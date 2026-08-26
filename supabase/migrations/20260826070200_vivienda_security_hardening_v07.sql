@@ -23,4 +23,21 @@ alter function public.vivienda_persist_expire_evidence_intents(timestamptz) secu
 -- The resolver intentionally remains SECURITY DEFINER and pinned to an empty search_path.
 -- It returns only the caller's opaque subjectRef + principal kind.
 
+-- Least-privilege table grants for the server-side data plane.
+-- In particular, the Case Journal remains append-only at the SQL privilege layer.
+revoke all on all tables in schema private from service_role;
+
+grant select, insert, update on private.vivienda_identity_subjects to service_role;
+grant select, insert, update on private.vivienda_cases to service_role;
+grant select, insert on private.vivienda_case_creation_keys to service_role;
+grant select, insert, update on private.vivienda_case_lawyer_assignments to service_role;
+grant select, insert on private.vivienda_case_journal to service_role;
+grant select, insert, update on private.vivienda_data_authorizations to service_role;
+grant select, insert, update on private.vivienda_evidence_intents to service_role;
+grant select, insert, update on private.vivienda_evidence_objects to service_role;
+grant select, insert, update on private.vivienda_evidence_metadata to service_role;
+
+-- No canonical table grants include DELETE in v0.7.
+-- Physical object deletion is coordinated through Storage after DB tombstone/expiry workflows.
+
 commit;
