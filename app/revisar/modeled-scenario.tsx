@@ -43,22 +43,26 @@ export function ModeledScenario({
   approximateYears: number;
   onBack: () => void;
 }) {
+  const approximateMonths = Number.isFinite(approximateYears) && approximateYears > 0
+    ? Math.max(1, Math.round(approximateYears * 12))
+    : null;
+
   const [annualRatePct, setAnnualRatePct] = useState("");
-  const [remainingMonths, setRemainingMonths] = useState(
-    Number.isFinite(approximateYears) && approximateYears > 0
-      ? String(Math.max(1, Math.round(approximateYears * 12)))
-      : "",
-  );
+  const [remainingMonths, setRemainingMonths] = useState("");
   const [system, setSystem] = useState<System>("unknown");
   const [monthlyExtra, setMonthlyExtra] = useState("200000");
 
-  const rate = Number(annualRatePct) / 100;
-  const months = Number(remainingMonths);
+  const hasExplicitRate = annualRatePct.trim().length > 0;
+  const hasExplicitMonths = remainingMonths.trim().length > 0;
+  const rate = hasExplicitRate ? Number(annualRatePct) / 100 : Number.NaN;
+  const months = hasExplicitMonths ? Number(remainingMonths) : Number.NaN;
   const extra = Number(monthlyExtra);
 
   const canModel =
     modality === "pesos" &&
     system === "constant-payment" &&
+    hasExplicitRate &&
+    hasExplicitMonths &&
     Number.isFinite(balance) && balance > 0 &&
     Number.isFinite(rate) && rate >= 0 && rate < 1 &&
     Number.isInteger(months) && months > 0 &&
@@ -89,7 +93,7 @@ export function ModeledScenario({
       <section className="surface form-card" style={{ marginTop: 20 }} aria-labelledby="model-title">
         <p className="eyebrow">Subir a C2 · Simulación modelada</p>
         <h1 id="model-title" style={{ fontSize: "clamp(32px, 6vw, 46px)" }}>Añade solo los datos que cambian la matemática.</h1>
-        <p className="section-copy">No pedimos identidad. Para modelar un crédito en pesos con cuota constante necesitamos tasa EA, cuotas restantes y el aporte adicional que quieres probar.</p>
+        <p className="section-copy">No pedimos identidad. Para modelar un crédito en pesos con cuota constante necesitamos tasa EA, cuotas restantes confirmadas y el aporte adicional que quieres probar.</p>
 
         {modality !== "pesos" ? (
           <div className="result-callout" role="status">
@@ -100,14 +104,14 @@ export function ModeledScenario({
 
         <div className="field-group">
           <label className="field-label" htmlFor="annual-rate">Tasa efectiva anual del crédito</label>
-          <span className="field-hint" id="annual-rate-hint">Ejemplo: escribe 12 para 12 % EA. No uses la tasa mensual.</span>
+          <span className="field-hint" id="annual-rate-hint">Ejemplo: escribe 12 para 12 % EA. No uses la tasa mensual. Si tu tasa real fuera 0 %, escribe 0 explícitamente.</span>
           <input className="field-control" id="annual-rate" type="number" min="0" max="99.99" step="0.01" inputMode="decimal" aria-describedby="annual-rate-hint" value={annualRatePct} onChange={(event) => setAnnualRatePct(event.target.value)} />
         </div>
 
         <div className="field-group">
           <label className="field-label" htmlFor="remaining-months">Número de cuotas que te faltan</label>
-          <span className="field-hint" id="remaining-months-hint">Confirma el número de cuotas, no solo los años aproximados.</span>
-          <input className="field-control" id="remaining-months" type="number" min="1" step="1" inputMode="numeric" aria-describedby="remaining-months-hint" value={remainingMonths} onChange={(event) => setRemainingMonths(event.target.value)} />
+          <span className="field-hint" id="remaining-months-hint">{approximateMonths ? `Antes indicaste aproximadamente ${approximateYears} años (~${approximateMonths} cuotas). Confirma aquí el número de cuotas para usarlo en el modelo.` : "Confirma el número de cuotas, no solo los años aproximados."}</span>
+          <input className="field-control" id="remaining-months" type="number" min="1" step="1" inputMode="numeric" aria-describedby="remaining-months-hint" placeholder={approximateMonths ? String(approximateMonths) : undefined} value={remainingMonths} onChange={(event) => setRemainingMonths(event.target.value)} />
         </div>
 
         <fieldset className="field-group">
@@ -147,7 +151,7 @@ export function ModeledScenario({
         <div aria-live="polite" style={{ marginTop: 20 }}>
           <DecisionResult
             title={`Con ${formatCop(extra)} adicionales al mes, el modelo termina ${formatMonths(comparison.termReductionMonths)} antes.`}
-            explanation="Esta es una simulación nominal C2 basada en los datos que declaraste. Mantiene la cuota financiera modelada y aplica el monto adicional a capital cada periodo. No incluye seguros, mora, cargos ni una eventual mecánica distinta de tu entidad."
+            explanation="Esta es una simulación nominal C2 basada en los datos que declaraste y confirmaste para el modelo. Mantiene la cuota financiera modelada y aplica el monto adicional a capital cada periodo. No incluye seguros, mora, cargos ni una eventual mecánica distinta de tu entidad."
             precision="C2"
             facts={[
               { label: "Cuota financiera modelada", value: formatCop(comparison.baseline.contractualPayment), detail: `${annualRatePct} % EA` },
