@@ -76,6 +76,17 @@ export default function HomePage() {
           </div>
         </section>
 
+        <section className="shell section" aria-labelledby="difference-path-heading">
+          <div className="surface choice-card">
+            <p className="eyebrow">Algo no me cuadra</p>
+            <h2 id="difference-path-heading">¿Hay un cobro, tasa, saldo o movimiento que no entiendes?</h2>
+            <p className="section-copy">Aísla qué esperabas, qué aparece distinto y qué fuentes deberías comparar. El primer resultado es C0 y no presupone que la entidad haya cometido un error.</p>
+            <div className="actions">
+              <a className="button button-secondary" href="/revisar-diferencia">Revisar una diferencia</a>
+            </div>
+          </div>
+        </section>
+
         <section className="shell section" aria-label="Ejemplo de resultado">
           <DecisionResult
             title="Vemos una oportunidad que vale la pena simular."
