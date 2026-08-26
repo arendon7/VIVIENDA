@@ -1,0 +1,264 @@
+.main {
+  padding-bottom: 24px;
+}
+
+.previewNotice {
+  display: grid;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+}
+
+.previewNotice strong {
+  color: var(--warning);
+}
+
+.previewNotice span {
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, .9fr);
+  gap: 28px;
+  align-items: end;
+  padding: 52px 0 36px;
+}
+
+.title {
+  max-width: 13ch;
+}
+
+.currentState {
+  padding: 24px;
+}
+
+.stateHeader,
+.sectionHeading,
+.opportunityMeta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.stateTitle {
+  display: block;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.currentState :global(.button) {
+  margin-top: 22px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+  gap: 16px;
+}
+
+.twin,
+.nextAction,
+.precisionPanel {
+  padding: clamp(22px, 3vw, 30px);
+}
+
+.demoTag,
+.noAction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--surface-warm);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.nextAction {
+  background: var(--surface-muted);
+}
+
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+  display: grid;
+  gap: 16px;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.steps li > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.steps p {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.section {
+  padding: 46px 0 0;
+}
+
+.sectionHeading {
+  margin-bottom: 20px;
+}
+
+.opportunityGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.opportunity {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.opportunityMeta {
+  width: 100%;
+  margin-bottom: 18px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.opportunityMeta strong {
+  color: var(--accent);
+  text-align: right;
+}
+
+.opportunity :global(.section-copy) {
+  flex: 1;
+  margin-bottom: 22px;
+}
+
+.precisionPath {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.precisionPath li {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+}
+
+.precisionPath li span:last-child {
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.activePrecision {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.workspaceItem {
+  padding: 22px;
+}
+
+.workspaceItem p {
+  color: var(--ink-muted);
+}
+
+.workspaceItem a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.workspaceItem span {
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.endState {
+  margin-top: 48px;
+  padding: 28px 0 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .hero,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .opportunityGrid,
+  .workspaceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .hero {
+    padding-top: 36px;
+  }
+
+  .facts,
+  .precisionPath {
+    grid-template-columns: 1fr;
+  }
+
+  .stateHeader,
+  .sectionHeading,
+  .endState {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .endState :global(.button) {
+    width: 100%;
+  }
+}
