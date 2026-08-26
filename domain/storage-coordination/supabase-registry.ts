@@ -9,6 +9,7 @@ import {
   type EvidenceObjectRegistryPort,
   type EvidenceObjectResolution,
   type IntentObjectResolution,
+  type PendingEvidenceDeletion,
 } from "./coordinator";
 
 function providerError(operation: string): PersistenceBoundaryError {
@@ -49,8 +50,19 @@ export class SupabaseStorageCoordinationRegistry implements EvidenceObjectRegist
     return this.base.expireIntents(before);
   }
 
-  listPendingDeletions(limit?: number) {
-    return this.base.listPendingDeletions(limit);
+  async listPendingDeletions(limit?: number): Promise<PendingEvidenceDeletion[]> {
+    const rows = await this.base.listPendingDeletions(limit);
+    return rows.map((row) => {
+      if (row.bucketId !== EVIDENCE_BUCKET_ID) {
+        throw providerError("listPendingDeletions");
+      }
+      return {
+        storageLocator: row.storageLocator,
+        bucketId: EVIDENCE_BUCKET_ID,
+        objectPath: row.objectPath,
+        deletionRequestedAt: row.deletionRequestedAt,
+      };
+    });
   }
 
   markObjectDeleted(storageLocator: string, deletedAt: string) {
