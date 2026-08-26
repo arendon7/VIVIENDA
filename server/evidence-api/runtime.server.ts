@@ -2,6 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { PersistenceBoundaryError } from "@/domain/persistence-boundary/contracts";
+import { ServerClassifiedEvidenceApplication } from "./application-authority";
 import {
   EvidenceHttpApi,
   type ApiAuditLogPort,
@@ -54,8 +55,12 @@ class NoopSafeAudit implements ApiAuditLogPort {
   }
 }
 
-export const evidenceHttpApi = new EvidenceHttpApi(
+const classifiedApplication = new ServerClassifiedEvidenceApplication(
   new UnconfiguredEvidenceApplication(),
+);
+
+export const evidenceHttpApi = new EvidenceHttpApi(
+  classifiedApplication,
   new ServerRequestContextSource(),
   new FailClosedRateLimit(),
   new NoopSafeAudit(),
