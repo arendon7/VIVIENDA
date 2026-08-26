@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { buildCasePlan, type CasePlanActor, type CasePlanPhaseState, type CasePlanTaskState } from "@/domain/case-plan/planner";
 import type { OpportunityRoute } from "@/domain/opportunity/router";
+import { CaseTimelinePreview } from "@/components/vivienda/case-timeline-preview";
 
 const actorLabels: Record<CasePlanActor, string> = {
   user: "Tú",
@@ -40,6 +42,7 @@ export function CasePlanWorkspace({
   onClose: () => void;
 }) {
   const plan = buildCasePlan(route, asOfDate);
+  const [showTimeline, setShowTimeline] = useState(false);
 
   return (
     <section className="surface result-frame" style={{ marginTop: 24 }} aria-labelledby="case-plan-title">
@@ -123,6 +126,21 @@ export function CasePlanWorkspace({
           <ul>{plan.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
         </div>
       ) : null}
+
+      <div className="surface" style={{ marginTop: 24, padding: 20 }}>
+        <p className="eyebrow">Siguiente capa del prototipo</p>
+        <h3>Ver cómo este plan se convertiría en un expediente trazable.</h3>
+        <p className="field-hint">
+          El timeline usa eventos locales simulados para demostrar append-only, versionado y capacidades separadas. No persiste datos ni ejecuta actuaciones reales.
+        </p>
+        <div className="actions" style={{ marginTop: 16 }}>
+          <button className="button button-secondary" type="button" onClick={() => setShowTimeline((value) => !value)}>
+            {showTimeline ? "Ocultar expediente local" : "Ver expediente local de demostración"}
+          </button>
+        </div>
+      </div>
+
+      {showTimeline ? <CaseTimelinePreview route={route} asOfDate={asOfDate} /> : null}
 
       <div className="actions" style={{ marginTop: 24 }}>
         <button className="button button-secondary" type="button" onClick={onClose}>Volver a las rutas</button>
