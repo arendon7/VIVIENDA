@@ -33,6 +33,8 @@ Gate de base:
 10. `upsert` está prohibido para evidencia: cada upload utiliza un path nuevo.
 11. Tombstone lógico y borrado físico son hechos distintos.
 12. El coordinador no muta Case Log directamente; usa el application service existente.
+13. Un object path sintácticamente válido no es suficiente: sus segmentos deben corresponder exactamente al intent, evidence y storage locator registrados.
+14. Un TTL solicitado es un máximo efectivo: un adapter no puede devolver silenciosamente un signed download con mayor duración.
 
 ## 4. Arquitectura
 
@@ -90,9 +92,11 @@ Service principals se construyen únicamente en backend controlado y no proviene
 2. `CasePersistenceService.prepareEvidenceUpload()` valida ownership, autorización de datos y clasificación;
 3. obtener `intentId`, `evidenceId` y `intentExpiresAt`;
 4. generar `storageLocator` y `objectPath` opacos server-side;
-5. registrar/reservar las coordenadas físicas antes de emitir el grant;
-6. emitir signed upload grant con `upsert:false`;
-7. devolver al navegador únicamente lo mínimo necesario para subir.
+5. comprobar que `objectPath = quarantine/<intentId>/<evidenceId>/<storageLocator>` para esos IDs exactos;
+6. registrar/reservar las coordenadas físicas antes de emitir el grant;
+7. emitir signed upload grant con `upsert:false`;
+8. rechazar un grant ya vencido o inválido;
+9. devolver al navegador únicamente lo mínimo necesario para subir.
 
 Registrar primero la reserva evita un upload firmado cuyo path no pueda reconciliarse posteriormente.
 
@@ -115,9 +119,9 @@ Regla:
 
 Nunca se extiende el intent de negocio para igualarlo silenciosamente al token del proveedor.
 
-## 8. Object path
+## 8. Object path y binding
 
-Formato conceptual:
+Formato canónico:
 
 `quarantine/<opaque-intent>/<opaque-evidence>/<opaque-object>`
 
@@ -134,6 +138,16 @@ Propiedades:
 - no overwrite.
 
 `storageLocator` es un identificador opaco distinto del physical path.
+
+Además del patrón sintáctico, se exige binding semántico estructural:
+
+- el segmento intent del path debe ser el `intentId` de la reserva;
+- el segmento evidence debe ser el `evidenceId` de la reserva/metadata;
+- el segmento object debe ser exactamente el `storageLocator` asociado;
+- para cleanup de un intent expirado, el intent del path debe coincidir con el intent que originó la candidatura;
+- para cualquier delete, el locator del path debe coincidir con el locator que se marcará como borrado.
+
+Una combinación de IDs individualmente válidos pero cruzados entre objetos se trata como `provider_error` y no habilita inspect, sign ni delete.
 
 ## 9. Signed upload grant
 
@@ -153,7 +167,8 @@ El grant:
 - no se registra en Case Log;
 - no cambia precisión C2/C3;
 - no prueba que el objeto exista;
-- no prueba MIME, tamaño ni checksum.
+- no prueba MIME, tamaño ni checksum;
+- debe tener expiración válida y futura al momento de emisión.
 
 ## 10. Upload verification
 
@@ -168,11 +183,13 @@ Después de la subida, el backend debe inspeccionar el objeto reservado y produc
 
 La verificación nunca confía en MIME, size o checksum enviados exclusivamente por navegador.
 
-Si el objeto no existe o no coincide con la reserva, no se llama `finalizeEvidenceUpload()`.
+Si el objeto no existe, el path no está correctamente ligado a la reserva o el receipt no coincide, no se llama `finalizeEvidenceUpload()`.
 
 ## 11. Finalize
 
-El coordinador llama:
+Antes de cualquier lookup físico privilegiado, `completeUpload` vuelve a ejecutar `readCase()` para autorizar ownership/assignment/admin.
+
+Después de verificar físicamente el objeto, el coordinador llama:
 
 `CasePersistenceService.finalizeEvidenceUpload(principal, caseId, command)`
 
@@ -188,22 +205,29 @@ El servicio existente vuelve a comprobar:
 - expiración;
 - transición de dominio.
 
+Esta doble comprobación es intencional: autoriza antes del acceso físico privilegiado y vuelve a autorizar en commit para reducir exposición IDOR y cerrar cambios TOCTOU.
+
 Solo la transacción DB final convierte el objeto en evidencia y crea `EVIDENCE_ATTACHED`.
 
 ## 12. Download flow
 
-1. resolver principal;
-2. `CasePersistenceService.readCase()` valida ownership/assignment/admin;
-3. confirmar en read model que evidenceId existe, está visible y no está tombstoned;
-4. resolver coordenadas físicas con RPC service-only;
-5. emitir signed URL efímera desde backend;
-6. devolver URL al cliente;
-7. no persistir URL/token.
+1. validar TTL solicitado;
+2. resolver principal;
+3. `CasePersistenceService.readCase()` valida ownership/assignment/admin;
+4. confirmar en read model que evidenceId existe, está visible y no está tombstoned;
+5. resolver coordenadas físicas con RPC service-only;
+6. comprobar binding exacto evidenceId ↔ storageLocator ↔ objectPath;
+7. emitir signed URL efímera desde backend;
+8. comprobar que la expiración real del grant no exceda el TTL solicitado, admitiendo solo una tolerancia técnica mínima de clock skew;
+9. devolver URL al cliente;
+10. no persistir URL/token.
 
 TTL inicial de VIVIENDA:
 
 - default 60 segundos;
 - máximo 300 segundos.
+
+Evidencia `active` y `legal_hold` puede ser legible cuando el access check de expediente lo permite. `legal_hold` bloquea borrado, no constituye por sí mismo una prohibición de lectura. Evidencia `tombstoned` nunca recibe signed download.
 
 Una nueva descarga requiere nueva autorización y nuevo grant.
 
@@ -216,14 +240,14 @@ Port mínimo:
 - createSignedDownloadGrant(bucketId, objectPath, expiresInSeconds);
 - deleteObject(bucketId, objectPath).
 
-`deleteObject` se considera idempotente: object-not-found puede tratarse como estado final borrado siempre que el path haya sido resuelto desde registry autorizado.
+`deleteObject` se considera idempotente: object-not-found puede tratarse como estado final borrado siempre que el path haya sido resuelto desde registry autorizado y pase las comprobaciones de binding.
 
 ## 14. Registry queries v0.8
 
 El registry necesita, además de v0.7:
 
 - resolve reserved object by `intentId`;
-- resolve active physical object by `(caseId,evidenceId)`;
+- resolve readable physical object by `(caseId,evidenceId)` para lifecycle `active` o `legal_hold`;
 - list pending physical deletions;
 - mark physical deletion confirmed.
 
@@ -234,21 +258,26 @@ Todas son service-role only y no exponen rutas físicas al browser.
 Worker:
 
 1. expirar intents vencidos;
-2. recibir coordenadas físicas reservadas;
-3. borrar Storage si existe;
-4. confirmar `deleted_at` únicamente después de delete success/not-found;
-5. no crear eventos en Case Log;
-6. continuar procesando otros objetos si uno falla;
-7. dejar fallidos pendientes para retry.
+2. recuperar únicamente intents expirados que tengan mapping físico y `deleted_at IS NULL`;
+3. mantenerlos recuperables en ejecuciones futuras mientras el borrado físico no se confirme;
+4. comprobar binding intent/path/locator antes de borrar;
+5. borrar Storage si existe;
+6. confirmar `deleted_at` únicamente después de delete success/not-found;
+7. no crear eventos en Case Log;
+8. continuar procesando otros objetos si uno falla;
+9. dejar fallidos pendientes para retry.
+
+Un intent expirado que nunca adquirió objeto físico permanece expirado, pero no se recicla inútilmente como candidatura de delete.
 
 ## 16. Tombstone deletion worker
 
 1. listar `deletion_requested_at` no confirmados;
-2. borrar objeto físico;
-3. confirmar `deleted_at`;
-4. nunca restaurar metadata;
-5. nunca modificar eventos históricos;
-6. respetar que `legal_hold` impide que se cree la solicitud de borrado.
+2. comprobar que storageLocator coincida con el locator contenido en objectPath;
+3. borrar objeto físico;
+4. confirmar `deleted_at`;
+5. nunca restaurar metadata;
+6. nunca modificar eventos históricos;
+7. respetar que `legal_hold` impide que se cree la solicitud de borrado.
 
 ## 17. Errores
 
@@ -325,7 +354,7 @@ Estos datos son adapter/provider facts, no reglas de dominio.
 20. MIME inválido no finaliza;
 21. size inválido no finaliza;
 22. download exige readCase previo;
-23. download exige evidence activa;
+23. download admite evidencia active/legal_hold autorizada, nunca tombstoned;
 24. tombstoned no recibe signed download;
 25. storageLocator no se devuelve en download grant;
 26. download TTL default 60;
@@ -340,8 +369,8 @@ Estos datos son adapter/provider facts, no reglas de dominio.
 35. orphan cleanup no crea EVIDENCE_ATTACHED;
 36. tombstone cleanup no modifica journal;
 37. resolve-by-intent es service-only;
-38. resolve-active-evidence es service-only;
-39. resolver físico comprueba lifecycle active;
+38. resolve-readable-evidence es service-only;
+39. resolver físico comprueba lifecycle active/legal_hold y excluye tombstoned;
 40. user cannot choose object path;
 41. user cannot request upsert;
 42. provider error redacta paths/tokens;
@@ -352,7 +381,15 @@ Estos datos son adapter/provider facts, no reglas de dominio.
 47. no proyecto Supabase live requerido para contract tests;
 48. baseline v0.7 permanece verde;
 49. tests verifican orden prepare→reserve→grant;
-50. tests verifican readCase→resolve physical→sign download.
+50. tests verifican readCase→resolve physical→sign download;
+51. completeUpload autoriza readCase antes de lookup/inspection físico;
+52. objectPath debe estar ligado exactamente a intentId/evidenceId/storageLocator;
+53. cleanup expirado exige binding intentId/path/locator;
+54. cleanup tombstone exige binding locator/path;
+55. orphan cleanup reintenta objetos expired no confirmados en ejecuciones futuras;
+56. orphan cleanup no devuelve intents expirados sin mapping físico;
+57. provider upload grant ya vencido es rechazado;
+58. provider download grant cuya expiración efectiva exceda el TTL solicitado es rechazado.
 
 ## 22. Fuera de alcance v0.8
 
