@@ -259,7 +259,8 @@ export type BoundaryErrorCode =
   | "invalid_evidence_reference"
   | "unsafe_persistence_material"
   | "evidence_not_found"
-  | "evidence_on_legal_hold";
+  | "evidence_on_legal_hold"
+  | "provider_error";
 
 export class PersistenceBoundaryError extends Error {
   readonly code: BoundaryErrorCode;
