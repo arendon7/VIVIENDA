@@ -154,6 +154,7 @@ class FakePrincipalSource implements PrincipalSource {
 class FakeCaseApp implements EvidenceCaseApplication {
   model = readModel();
   lastFinalizeCommand: unknown = null;
+  failRead = false;
   constructor(private readonly calls: string[]) {}
   async prepareEvidenceUpload(_principal: Principal, _caseId: string, _command: PrepareEvidenceUploadCommand) {
     this.calls.push("case.prepare");
@@ -170,6 +171,7 @@ class FakeCaseApp implements EvidenceCaseApplication {
   }
   async readCase(_principal: Principal, _caseId: string) {
     this.calls.push("case.read");
+    if (this.failRead) throw new Error("forbidden");
     return this.model;
   }
 }
@@ -302,7 +304,7 @@ describe("EvidenceStorageCoordinator v0.8", () => {
     expect(calls).toEqual(["principal.resolve", "case.prepare"]);
   });
 
-  it("builds the finalization receipt only from reserved coordinates and server inspection", async () => {
+  it("authorizes the case before physical upload lookup and builds receipt from server inspection", async () => {
     const { coordinator, cases, calls } = setup();
     await coordinator.completeUpload({
       caseId: "case_demo",
@@ -310,7 +312,13 @@ describe("EvidenceStorageCoordinator v0.8", () => {
       expectedVersion: 2,
       idempotencyKey: "idem-finalize-demo",
     });
-    expect(calls).toEqual(["principal.resolve", "registry.resolveIntent", "storage.inspect", "case.finalize"]);
+    expect(calls).toEqual([
+      "principal.resolve",
+      "case.read",
+      "registry.resolveIntent",
+      "storage.inspect",
+      "case.finalize",
+    ]);
     expect(cases.lastFinalizeCommand).toEqual({
       idempotencyKey: "idem-finalize-demo",
       intentId: "upl_demo",
@@ -326,6 +334,20 @@ describe("EvidenceStorageCoordinator v0.8", () => {
     });
   });
 
+  it("stops before physical lookup when case authorization fails", async () => {
+    const { coordinator, cases, calls } = setup();
+    cases.failRead = true;
+    await expect(
+      coordinator.completeUpload({
+        caseId: "case_other",
+        intentId: "upl_demo",
+        expectedVersion: 2,
+        idempotencyKey: "idem-idor",
+      }),
+    ).rejects.toThrow(/forbidden/i);
+    expect(calls).toEqual(["principal.resolve", "case.read"]);
+  });
+
   it("rejects an expired business intent before inspecting the object", async () => {
     const { coordinator, registry, calls } = setup();
     registry.intentObject = { ...intentResolution, expiresAt: "2026-08-26T12:59:59.000Z" };
@@ -337,7 +359,7 @@ describe("EvidenceStorageCoordinator v0.8", () => {
         idempotencyKey: "idem-expired",
       }),
     ).rejects.toMatchObject({ code: "evidence_intent_expired" });
-    expect(calls).toEqual(["principal.resolve", "registry.resolveIntent"]);
+    expect(calls).toEqual(["principal.resolve", "case.read", "registry.resolveIntent"]);
   });
 
   it("authorizes readCase before physical lookup and signs downloads for 60 seconds by default", async () => {
