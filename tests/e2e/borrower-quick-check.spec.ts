@@ -174,6 +174,16 @@ test("never grants C3 from simulated document values, even after all material fi
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
 });
 
+test("keeps unknown product as classification work instead of automatic legal escalation", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Primero necesitamos clasificar el producto/ });
+  await expect(primary).toBeVisible();
+  await expect(primary.getByText("Vale la pena evaluar", { exact: true })).toBeVisible();
+  await expect(primary.getByText("Revisión humana", { exact: true })).toHaveCount(0);
+  await expect(workspace.getByText(/no obliga a escalar el caso/i)).toBeVisible();
+});
+
 test("prioritizes term prepayment when a covered mortgage user wants to finish sooner", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
@@ -195,7 +205,8 @@ test("elevates Article 24 assignment only after the user declares a binding offe
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Activar la cesión con oferta vinculante/ });
   await expect(primary).toBeVisible();
-  await expect(primary.getByText(/máximo 10 días hábiles/i)).toBeVisible();
+  const nextStep = primary.locator(".result-callout");
+  await expect(nextStep.getByText(/plazo legal máximo de 10 días hábiles/i)).toBeVisible();
   await expect(primary.getByText(/no son el tiempo para que un nuevo banco apruebe/i)).toBeVisible();
 });
 
@@ -221,5 +232,7 @@ test("explains the 40 percent rule without turning current payment burden into a
 
   await expect(workspace.getByText("El 40% no se usa como detector automático de ilegalidad.", { exact: true })).toBeVisible();
   await expect(workspace.getByText(/no convierte una cuota vigente superior a ese porcentaje en una infracción automática/i)).toBeVisible();
-  await expect(workspace.getByText(/primera cuota propuesta supera el 40%/i)).toBeVisible();
+  await expect(
+    workspace.getByText("La primera cuota propuesta supera el 40% del ingreso familiar acreditado y debe rediseñarse.", { exact: true }),
+  ).toBeVisible();
 });
