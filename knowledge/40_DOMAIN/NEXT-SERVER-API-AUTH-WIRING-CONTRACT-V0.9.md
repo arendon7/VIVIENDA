@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Definir la frontera HTTP server-side de VIVIENDA sobre el baseline v0.8 congelado, de modo que requests provenientes del navegador puedan invocar coordinación de evidencia sin convertirse en autoridad de identidad, permisos o infraestructura.
+Definir la frontera HTTP server-side de VIVIENDA sobre el baseline v0.8 congelado, de modo que requests provenientes del navegador puedan invocar coordinación de evidencia sin convertirse en autoridad de identidad, permisos, clasificación de seguridad o infraestructura.
 
 Base congelada v0.8:
 
@@ -48,6 +48,8 @@ No son autoridad:
 - `service`/`serviceRole`;
 - owner ids;
 - lawyer/admin flags;
+- `legalDataCategory`;
+- `securityTier`;
 - objectPath;
 - storageLocator;
 - bucket interno;
@@ -57,6 +59,24 @@ No son autoridad:
 
 La sesión normal se consume exclusivamente mediante el `PrincipalSource` user-scoped ya definido en v0.8, detrás del coordinador.
 
+### 3.1 Clasificación documental server-side
+
+La clasificación persistida se deriva server-side desde `kind` mediante `ServerClassifiedEvidenceApplication`.
+
+Defaults operativos mínimos v0.9:
+
+- `statement` → `financial_credit_semiprivate + restricted`;
+- `contract` → `financial_credit_semiprivate + restricted`;
+- `bank_response` → `financial_credit_semiprivate + restricted`;
+- `filing_proof` → `private + restricted`;
+- `authority` → `private + highly_restricted`;
+- `court_document` → `private + highly_restricted`;
+- `other` → `private + highly_restricted` como default conservador, sujeto a reclasificación posterior por contenido.
+
+Durante la transición v0.9 el parser HTTP conserva compatibilidad con `legalDataCategory` y `securityTier` en el body, pero esos valores son **advisory/non-authoritative**: el application decorator los reemplaza antes de persistencia. Un browser no puede degradar un extracto a `non_personal/open`.
+
+Un slice posterior puede retirar esos dos campos del DTO browser una vez actualizado el consumidor.
+
 ## 4. DTOs públicos
 
 ### Prepare upload request
@@ -64,10 +84,10 @@ La sesión normal se consume exclusivamente mediante el `PrincipalSource` user-s
 Path:
 - `caseId`.
 
-JSON body allowlist exacta:
-- `kind`;
-- `legalDataCategory`;
-- `securityTier`.
+JSON body de transición v0.9:
+- `kind` — única decisión de clasificación con efecto funcional;
+- `legalDataCategory` — compatibilidad temporal, no autoridad;
+- `securityTier` — compatibilidad temporal, no autoridad.
 
 No se acepta ningún campo adicional.
 
@@ -143,7 +163,7 @@ Reglas:
 - `Content-Type` debe ser `application/json` con parámetros opcionales válidos;
 - request body máximo inicial: 16 KiB;
 - `Content-Length` excesivo permite rechazo temprano;
-- el tamaño real se vuelve a comprobar después de leer el body;
+- el tamaño real UTF-8 se vuelve a comprobar después de leer el body;
 - JSON inválido → 400;
 - array/null/primitivo → 400;
 - objeto debe ser plain JSON object;
@@ -152,17 +172,22 @@ Reglas:
 
 Esta API nunca transporta bytes del documento. Los bytes viajan directamente al signed upload grant de Storage.
 
-## 6. Same-origin / CSRF
+## 6. Trusted origin / CSRF
 
-Los endpoints browser-facing exigen `Origin` válido y exactamente igual al `origin` del request URL reconstruido por el servidor.
+`request.url` no es fuente de autoridad de origin por sí sola.
 
-En despliegue detrás de proxy, la reconstrucción confiable del origin pertenece al adapter de infraestructura y no debe confiar ciegamente en headers arbitrarios del usuario.
+Antes de entrar a `EvidenceHttpApi`, cada Route Handler pasa el request por `bindRequestToTrustedOrigin()`:
 
-En v0.9 puro se prueba:
+1. lee `VIVIENDA_TRUSTED_ORIGIN` únicamente server-side;
+2. si falta o es inválido, falla cerrado con 503;
+3. solo acepta HTTPS, excepto `http://localhost`, `127.0.0.1` o loopback explícito para desarrollo;
+4. conserva path/query del request;
+5. reconstruye `request.url` sobre el origin configurado;
+6. el inner boundary exige después `Origin` browser presente y exactamente igual al origin reconstruido.
 
-- missing Origin → forbidden;
-- cross-origin → forbidden;
-- same-origin → permitido.
+Así, un `Host` o proxy-derived URL manipulado no puede convertirse en su propia autoridad de same-origin.
+
+No se usa `NEXT_PUBLIC_*` para esta política.
 
 Cookies de sesión, cuando se activen, deben usar configuración compatible con esta estrategia y no sustituyen la comprobación de origin.
 
@@ -182,15 +207,16 @@ Path params identifican recurso, pero no prueban ownership. El coordinador/appli
 
 `complete upload` exige `Idempotency-Key` porque la operación de finalización ya posee semántica idempotente en el persistence boundary.
 
-Reglas HTTP:
+Reglas HTTP v0.9:
 
-- 1–200 caracteres;
+- no vacía;
+- máximo 200 caracteres;
 - caracteres de control prohibidos;
 - no se deriva del body;
 - se pasa intacta al command de finalize;
 - no se loguea su valor completo.
 
-Prepare/download no heredan una falsa garantía de idempotencia que el dominio todavía no ofrece. Sus retries deben ser tratados explícitamente en un slice posterior si se requiere replay cache temporal.
+Prepare/download no heredan una falsa garantía de idempotencia que el dominio todavía no ofrece. Sus retries deben ser tratados explícitamente si se requiere replay cache temporal.
 
 ## 9. Rate limiting
 
@@ -205,6 +231,8 @@ Operaciones iniciales separadas:
 - evidence.download.
 
 Si el límite se excede → 429 + `Retry-After` cuando esté disponible.
+
+Si el provider de rate limit está indisponible → fail closed 503.
 
 No se instala Redis ni servicio externo en v0.9.
 
@@ -261,13 +289,15 @@ La respuesta pública contiene código estable y mensaje genérico. No reenvía 
 
 ## 13. Response security
 
-Todas las respuestas API añaden al menos:
+Todas las respuestas del inner API añaden al menos:
 
 - `Cache-Control: no-store`;
 - `Content-Type: application/json; charset=utf-8`;
 - `X-Content-Type-Options: nosniff`;
 - `Referrer-Policy: no-referrer`;
 - `X-Request-Id` generado server-side.
+
+El fail-closed del trusted-origin binder aplica la misma política mínima de cache/content/referrer/request-id.
 
 ## 14. Route handlers y assembly
 
@@ -276,9 +306,13 @@ Los Route Handlers son thin adapters:
 - no contienen reglas de negocio;
 - no crean service credentials;
 - no resuelven role desde request body;
-- delegan a una instancia server-only de la frontera HTTP.
+- no leen directamente env de infraestructura;
+- primero aplican trusted-origin binding;
+- luego delegan a una instancia server-only de la frontera HTTP.
 
-Mientras no exista infraestructura live, el assembly de producción v0.9 permanece **fail closed**: un request que supere guards pero requiera aplicación no configurada recibe error provider/unavailable seguro.
+El runtime v0.9 compone obligatoriamente `ServerClassifiedEvidenceApplication` alrededor de la aplicación concreta.
+
+Mientras no exista infraestructura live, el assembly permanece **fail closed**: rate limiting y application wiring reales no se inventan.
 
 Los tests positivos usan dependency injection con fakes y no requieren Supabase.
 
@@ -297,7 +331,20 @@ Nunca se entrega service-scoped client a un Client Component ni se crea desde un
 
 Su activación futura debe usar scheduler/internal authorization separado, no la sesión ordinaria de un cliente.
 
-## 17. Acceptance criteria
+## 17. Test discovery
+
+Los contract tests de v0.9 viven bajo `server/**/*.test.ts`.
+
+El runner Vitest debe incluir explícitamente:
+
+- `domain/**/*.test.ts`;
+- `server/**/*.test.ts`.
+
+Un green build que excluya los tests server-side **no** satisface el gate v0.9.
+
+Este requisito se añadió después de detectar que la configuración inicial de Vitest ejecutaba únicamente `domain/**/*.test.ts`.
+
+## 18. Acceptance criteria
 
 1. v0.9 nace exactamente de `ac0b476...`;
 2. v0.8 no se modifica;
@@ -309,66 +356,77 @@ Su activación futura debe usar scheduler/internal authorization separado, no la
 8. actual body size se verifica aunque falte Content-Length;
 9. invalid JSON → 400;
 10. primitive/array/null body → 400;
-11. prepare allowlist exacta;
+11. prepare allowlist exacta de transición;
 12. complete allowlist exacta;
 13. download allowlist exacta;
 14. extra top-level field → 400;
 15. privileged key recursiva → 400;
-16. role no es aceptado;
-17. subjectRef no es aceptado;
-18. objectPath no es aceptado;
-19. storageLocator no es aceptado;
+16. role no es autoridad;
+17. subjectRef no es autoridad;
+18. objectPath no es autoridad;
+19. storageLocator no es autoridad;
 20. provider token/receipt no es aceptado en complete;
-21. path caseId validado;
-22. path intentId validado;
-23. path evidenceId validado;
-24. path ID no prueba ownership;
-25. same-origin requerido;
-26. missing Origin bloqueado;
-27. cross-origin bloqueado;
-28. requestId no se toma del body;
-29. rateLimitKey no se toma del body;
-30. rate limiter corre antes de aplicación;
-31. rate-limited → 429;
-32. complete exige Idempotency-Key;
-33. invalid Idempotency-Key → 400;
-34. key se pasa a finalize;
-35. prepare no promete idempotencia inexistente;
-36. response DTO de prepare es allowlisted;
-37. prepare response no contiene storageLocator;
-38. complete response no serializa snapshot completo;
-39. download response no contiene objectPath/storageLocator;
-40. signed URL no se loguea;
-41. upload token no se loguea;
-42. body no se loguea;
-43. internal error.message no se devuelve;
-44. provider error → 503 seguro;
-45. unknown error → 500 seguro;
-46. authentication → 401;
-47. forbidden → 403;
-48. not found → 404;
-49. version conflict → 409;
-50. data authorization required → 409;
-51. no-store en responses;
-52. nosniff en responses;
-53. no-referrer en responses;
-54. server request id en response;
-55. route handlers son adapters delgados;
-56. production assembly fail-closed sin infraestructura;
-57. no service key en código browser-facing;
-58. no `NEXT_PUBLIC_*` para credenciales privilegiadas;
-59. tests no requieren Supabase live;
-60. 139/139 baseline permanece verde;
-61. 48/48 E2E baseline permanece verde;
-62. Next build permanece verde.
+21. legalDataCategory browser no es autoridad;
+22. securityTier browser no es autoridad;
+23. statement se persiste como financial_credit_semiprivate/restricted;
+24. authority/court/other usan default highly_restricted;
+25. clasificación pasa por decorator server-side;
+26. path caseId validado;
+27. path intentId validado;
+28. path evidenceId validado;
+29. path ID no prueba ownership;
+30. trusted origin proviene de configuración server-side;
+31. trusted origin ausente/inválido → fail closed;
+32. `NEXT_PUBLIC_*` no se usa para trusted origin;
+33. Host/request URL recibido no define el origin autorizado;
+34. missing Origin bloqueado;
+35. cross-origin bloqueado;
+36. same-origin contra trusted origin permitido;
+37. requestId no se toma del body;
+38. rateLimitKey no se toma del body;
+39. rate limiter corre antes de aplicación;
+40. rate-limited → 429;
+41. rate-limit unavailable → 503;
+42. complete exige Idempotency-Key;
+43. invalid Idempotency-Key → 400;
+44. key se pasa a finalize;
+45. prepare no promete idempotencia inexistente;
+46. response DTO de prepare es allowlisted;
+47. prepare response no contiene storageLocator;
+48. complete response no serializa snapshot completo;
+49. download response no contiene objectPath/storageLocator;
+50. signed URL no se loguea;
+51. upload token no se loguea;
+52. body no se loguea;
+53. internal error.message no se devuelve;
+54. provider error → 503 seguro;
+55. unknown error → 500 seguro;
+56. authentication → 401;
+57. forbidden → 403;
+58. not found → 404;
+59. version conflict → 409;
+60. data authorization required → 409;
+61. no-store en responses;
+62. nosniff en responses;
+63. no-referrer en responses;
+64. server request id en response;
+65. route handlers siguen delgados;
+66. production assembly fail-closed sin infraestructura;
+67. no service key en código browser-facing;
+68. no `NEXT_PUBLIC_*` para credenciales privilegiadas;
+69. tests no requieren Supabase live;
+70. Vitest ejecuta domain + server tests;
+71. baseline v0.8 permanece verde;
+72. 48/48 E2E baseline permanece verde;
+73. Next build permanece verde.
 
-## 18. Fuera de alcance v0.9
+## 19. Fuera de alcance v0.9
 
 - Supabase project live;
 - cookies/session provider real;
 - Redis/rate limiter real;
 - WAF/CDN config;
-- trusted proxy deployment config;
+- proxy trust productivo distinto del trusted-origin explícito;
 - upload bytes through Next;
 - antivirus/OCR/DLP;
 - internal scheduler endpoint;
