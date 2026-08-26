@@ -113,3 +113,43 @@ test("refuses to apply the peso annuity model to UVR", async ({ page }) => {
   await expect(page.getByText("No vamos a forzar una fórmula de pesos.")).toBeVisible();
   await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toHaveCount(0);
 });
+
+test("rejects unsupported document types before the verification review", async ({ page }) => {
+  await page.goto("/verificar");
+
+  await page.getByLabel("Selecciona un extracto para probar la experiencia").setInputFiles({
+    name: "notas.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("demo"),
+  });
+
+  await expect(page.getByRole("alert")).toHaveText("Usa un archivo PDF, JPG o PNG.");
+  await expect(page.getByRole("heading", { name: "Revisa campo por campo antes de usarlo." })).toHaveCount(0);
+});
+
+test("never grants C3 from simulated document values, even after all material fields are confirmed", async ({ page }) => {
+  await page.goto("/verificar");
+
+  await page.getByLabel("Selecciona un extracto para probar la experiencia").setInputFiles({
+    name: "extracto-demo.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4 demo"),
+  });
+
+  const confirmationBoxes = page.locator('input[type="checkbox"]:not(:disabled)');
+  await expect(confirmationBoxes).toHaveCount(6);
+
+  for (let index = 0; index < 6; index += 1) {
+    await confirmationBoxes.nth(index).check();
+  }
+
+  await expect(page.getByText("6 de 6 campos materiales confirmados")).toBeVisible();
+  await expect(page.getByText("La reconciliación de la demostración está completa, pero sigue siendo C2.")).toBeVisible();
+  await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Previsualizar Mortgage Twin" }).click();
+
+  await expect(page.getByRole("heading", { name: "Así quedará tu crédito cuando la evidencia sea verificable." })).toBeVisible();
+  await expect(page.getByText("Preview, no C3.")).toBeVisible();
+  await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
+});
