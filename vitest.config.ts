@@ -8,7 +8,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["domain/**/*.test.ts"],
+    include: ["domain/**/*.test.ts", "server/**/*.test.ts"],
     exclude: ["tests/e2e/**", "node_modules/**", ".next/**"],
   },
 });
