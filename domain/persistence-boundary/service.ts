@@ -15,6 +15,7 @@ import {
   type CaseJournalRecord,
   type CasePersistencePort,
   type CaseReadModel,
+  type CaseTimelineEvent,
   type Clock,
   type CreateCaseCommand,
   type DataAuthorizationRecord,
@@ -28,6 +29,7 @@ import {
   type PersistedCaseSnapshot,
   type PrepareEvidenceUploadCommand,
   type Principal,
+  type PrivacyPurpose,
   type SecurityTier,
 } from "./contracts";
 
@@ -37,6 +39,11 @@ const OPAQUE_STORAGE_LOCATOR = /^obj_[A-Za-z0-9_-]{6,}$/;
 const SHA256 = /^[a-f0-9]{64}$/i;
 const SAFE_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
 const MAX_EVIDENCE_BYTES = 25 * 1024 * 1024;
+const EVIDENCE_TREATMENT_PURPOSES = new Set<PrivacyPurpose>([
+  "mortgage_analysis",
+  "case_management",
+  "legal_service",
+]);
 const EXTERNAL_RECORDABLE = new Set<CaseEventDraft["type"]>(["RESPONSE_RECORDED", "RESOLUTION_RECORDED"]);
 const RESERVED_GENERIC_OPERATIONS = new Set<CaseEventDraft["type"]>([
   "DATA_AUTHORIZATION_RECORDED",
@@ -66,7 +73,10 @@ export type CaseMutationResult = {
 
 function requireAuthenticated(principal: Principal): AuthenticatedPrincipal {
   if (!isAuthenticated(principal)) {
-    throw new PersistenceBoundaryError("authentication_required", "Se requiere una identidad autenticada para persistir o leer un expediente.");
+    throw new PersistenceBoundaryError(
+      "authentication_required",
+      "Se requiere una identidad autenticada para persistir o leer un expediente.",
+    );
   }
   assertSubjectRef(principal.subjectRef);
   return principal;
@@ -154,9 +164,16 @@ function assertOpaqueEvidenceRefs(evidenceRefs: readonly string[] | undefined) {
 
 function assertSecurityClassification(category: LegalDataCategory, tier: SecurityTier) {
   if (category === "sensitive" && tier !== "highly_restricted") {
-    throw new PersistenceBoundaryError("invalid_command", "Los datos clasificados como sensitive requieren securityTier highly_restricted.");
+    throw new PersistenceBoundaryError(
+      "invalid_command",
+      "Los datos clasificados como sensitive requieren securityTier highly_restricted.",
+    );
   }
-  if ((category === "financial_credit_semiprivate" || category === "private") && tier !== "restricted" && tier !== "highly_restricted") {
+  if (
+    (category === "financial_credit_semiprivate" || category === "private") &&
+    tier !== "restricted" &&
+    tier !== "highly_restricted"
+  ) {
     throw new PersistenceBoundaryError("invalid_command", `${category} requiere securityTier restricted o highly_restricted.`);
   }
   if (category === "personal" && tier === "open") {
@@ -183,7 +200,10 @@ function displayNameFor(kind: EvidenceKind): string {
   }
 }
 
-function ensureServiceScope(principal: AuthenticatedPrincipal, scope: "case:read" | "case:append_system" | "case:record_external") {
+function ensureServiceScope(
+  principal: AuthenticatedPrincipal,
+  scope: "case:read" | "case:append_system" | "case:record_external",
+) {
   if (principal.kind === "service" && !principal.scopes.includes(scope)) {
     throw new PersistenceBoundaryError("forbidden", `El service principal requiere scope ${scope}.`);
   }
@@ -213,28 +233,38 @@ function actorFor(principal: AuthenticatedPrincipal, recordAsExternal: boolean):
   return { kind: principalActorKind(principal), actorId: principal.subjectRef };
 }
 
+function sanitizeTimelineEvent(event: CaseEvent): CaseTimelineEvent {
+  return {
+    ...event,
+    actor: { kind: event.actor.kind },
+    payload: { ...event.payload },
+    ...(event.evidenceRefs ? { evidenceRefs: [...event.evidenceRefs] } : {}),
+  } as CaseTimelineEvent;
+}
+
 function modelFromSnapshot(snapshot: PersistedCaseSnapshot): CaseReadModel {
   const projection = replayCaseHistory(snapshot.journal.map((item) => item.event));
   return {
     caseId: snapshot.caseId,
     projection,
-    journal: snapshot.journal.map((record) => ({
-      ...record,
-      event: {
-        ...record.event,
-        actor: { ...record.event.actor },
-        payload: { ...record.event.payload },
-        ...(record.event.evidenceRefs ? { evidenceRefs: [...record.event.evidenceRefs] } : {}),
-      } as CaseEvent,
+    timeline: snapshot.journal.map((record) => sanitizeTimelineEvent(record.event)),
+    dataAuthorizations: snapshot.dataAuthorizations.map(({ subjectRef: _subjectRef, ...item }) => ({
+      ...item,
+      purposes: [...item.purposes],
     })),
-    dataAuthorization: snapshot.dataAuthorization
-      ? { ...snapshot.dataAuthorization, purposes: [...snapshot.dataAuthorization.purposes] }
-      : null,
-    evidence: snapshot.evidence.map((item) => ({ ...item })),
+    evidence: snapshot.evidence.map(
+      ({ storageLocator: _storageLocator, checksumSha256: _checksumSha256, createdBySubjectRef: _createdBySubjectRef, ...item }) => ({
+        ...item,
+      }),
+    ),
   };
 }
 
-function duplicateFor(snapshot: PersistedCaseSnapshot, idempotencyKey: string, fingerprint: string): CaseMutationResult | null {
+function duplicateFor(
+  snapshot: PersistedCaseSnapshot,
+  idempotencyKey: string,
+  fingerprint: string,
+): CaseMutationResult | null {
   const existing = snapshot.journal.find((item) => item.event.idempotencyKey === idempotencyKey);
   if (!existing) return null;
   if (existing.semanticFingerprint !== fingerprint) {
@@ -275,11 +305,35 @@ function validateReceipt(command: FinalizeEvidenceCommand) {
     throw new PersistenceBoundaryError("evidence_receipt_mismatch", "byteSize de evidencia está fuera del rango permitido.");
   }
   if (!SHA256.test(receipt.checksumSha256)) {
-    throw new PersistenceBoundaryError("evidence_receipt_mismatch", "checksumSha256 debe contener 64 caracteres hexadecimales.");
+    throw new PersistenceBoundaryError(
+      "evidence_receipt_mismatch",
+      "checksumSha256 debe contener 64 caracteres hexadecimales.",
+    );
   }
   if (Number.isNaN(Date.parse(receipt.verifiedAt))) {
     throw new PersistenceBoundaryError("evidence_receipt_mismatch", "verifiedAt debe ser una fecha válida.");
   }
+}
+
+function activeDataAuthorization(snapshot: PersistedCaseSnapshot): DataAuthorizationRecord | null {
+  return snapshot.dataAuthorizations.findLast((item) => item.status === "active") ?? null;
+}
+
+function assertEvidenceTreatmentAuthorization(snapshot: PersistedCaseSnapshot): DataAuthorizationRecord {
+  const authorization = activeDataAuthorization(snapshot);
+  if (!authorization) {
+    throw new PersistenceBoundaryError(
+      "data_authorization_required",
+      "La evidencia no puede persistirse sin una autorización de tratamiento activa para el expediente.",
+    );
+  }
+  if (!authorization.purposes.some((purpose) => EVIDENCE_TREATMENT_PURPOSES.has(purpose))) {
+    throw new PersistenceBoundaryError(
+      "data_authorization_required",
+      "La autorización activa no incluye una finalidad compatible con análisis hipotecario, gestión del expediente o servicio jurídico.",
+    );
+  }
+  return authorization;
 }
 
 export class CasePersistenceService {
@@ -414,7 +468,7 @@ export class CasePersistenceService {
     if (duplicate) return duplicate;
 
     const now = this.clock.now();
-    const { idempotencyKey, occurredAt, recordAsExternal: _external, ...commandBody } = command;
+    const { idempotencyKey, occurredAt, recordAsExternal: _recordAsExternal, ...commandBody } = command;
     const draft = {
       ...commandBody,
       eventId: this.ids.next("evt"),
@@ -447,7 +501,10 @@ export class CasePersistenceService {
     const snapshot = await this.requireCase(caseId);
     assertCaseAccess(principal, snapshot);
     if (principal.kind !== "client" && principal.kind !== "admin") {
-      throw new PersistenceBoundaryError("forbidden", "Solo el cliente titular o administración puede registrar la autorización de datos.");
+      throw new PersistenceBoundaryError(
+        "forbidden",
+        "Solo el cliente titular o administración puede registrar la autorización de datos.",
+      );
     }
     if (principal.kind === "client" && snapshot.access.ownerSubjectRef !== principal.subjectRef) {
       throw new PersistenceBoundaryError("forbidden", "El cliente solo puede autorizar tratamiento para su propio expediente.");
@@ -507,7 +564,11 @@ export class CasePersistenceService {
     return { kind: storeResult.kind, model: modelFromSnapshot(storeResult.snapshot) };
   }
 
-  async revokeDataAuthorization(principalInput: Principal, caseId: string, reason: string): Promise<CaseReadModel> {
+  async revokeDataAuthorization(
+    principalInput: Principal,
+    caseId: string,
+    reason: string,
+  ): Promise<CaseReadModel> {
     const principal = requireAuthenticated(principalInput);
     const snapshot = await this.requireCase(caseId);
     assertCaseAccess(principal, snapshot);
@@ -530,7 +591,7 @@ export class CasePersistenceService {
     if (principal.kind === "service") {
       throw new PersistenceBoundaryError("forbidden", "Los service principals no preparan uploads de usuario en v0.6.");
     }
-    this.assertActiveDataAuthorization(snapshot);
+    assertEvidenceTreatmentAuthorization(snapshot);
     assertSecurityClassification(command.legalDataCategory, command.securityTier);
 
     const now = this.clock.now();
@@ -562,9 +623,12 @@ export class CasePersistenceService {
     const snapshot = await this.requireCase(caseId);
     assertCaseAccess(principal, snapshot);
     if (principal.kind === "service") {
-      throw new PersistenceBoundaryError("forbidden", "La finalización de evidencia de usuario no se expone a service principals en v0.6.");
+      throw new PersistenceBoundaryError(
+        "forbidden",
+        "La finalización de evidencia de usuario no se expone a service principals en v0.6.",
+      );
     }
-    this.assertActiveDataAuthorization(snapshot);
+    assertEvidenceTreatmentAuthorization(snapshot);
     assertIdempotencyKey(command.idempotencyKey);
     validateReceipt(command);
 
@@ -645,7 +709,12 @@ export class CasePersistenceService {
     return { kind: storeResult.kind, model: modelFromSnapshot(storeResult.snapshot) };
   }
 
-  async tombstoneEvidence(principalInput: Principal, caseId: string, evidenceId: string, reason: string): Promise<CaseReadModel> {
+  async tombstoneEvidence(
+    principalInput: Principal,
+    caseId: string,
+    evidenceId: string,
+    reason: string,
+  ): Promise<CaseReadModel> {
     const principal = requireAuthenticated(principalInput);
     const snapshot = await this.requireCase(caseId);
     assertCaseAccess(principal, snapshot);
@@ -661,8 +730,11 @@ export class CasePersistenceService {
   }
 
   async rebuildProjection(principalInput: Principal, caseId: string) {
-    const model = await this.readCase(principalInput, caseId);
-    return replayCaseHistory(model.journal.map((record) => record.event));
+    const principal = requireAuthenticated(principalInput);
+    const snapshot = await this.requireCase(caseId);
+    ensureServiceScope(principal, "case:read");
+    assertCaseAccess(principal, snapshot);
+    return replayCaseHistory(snapshot.journal.map((record) => record.event));
   }
 
   private async requireCase(caseId: string): Promise<PersistedCaseSnapshot> {
@@ -671,14 +743,5 @@ export class CasePersistenceService {
       throw new PersistenceBoundaryError("case_not_found", "Expediente persistido no encontrado.");
     }
     return snapshot;
-  }
-
-  private assertActiveDataAuthorization(snapshot: PersistedCaseSnapshot) {
-    if (!snapshot.dataAuthorization || snapshot.dataAuthorization.status !== "active") {
-      throw new PersistenceBoundaryError(
-        "data_authorization_required",
-        "La evidencia no puede persistirse sin una autorización de tratamiento activa para el expediente.",
-      );
-    }
   }
 }
