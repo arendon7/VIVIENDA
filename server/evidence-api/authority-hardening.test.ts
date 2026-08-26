@@ -12,6 +12,10 @@ import {
   canonicalClassificationForEvidenceKind,
 } from "./application-authority";
 import type { EvidenceApiApplication } from "./http-boundary";
+import {
+  canonicalTrustedOrigin,
+  rebindRequestToConfiguredOrigin,
+} from "./trusted-origin-policy";
 
 class RecordingApplication implements EvidenceApiApplication {
   prepares: Array<{ caseId: string; command: PrepareEvidenceUploadCommand }> = [];
@@ -79,9 +83,46 @@ describe("server-controlled evidence classification v0.9", () => {
   });
 });
 
-describe("trusted-origin wiring v0.9", () => {
+describe("trusted-origin policy v0.9", () => {
+  it("accepts HTTPS origins and explicit loopback HTTP only", () => {
+    expect(canonicalTrustedOrigin("https://vivienda.example")).toBe("https://vivienda.example");
+    expect(canonicalTrustedOrigin("http://localhost:3000")).toBe("http://localhost:3000");
+    expect(canonicalTrustedOrigin("http://127.0.0.1:3000")).toBe("http://127.0.0.1:3000");
+    expect(canonicalTrustedOrigin("http://vivienda.example")).toBeNull();
+    expect(canonicalTrustedOrigin("https://vivienda.example/path")).toBeNull();
+    expect(canonicalTrustedOrigin("https://user:pass@vivienda.example")).toBeNull();
+    expect(canonicalTrustedOrigin(undefined)).toBeNull();
+  });
+
+  it("rebinds a spoofed request URL to the server-configured origin while preserving browser Origin and body", async () => {
+    const incoming = new Request("https://attacker-controlled-host.example/api/v1/cases/case_demo/evidence/uploads?x=1", {
+      method: "POST",
+      headers: {
+        origin: "https://evil.example",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ kind: "statement" }),
+    });
+
+    const rebound = rebindRequestToConfiguredOrigin(incoming, "https://vivienda.example");
+    expect(rebound).not.toBeNull();
+    expect(rebound!.url).toBe("https://vivienda.example/api/v1/cases/case_demo/evidence/uploads?x=1");
+    expect(rebound!.headers.get("origin")).toBe("https://evil.example");
+    expect(rebound!.method).toBe("POST");
+    expect(await rebound!.text()).toBe(JSON.stringify({ kind: "statement" }));
+  });
+
+  it("fails to produce a rebound request when trusted-origin configuration is absent or invalid", () => {
+    const incoming = new Request("https://host.example/api", { method: "POST", body: "{}" });
+    expect(rebindRequestToConfiguredOrigin(incoming, undefined)).toBeNull();
+    expect(rebindRequestToConfiguredOrigin(incoming, "http://public.example")).toBeNull();
+  });
+});
+
+describe("trusted-origin server wiring v0.9", () => {
   const root = process.cwd();
-  const trustedOrigin = readFileSync(join(root, "server/evidence-api/trusted-origin.server.ts"), "utf8");
+  const trustedOriginServer = readFileSync(join(root, "server/evidence-api/trusted-origin.server.ts"), "utf8");
+  const trustedOriginPolicy = readFileSync(join(root, "server/evidence-api/trusted-origin-policy.ts"), "utf8");
   const runtime = readFileSync(join(root, "server/evidence-api/runtime.server.ts"), "utf8");
   const routes = [
     "app/api/v1/cases/[caseId]/evidence/uploads/route.ts",
@@ -90,22 +131,21 @@ describe("trusted-origin wiring v0.9", () => {
   ].map((path) => readFileSync(join(root, path), "utf8"));
 
   it("keeps trusted origin configuration server-only and fail-closed when absent", () => {
-    expect(trustedOrigin).toContain('import "server-only"');
-    expect(trustedOrigin).toContain("process.env.VIVIENDA_TRUSTED_ORIGIN");
-    expect(trustedOrigin).toContain('code: "origin_policy_unavailable"');
-    expect(trustedOrigin).toContain("status: 503");
-    expect(trustedOrigin).not.toContain("NEXT_PUBLIC_");
+    expect(trustedOriginServer).toContain('import "server-only"');
+    expect(trustedOriginServer).toContain("process.env.VIVIENDA_TRUSTED_ORIGIN");
+    expect(trustedOriginServer).toContain('code: "origin_policy_unavailable"');
+    expect(trustedOriginServer).toContain("status: 503");
+    expect(trustedOriginServer).not.toContain("NEXT_PUBLIC_");
   });
 
-  it("rejects non-HTTPS origins except explicit local-development hosts", () => {
-    expect(trustedOrigin).toContain('url.protocol !== "https:"');
-    expect(trustedOrigin).toContain('url.protocol === "http:"');
-    expect(trustedOrigin).toContain("LOCAL_HOSTS.has(url.hostname)");
+  it("keeps protocol restrictions in the testable policy rather than trusting request Host", () => {
+    expect(trustedOriginPolicy).toContain('url.protocol !== "https:"');
+    expect(trustedOriginPolicy).toContain('url.protocol === "http:"');
+    expect(trustedOriginPolicy).toContain("LOCAL_HOSTS.has(url.hostname)");
+    expect(trustedOriginPolicy).toContain("return new Request(trustedUrl, request)");
   });
 
-  it("rebinds request URL to the configured origin before the inner same-origin guard", () => {
-    expect(trustedOrigin).toContain("const trustedUrl = `${trustedOrigin}${incoming.pathname}${incoming.search}`");
-    expect(trustedOrigin).toContain("return new Request(trustedUrl, request)");
+  it("forces every browser evidence route through trusted-origin binding", () => {
     for (const route of routes) {
       expect(route).toContain("bindRequestToTrustedOrigin(request)");
       expect(route).toContain("guardedRequest instanceof Response");
