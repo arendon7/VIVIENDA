@@ -295,6 +295,7 @@ export function reconcileInconsistency(input: InconsistencyReconciliationInput):
 
   let state: ReconciliationState;
   if (judicial) state = "procedural_priority";
+  else if (input.productType === "unknown") state = "needs_information";
   else if (input.kind === "annual_projection") state = "education_first";
   else if (input.kind === "missing_information" || input.specificity === "unclear" || input.evidenceAvailability === "none" || input.evidenceAvailability === "unknown") state = "needs_information";
   else if (hasR7) state = "possible_inconsistency";
