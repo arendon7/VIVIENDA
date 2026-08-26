@@ -123,7 +123,7 @@ test("rejects unsupported document types before the verification review", async 
     buffer: Buffer.from("demo"),
   });
 
-  await expect(page.getByRole("alert")).toHaveText("Usa un archivo PDF, JPG o PNG.");
+  await expect(page.locator("#statement-file-error")).toHaveText("Usa un archivo PDF, JPG o PNG.");
   await expect(page.getByRole("heading", { name: "Revisa campo por campo antes de usarlo." })).toHaveCount(0);
 });
 
