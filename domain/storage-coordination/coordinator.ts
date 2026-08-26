@@ -271,6 +271,11 @@ export class EvidenceStorageCoordinator {
     idempotencyKey: string;
   }): Promise<CompletedEvidenceUpload> {
     const principal = requirePrincipal(await this.principals.resolve());
+
+    // Authorize ownership/assignment before privileged physical lookup or object inspection.
+    // Finalization authorizes again, intentionally closing TOCTOU changes between read and commit.
+    await this.cases.readCase(principal, input.caseId);
+
     const reserved = await this.registry.resolveIntentObject(input.intentId);
     if (!reserved || reserved.caseId !== input.caseId) {
       throw new PersistenceBoundaryError("evidence_intent_not_found", "No existe una reserva física para este upload intent.");
