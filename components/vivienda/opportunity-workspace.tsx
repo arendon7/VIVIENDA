@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CasePlanWorkspace } from "@/components/vivienda/case-plan-workspace";
 import {
   evaluateOpportunityRoutes,
   type OpportunityPrecision,
+  type OpportunityRouteCode,
   type PaymentState,
   type ProductType,
 } from "@/domain/opportunity/router";
@@ -79,6 +81,7 @@ export function OpportunityWorkspace({ precision }: { precision: OpportunityPrec
   const [bindingOffer, setBindingOffer] = useState(false);
   const [paymentState, setPaymentState] = useState<PaymentState>("current");
   const [auditIssue, setAuditIssue] = useState(false);
+  const [selectedRouteCode, setSelectedRouteCode] = useState<OpportunityRouteCode | null>(null);
   const asOfDate = bogotaToday();
 
   const result = useMemo(() => {
@@ -114,6 +117,10 @@ export function OpportunityWorkspace({ precision }: { precision: OpportunityPrec
     productType,
     proposedInstallment,
   ]);
+
+  const selectedRoute = selectedRouteCode
+    ? result.routes.find((route) => route.routeCode === selectedRouteCode) ?? null
+    : null;
 
   return (
     <section className="surface form-card" style={{ marginTop: 20 }} aria-labelledby="opportunity-workspace-title">
@@ -309,12 +316,31 @@ export function OpportunityWorkspace({ precision }: { precision: OpportunityPrec
                     <summary>Ver fundamento de esta ruta</summary>
                     <ul>{routeItem.legalBasis.map((item) => <li key={item}>{item}</li>)}</ul>
                   </details>
+
+                  <div className="actions">
+                    <button
+                      className="button button-primary"
+                      type="button"
+                      aria-pressed={selectedRouteCode === routeItem.routeCode}
+                      onClick={() => setSelectedRouteCode(routeItem.routeCode)}
+                    >
+                      Preparar esta ruta
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
           </div>
         )}
       </div>
+
+      {selectedRoute ? (
+        <CasePlanWorkspace
+          route={selectedRoute}
+          asOfDate={asOfDate}
+          onClose={() => setSelectedRouteCode(null)}
+        />
+      ) : null}
     </section>
   );
 }
