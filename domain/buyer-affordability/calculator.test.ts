@@ -47,7 +47,7 @@ describe("Buyer affordability v0.13", () => {
     expect(result.planning.planningHousingPaymentRoom).toBe(0);
   });
 
-  it("reproduces the C2 payment-binding golden vector and subtracts non-credit costs", () => {
+  it("reproduces the C2 payment-binding vector without forcing financing to equal max LTV", () => {
     const fixture = vector("c2-payment-binding-with-non-credit-costs");
     const result = calculateBuyerAffordability(fixture.input as BuyerAffordabilityInput);
     const expected = fixture.expected as Record<string, number | string>;
@@ -59,7 +59,7 @@ describe("Buyer affordability v0.13", () => {
     close(result.financing?.modeledCreditPaymentBudget ?? -1, Number(expected.modeledCreditPaymentBudget));
     close(result.financing?.monthlyRate ?? -1, Number(expected.monthlyRate));
     close(nonVis.modeledPrincipal ?? -1, Number(expected.modeledPrincipal));
-    close(nonVis.propertyCeilingFromPayment ?? -1, Number(expected.propertyCeilingFromPayment));
+    close(nonVis.propertyCeilingFromCreditAndCash ?? -1, Number(expected.propertyCeilingFromCreditAndCash));
     close(nonVis.propertyCeilingFromDownPayment, Number(expected.propertyCeilingFromDownPayment));
     close(nonVis.modeledPropertyCeiling ?? -1, Number(expected.modeledPropertyCeiling));
     expect(nonVis.bindingConstraint).toBe("payment");
@@ -74,6 +74,7 @@ describe("Buyer affordability v0.13", () => {
     const nonVis = scenario(result, "non_vis");
 
     close(nonVis.modeledPrincipal ?? -1, Number(expected.modeledPrincipal));
+    close(nonVis.propertyCeilingFromCreditAndCash ?? -1, Number(expected.propertyCeilingFromCreditAndCash));
     close(nonVis.modeledPropertyCeiling ?? -1, Number(expected.modeledPropertyCeiling));
     expect(nonVis.bindingConstraint).toBe("down_payment");
   });
@@ -87,6 +88,8 @@ describe("Buyer affordability v0.13", () => {
 
     expect(result.scenarios).toHaveLength(2);
     close(result.financing?.modeledCreditPaymentBudget ?? -1, Number(expected.modeledCreditPaymentBudget));
+    close(nonVis.propertyCeilingFromCreditAndCash ?? -1, Number(expected.propertyCeilingFromCreditAndCash));
+    close(vis.propertyCeilingFromCreditAndCash ?? -1, Number(expected.propertyCeilingFromCreditAndCash));
     close(nonVis.modeledPropertyCeiling ?? -1, Number(expected.nonVisModeledPropertyCeiling));
     close(vis.modeledPropertyCeiling ?? -1, Number(expected.visModeledPropertyCeiling));
     expect(nonVis.bindingConstraint).toBe("down_payment");
@@ -94,15 +97,42 @@ describe("Buyer affordability v0.13", () => {
     expect(result.financing?.nonCreditHousingCostsOmitted).toBe(true);
   });
 
+  it("lets extra equity increase property value instead of assuming exact max LTV", () => {
+    const result = calculateBuyerAffordability({
+      netHouseholdIncomeMonthly: 10_000_000,
+      currentMonthlyDebtPayments: 1_000_000,
+      availableDownPayment: 100_000_000,
+      housingCategory: "non_vis",
+      financing: {
+        mode: "pesos_fixed_constant",
+        annualEffectiveRate: 0.117,
+        termMonths: 240,
+        monthlyNonCreditHousingCosts: 300_000,
+      },
+    });
+    const nonVis = scenario(result, "non_vis");
+
+    expect(nonVis.propertyCeilingFromCreditAndCash).toBeCloseTo(
+      (nonVis.modeledPrincipal ?? 0) + 100_000_000,
+      6,
+    );
+    expect(nonVis.modeledPropertyCeiling).toBeGreaterThan((nonVis.modeledPrincipal ?? 0) / 0.70);
+    expect(nonVis.bindingConstraint).toBe("payment");
+  });
+
   it("keeps the 40% regulatory ceiling separate and lets it bind only when accreditable income is supplied", () => {
     const fixture = vector("c2-regulatory-ceiling-can-bind-separately");
     const result = calculateBuyerAffordability(fixture.input as BuyerAffordabilityInput);
     const expected = fixture.expected as Record<string, number | string>;
+    const nonVis = scenario(result, "non_vis");
 
     close(result.planning.planningHousingPaymentRoom, Number(expected.planningHousingPaymentRoom));
     close(result.regulatory.firstInstallmentCeiling ?? -1, Number(expected.regulatoryFirstInstallmentCeiling));
     close(result.financing?.modeledCreditPaymentBudget ?? -1, Number(expected.modeledCreditPaymentBudget));
-    close(scenario(result, "non_vis").modeledPrincipal ?? -1, Number(expected.modeledPrincipal));
+    close(nonVis.modeledPrincipal ?? -1, Number(expected.modeledPrincipal));
+    close(nonVis.propertyCeilingFromCreditAndCash ?? -1, Number(expected.propertyCeilingFromCreditAndCash));
+    close(nonVis.modeledPropertyCeiling ?? -1, Number(expected.modeledPropertyCeiling));
+    expect(nonVis.bindingConstraint).toBe("payment");
     expect(result.planning.planningTotalDebtRatio).toBe(0.30);
     expect(result.regulatory.firstInstallmentRatio).toBe(0.40);
   });
