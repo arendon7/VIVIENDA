@@ -81,11 +81,23 @@ test("does not overflow horizontally on compact viewport", async ({ page }) => {
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
 });
 
+test("does not grant C2 from placeholder or empty financial inputs", async ({ page }) => {
+  await completeQuickCheck(page, "Pesos");
+  await page.getByRole("button", { name: "Continuar con más precisión" }).click();
+
+  await page.getByRole("radio", { name: "Cuota constante en pesos" }).check();
+  await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toHaveCount(0);
+
+  await page.getByLabel("Tasa efectiva anual del crédito").fill("12");
+  await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toHaveCount(0);
+});
+
 test("upgrades a compatible peso case from C1 to a real C2 modeled scenario", async ({ page }) => {
   await completeQuickCheck(page, "Pesos");
   await page.getByRole("button", { name: "Continuar con más precisión" }).click();
 
   await page.getByLabel("Tasa efectiva anual del crédito").fill("12");
+  await page.getByLabel("Número de cuotas que te faltan").fill("204");
   await page.getByRole("radio", { name: "Cuota constante en pesos" }).check();
 
   await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toBeVisible();
