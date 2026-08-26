@@ -1,0 +1,322 @@
+.main {
+  padding-bottom: 24px;
+}
+
+.previewNotice {
+  display: grid;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+}
+
+.previewNotice strong {
+  color: var(--warning);
+}
+
+.previewNotice span {
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+  gap: clamp(28px, 5vw, 60px);
+  align-items: center;
+  padding: clamp(48px, 7vw, 84px) 0 42px;
+}
+
+.hero h1 {
+  max-width: 13ch;
+}
+
+.routeState {
+  padding: clamp(22px, 3vw, 30px);
+}
+
+.routeHeader,
+.sectionHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.routeHeader strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1.22;
+}
+
+.routeFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 24px 0 0;
+}
+
+.routeFacts div {
+  min-width: 0;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+}
+
+.routeFacts dt {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.routeFacts dd {
+  margin: 4px 0 0;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.section {
+  padding: 46px 0 0;
+}
+
+.sectionHeading {
+  margin-bottom: 20px;
+}
+
+.triggerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.triggerGrid article {
+  padding: 22px;
+}
+
+.triggerGrid p {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+}
+
+.evidencePanel,
+.resultPanel {
+  padding: clamp(22px, 3vw, 30px);
+}
+
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.checklist li {
+  position: relative;
+  padding: 14px 16px 14px 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+}
+
+.checklist li::before {
+  content: "";
+  position: absolute;
+  left: 17px;
+  top: 18px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+}
+
+.boundaryNote {
+  margin: 18px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.phaseList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.phaseList > li {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 18px;
+  padding: 22px;
+}
+
+.phaseIndex {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.phaseList h3 {
+  font-size: 20px;
+}
+
+.phaseList ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: var(--ink-muted);
+}
+
+.phaseList ul li + li {
+  margin-top: 5px;
+}
+
+.findingGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.findingGrid article {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+}
+
+.findingGrid code {
+  color: var(--accent);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.findingGrid strong {
+  line-height: 1.35;
+}
+
+.eventList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.eventList li {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.eventList li > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.eventList strong {
+  overflow-wrap: anywhere;
+}
+
+.eventList p {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.boundaries {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(300px, 1.1fr);
+  gap: 28px;
+  padding: clamp(24px, 4vw, 36px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+}
+
+.boundaries ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-muted);
+}
+
+.boundaries li + li {
+  margin-top: 8px;
+}
+
+.endState {
+  margin-top: 48px;
+  padding: 30px 0 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .hero,
+  .boundaries {
+    grid-template-columns: 1fr;
+  }
+
+  .triggerGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .hero {
+    padding-top: 36px;
+  }
+
+  .routeHeader,
+  .sectionHeading,
+  .endState {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .routeFacts,
+  .findingGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .phaseList > li {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .phaseIndex {
+    width: 34px;
+    height: 34px;
+  }
+
+  .endState :global(.button) {
+    width: 100%;
+  }
+}
