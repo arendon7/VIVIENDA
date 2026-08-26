@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DecisionResult, SourceFreshness } from "@/components/vivienda/signature-components";
+import { ModeledScenario } from "./modeled-scenario";
 
 type Product = "hipotecario" | "leasing" | "unknown";
 type Modality = "pesos" | "uvr" | "unknown";
@@ -49,14 +50,15 @@ export function QuickCheck() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>(initialAnswers);
   const [showResult, setShowResult] = useState(false);
+  const [showModel, setShowModel] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
   const steps = 5;
   const progress = Math.round(((step + 1) / steps) * 100);
 
   useEffect(() => {
-    if (showResult) resultRef.current?.focus();
-  }, [showResult]);
+    if (showResult && !showModel) resultRef.current?.focus();
+  }, [showModel, showResult]);
 
   const canContinue = useMemo(() => {
     if (step === 2) return Number(answers.balance) > 0;
@@ -75,11 +77,27 @@ export function QuickCheck() {
   }
 
   function back() {
+    if (showModel) {
+      setShowModel(false);
+      return;
+    }
     if (showResult) {
       setShowResult(false);
       return;
     }
     setStep((current) => Math.max(0, current - 1));
+  }
+
+  if (showModel) {
+    return (
+      <ModeledScenario
+        balance={Number(answers.balance)}
+        declaredInstallment={Number(answers.installment)}
+        modality={answers.modality}
+        approximateYears={Number(answers.years)}
+        onBack={back}
+      />
+    );
   }
 
   if (showResult) {
@@ -116,7 +134,7 @@ export function QuickCheck() {
               <p className="section-copy">Podemos añadir tasa y sistema de amortización para pasar a una simulación modelada, o revisar un extracto si quieres mayor precisión.</p>
             </div>
             <div className="actions">
-              <button className="button button-primary" type="button">Continuar con más precisión</button>
+              <button className="button button-primary" type="button" onClick={() => setShowModel(true)}>Continuar con más precisión</button>
               <a className="button button-secondary" href="/">Guardar esto para después</a>
             </div>
           </DecisionResult>
