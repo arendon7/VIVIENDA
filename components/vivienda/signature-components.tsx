@@ -145,7 +145,7 @@ export function DiyAssistedChoice() {
         <p className="eyebrow">Hazlo directamente</p>
         <h3>Puedes gestionar el siguiente paso con tu entidad.</h3>
         <p className="section-copy">Te mostraremos qué solicitar y qué evidencia conservar. No necesitas contratar acompañamiento para usar esta ruta.</p>
-        <a className="button button-secondary" href="#diy">Ver pasos</a>
+        <a className="button button-secondary" href="/revisar">Preparar mi ruta</a>
       </article>
       <article className="surface choice-card">
         <p className="eyebrow">Acompañamiento</p>
@@ -164,9 +164,11 @@ export function MortgageTwinSnapshot() {
         <div>
           <p className="eyebrow">Mortgage Twin</p>
           <h2 id="twin-title">Tu crédito, entendido como un sistema vivo.</h2>
-          <p className="section-copy">Este ejemplo muestra cómo se organizará la información cuando el extracto haya sido revisado y conciliado.</p>
+          <p className="section-copy">Esta es una vista conceptual del producto. C3 solo aparecerá cuando los campos materiales provengan realmente del documento y hayan sido reconciliados.</p>
         </div>
-        <PrecisionBadge level="C3" />
+        <span className="precision-badge" aria-label="Vista conceptual no verificada">
+          Vista conceptual · no verificada
+        </span>
       </div>
       <dl className="twin-facts">
         <FinancialNumber label="Saldo" value="$180.000.000" />
@@ -174,7 +176,7 @@ export function MortgageTwinSnapshot() {
         <FinancialNumber label="Tasa" value="11,7 % EA" />
         <FinancialNumber label="Plazo restante" value="17 años" />
       </dl>
-      <ScenarioPath start="Estado verificado" action="Decisión" outcome="Nueva trayectoria" />
+      <ScenarioPath start="Estado de ejemplo" action="Decisión" outcome="Nueva trayectoria" />
     </section>
   );
 }
