@@ -84,7 +84,8 @@ test.describe("Payment Pressure v0.14", () => {
     await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toHaveAttribute("href", "/verificar");
     await expect(page.getByText("Revisión jurídica prioritaria del proceso")).toBeVisible();
     await expect(page.getByRole("link", { name: "Revisar la diferencia" })).toHaveCount(0);
-    await expect(page.getByText("No calcula términos procesales, no genera una defensa y no garantiza reestructuración.", { exact: true })).toBeVisible();
+    const boundary = page.getByLabel("Límites de este resultado");
+    await expect(boundary).toContainText("No calcula términos procesales, no genera una defensa y no garantiza reestructuración.");
   });
 
   test("reported embargo or auction state remains priority review", async ({ page }) => {
