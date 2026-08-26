@@ -1,4 +1,7 @@
-import type { PrepareEvidenceUploadCommand } from "@/domain/persistence-boundary/contracts";
+import {
+  PersistenceBoundaryError,
+  type PrepareEvidenceUploadCommand,
+} from "@/domain/persistence-boundary/contracts";
 import type {
   CompletedEvidenceUpload,
   EvidenceDownloadGrant,
@@ -10,6 +13,8 @@ export type CanonicalEvidenceClassification = Pick<
   PrepareEvidenceUploadCommand,
   "legalDataCategory" | "securityTier"
 >;
+
+const CANONICAL_IDEMPOTENCY_KEY = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
 const CLASSIFICATION_BY_KIND: Record<PrepareEvidenceUploadCommand["kind"], CanonicalEvidenceClassification> = {
   statement: {
@@ -50,12 +55,24 @@ export function canonicalClassificationForEvidenceKind(
   return { ...CLASSIFICATION_BY_KIND[kind] };
 }
 
+export function assertCanonicalIdempotencyKey(value: string): void {
+  if (!CANONICAL_IDEMPOTENCY_KEY.test(value)) {
+    throw new PersistenceBoundaryError(
+      "invalid_command",
+      "Idempotency-Key debe usar una representación canónica de hasta 128 caracteres.",
+    );
+  }
+}
+
 /**
  * Server-side authority decorator.
  *
  * The HTTP body may carry legacy classification fields during v0.9, but they are not authoritative.
  * Every prepare operation is reclassified from the server-known evidence kind before it can reach
  * persistence. This prevents a browser from labelling an extract as non-personal/open.
+ *
+ * Complete operations also canonicalize the effective idempotency representation before it reaches
+ * the persistence boundary, preventing whitespace/representation variants from creating divergent retries.
  */
 export class ServerClassifiedEvidenceApplication implements EvidenceApiApplication {
   constructor(private readonly inner: EvidenceApiApplication) {}
@@ -69,6 +86,7 @@ export class ServerClassifiedEvidenceApplication implements EvidenceApiApplicati
   }
 
   completeUpload(input: Parameters<EvidenceApiApplication["completeUpload"]>[0]): Promise<CompletedEvidenceUpload> {
+    assertCanonicalIdempotencyKey(input.idempotencyKey);
     return this.inner.completeUpload(input);
   }
 
