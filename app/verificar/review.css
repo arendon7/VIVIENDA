@@ -1,0 +1,177 @@
+.privacy-panel,
+.surface-warning,
+.document-file-chip,
+.verification-progress {
+  border-radius: var(--radius-md);
+}
+
+.privacy-panel {
+  margin-top: 24px;
+  padding: 18px 20px;
+  background: var(--surface-muted);
+}
+
+.privacy-panel ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: var(--ink-muted);
+}
+
+.privacy-panel li + li {
+  margin-top: 7px;
+}
+
+.surface-warning {
+  margin-top: 20px;
+  padding: 18px;
+  background: var(--warning-soft);
+  border: 1px solid color-mix(in srgb, var(--warning) 26%, transparent);
+}
+
+.surface-warning strong {
+  color: var(--warning);
+}
+
+.surface-warning p {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+}
+
+.field-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.document-file-chip {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  background: var(--surface-warm);
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.document-file-chip strong {
+  color: var(--ink);
+}
+
+.document-file-chip span {
+  overflow-wrap: anywhere;
+}
+
+.verification-progress {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.extraction-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.extraction-row {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(280px, 1.1fr);
+  gap: 24px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.extraction-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-chip,
+.material-chip,
+.optional-chip {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.status-needs_confirmation {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.status-user_corrected {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.status-extracted_high_confidence {
+  background: var(--positive-soft);
+  color: var(--positive);
+}
+
+.status-missing,
+.status-conflict {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.material-chip {
+  background: var(--ink);
+  color: white;
+}
+
+.optional-chip {
+  background: var(--surface-warm);
+  color: var(--ink-muted);
+}
+
+.extraction-actions {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.confirm-control {
+  min-height: 44px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.confirm-control:has(input:checked) {
+  border-color: var(--positive);
+  background: var(--positive-soft);
+}
+
+.confirm-control input {
+  width: 18px;
+  height: 18px;
+}
+
+.confirm-disabled {
+  cursor: not-allowed;
+  opacity: .62;
+}
+
+@media (max-width: 720px) {
+  .extraction-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
