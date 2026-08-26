@@ -21,6 +21,7 @@ export default function HomePage() {
         <a className="brand" href="/">VIVIENDA</a>
         <nav aria-label="Principal">
           <a className="nav-link" href="#como-funciona">Cómo funciona</a>
+          <a className="nav-link" href="/mi-vivienda">Mi Vivienda · preview</a>
         </nav>
       </header>
 
@@ -34,6 +35,7 @@ export default function HomePage() {
             </p>
             <div className="actions">
               <a className="button button-primary" href="/revisar">Revisar mi crédito</a>
+              <a className="button button-secondary" href="/mi-vivienda">Ver Mi Vivienda · preview</a>
             </div>
             <p className="trust-line">No necesitas cédula, teléfono ni extracto para empezar. La ruta para compra de vivienda se desarrollará como un recorrido separado.</p>
           </div>
