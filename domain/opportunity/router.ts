@@ -133,7 +133,7 @@ function buildClaim(input: OpportunityRouterInput): OpportunityRoute | null {
   return {
     routeCode: "R7_RECLAMACION",
     title: "Auditar y documentar una posible reclamación",
-    status: input.precision === "C3" ? "candidate" : "candidate",
+    status: "candidate",
     priority: distressRequiresLawyer(input.paymentState) ? 90 : 95,
     reasonCodes,
     blockers: input.precision === "C0" ? ["Falta un caso/documento concreto para una reclamación personalizada."] : [],
@@ -152,21 +152,39 @@ function buildClaim(input: OpportunityRouterInput): OpportunityRoute | null {
 
 function buildArticle20(input: OpportunityRouterInput): OpportunityRoute | null {
   if (!coveredMortgage(input.productType)) {
-    if (input.productType === "other_secured_credit" || input.productType === "unknown") {
+    if (input.productType === "unknown") {
       return {
         routeCode: "R3_RESTRUCTURACION_546_20",
-        title: "Clasificar primero si aplica el régimen especial de vivienda",
+        title: "Primero necesitamos clasificar el producto",
+        status: "candidate",
+        priority: 20,
+        reasonCodes: ["housing_regime_not_established"],
+        blockers: ["Todavía no sabemos si el producto es un crédito hipotecario individual de vivienda cubierto por Ley 546."],
+        requiredEvidence: ["Contrato o extracto que permita identificar la finalidad y naturaleza del crédito"],
+        legalBasis: ["Ley 546 de 1999, arts. 1, 17 y 20 — la clasificación del producto precede al uso de la ruta especial."],
+        humanReviewRequired: false,
+        nextAction: "Confirmar primero la naturaleza del producto; la incertidumbre por sí sola no requiere escalar el caso a abogado.",
+        precision: routePrecision(input),
+        caveat: "No saber todavía qué producto tienes no confirma ni descarta que el régimen especial de vivienda aplique.",
+      };
+    }
+
+    if (input.productType === "other_secured_credit") {
+      return {
+        routeCode: "R3_RESTRUCTURACION_546_20",
+        title: "Revisar si el crédito realmente pertenece al régimen especial de vivienda",
         status: "legal_review",
         priority: 35,
         reasonCodes: ["housing_regime_not_established"],
-        blockers: ["No está confirmado que el producto sea crédito hipotecario individual de vivienda cubierto por Ley 546."],
-        requiredEvidence: ["Contrato o extracto que permita clasificar la finalidad y naturaleza del crédito"],
+        blockers: ["Una hipoteca como garantía no demuestra que la finalidad del crédito sea financiación individual de vivienda bajo Ley 546."],
+        requiredEvidence: ["Contrato, pagaré y/o extracto que permita clasificar la finalidad y naturaleza del crédito"],
         legalBasis: ["Ley 546 de 1999, arts. 1, 17 y 20."],
         humanReviewRequired: true,
-        nextAction: "Confirmar la naturaleza del producto antes de invocar la ruta especial del artículo 20.",
+        nextAction: "Revisar la naturaleza contractual antes de invocar la ruta especial del artículo 20.",
         precision: routePrecision(input),
       };
     }
+
     return null;
   }
 
@@ -300,7 +318,7 @@ function buildAssignment(input: OpportunityRouterInput): OpportunityRoute | null
     legalBasis: ["Ley 546 de 1999, art. 24 — cesión a petición del deudor; con oferta vinculante entregada, autorización en máximo 10 días hábiles."],
     humanReviewRequired: false,
     nextAction: bindingOffer
-      ? "Radicar la oferta vinculante con trazabilidad de fecha y controlar el término legal de autorización."
+      ? "Radicar la oferta vinculante con trazabilidad de fecha. Desde su entrega al acreedor actual, controlar el plazo legal máximo de 10 días hábiles para la autorización."
       : "Obtener y comparar una oferta real antes de presentar esta ruta como transferencia lista para ejecutar.",
     precision: routePrecision(input),
     caveat: "Los 10 días hábiles no son el tiempo para que un nuevo banco apruebe el crédito; cuentan después de entregar la oferta vinculante al acreedor actual.",
@@ -321,6 +339,10 @@ export function evaluateOpportunityRoutes(input: OpportunityRouterInput): Opport
 
   if (input.productType === "other_secured_credit") {
     notices.push("Tener una hipoteca como garantía no demuestra por sí solo que el crédito sea financiación individual de vivienda bajo Ley 546.");
+  }
+
+  if (input.productType === "unknown") {
+    notices.push("No saber todavía el tipo de producto no obliga a escalar el caso: primero hay que clasificarlo con el extracto o contrato disponible.");
   }
 
   const routes = [
