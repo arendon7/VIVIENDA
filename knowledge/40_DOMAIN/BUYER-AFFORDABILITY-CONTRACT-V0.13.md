@@ -50,8 +50,8 @@ C2 may show:
 
 - modeled monthly credit-payment budget;
 - modeled maximum principal under the supported annuity formula;
-- payment-constrained property ceiling;
-- down-payment-constrained property ceiling;
+- credit-and-cash property ceiling;
+- down-payment/LTV structural property ceiling;
 - modeled target ceiling = minimum of applicable constraints.
 
 C2 remains a simulation, not an offer or approval.
@@ -249,22 +249,42 @@ Public product UI should not use a 0% default scenario.
 
 ## 8. Modeled property ceiling
 
-For a known housing category and maximum LTV `L`:
+The modeled principal is a ceiling on the credit amount created by the payment budget. It **must not** be divided by maximum LTV as if every purchase necessarily used exactly that financing percentage.
+
+A buyer may use more equity than the regulatory minimum. Therefore, with available down payment `D`:
 
 ```text
-propertyCeilingFromPayment = modeledPrincipal / L
-propertyCeilingFromDownPayment = availableDownPayment / (1 - L)
+propertyCeilingFromCreditAndCash = modeledPrincipal + D
+propertyCeilingFromDownPayment = D / (1 - maxLtv)
 modeledPropertyCeiling = min(
-  propertyCeilingFromPayment,
+  propertyCeilingFromCreditAndCash,
   propertyCeilingFromDownPayment
 )
 ```
+
+Interpretation:
+
+- `propertyCeilingFromCreditAndCash` asks how much property value can be assembled from the modeled credit principal plus the declared cash available;
+- `propertyCeilingFromDownPayment` independently enforces the minimum equity implied by the maximum regulatory LTV;
+- the tighter value is the modeled ceiling.
+
+This corrects a rejected formula:
+
+```text
+modeledPrincipal / maxLtv
+```
+
+That rejected expression assumes financing exactly at maximum LTV and can understate the property value reachable when the user contributes more equity.
 
 Also return:
 
 ```text
 bindingConstraint = "payment" | "down_payment" | "both"
 ```
+
+If `propertyCeilingFromCreditAndCash` is tighter, the scenario is `payment` constrained. If the structural LTV/down-payment ceiling is tighter, the scenario is `down_payment` constrained.
+
+The calculation still does **not** reserve transaction costs, taxes, notary/registration costs or other uses of the declared cash unless a future contract explicitly does so.
 
 This is a modeled ceiling under explicit assumptions, not a purchase recommendation or approval.
 
@@ -370,12 +390,13 @@ Important freshness note: several older SFC informational pages still display th
 6. unknown housing category produces VIS + non-VIS references, not a guessed classification.
 7. C2 uses EA→monthly conversion and constant-payment formula outside UI components.
 8. non-credit costs reduce modeled credit-payment budget when supplied.
-9. down-payment and payment constraints are both calculated.
-10. modeled property ceiling uses the tighter constraint.
-11. no bank approval/offer/matching field exists.
-12. no numerical Home Readiness score exists.
-13. unsupported UVR/leasing are not silently routed through the pesos formula.
-14. calculation fixtures/golden vectors must be independent of React/UI.
+9. down-payment/LTV and credit-plus-cash constraints are both calculated independently.
+10. modeled property ceiling uses the tighter constraint without assuming exact max LTV financing.
+11. extra equity may increase modeled property value until the structural LTV/down-payment ceiling binds.
+12. no bank approval/offer/matching field exists.
+13. no numerical Home Readiness score exists.
+14. unsupported UVR/leasing are not silently routed through the pesos formula.
+15. calculation fixtures/golden vectors must be independent of React/UI.
 
 ## 15. Out of scope
 
