@@ -22,6 +22,26 @@ async function completeQuickCheck(
   await page.getByRole("button", { name: "Ver mi primera lectura" }).click();
 }
 
+async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
+  await page.goto("/verificar");
+  await page.getByLabel("Selecciona un extracto para probar la experiencia").setInputFiles({
+    name: "extracto-demo.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4 demo"),
+  });
+
+  const confirmationBoxes = page.locator('input[type="checkbox"]:not(:disabled)');
+  await expect(confirmationBoxes).toHaveCount(6);
+  for (let index = 0; index < 6; index += 1) {
+    await confirmationBoxes.nth(index).check();
+  }
+
+  await page.getByRole("button", { name: "Previsualizar Mortgage Twin" }).click();
+  await expect(page.getByRole("heading", { name: "Convierte el Mortgage Twin en próximas decisiones posibles." })).toBeVisible();
+
+  return page.locator('section[aria-labelledby="opportunity-workspace-title"]');
+}
+
 test("keeps the home conceptual Mortgage Twin outside verified C3 and exposes only real routes", async ({ page }) => {
   await page.goto("/");
 
@@ -146,28 +166,60 @@ test("rejects unsupported document types before the verification review", async 
 });
 
 test("never grants C3 from simulated document values, even after all material fields are confirmed", async ({ page }) => {
-  await page.goto("/verificar");
-
-  await page.getByLabel("Selecciona un extracto para probar la experiencia").setInputFiles({
-    name: "extracto-demo.pdf",
-    mimeType: "application/pdf",
-    buffer: Buffer.from("%PDF-1.4 demo"),
-  });
-
-  const confirmationBoxes = page.locator('input[type="checkbox"]:not(:disabled)');
-  await expect(confirmationBoxes).toHaveCount(6);
-
-  for (let index = 0; index < 6; index += 1) {
-    await confirmationBoxes.nth(index).check();
-  }
+  await openOpportunityWorkspace(page);
 
   await expect(page.getByText("6 de 6 campos materiales confirmados")).toBeVisible();
   await expect(page.getByText("La reconciliación de la demostración está completa, pero sigue siendo C2.")).toBeVisible();
-  await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
-
-  await page.getByRole("button", { name: "Previsualizar Mortgage Twin" }).click();
-
-  await expect(page.getByRole("heading", { name: "Así quedará tu crédito cuando la evidencia sea verificable." })).toBeVisible();
   await expect(page.getByText("Preview, no C3.")).toBeVisible();
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
+});
+
+test("prioritizes term prepayment when a covered mortgage user wants to finish sooner", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
+  await workspace.getByRole("radio", { name: "Terminar antes" }).check();
+  await workspace.getByLabel("3. ¿Cuánto capital adicional podrías aportar?").fill("300000");
+
+  const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Usar abonos adicionales para reducir plazo/ });
+  await expect(primary).toBeVisible();
+  await expect(primary.getByText("Se puede activar ahora", { exact: true })).toBeVisible();
+  await expect(primary.getByText(/capital adicional proviene del usuario/i)).toBeVisible();
+});
+
+test("elevates Article 24 assignment only after the user declares a binding offer", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
+  await workspace.getByLabel("Sí, ya existe una oferta vinculante real.").check();
+
+  const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Activar la cesión con oferta vinculante/ });
+  await expect(primary).toBeVisible();
+  await expect(primary.getByText(/máximo 10 días hábiles/i)).toBeVisible();
+  await expect(primary.getByText(/no son el tiempo para que un nuevo banco apruebe/i)).toBeVisible();
+});
+
+test("makes judicial distress primary instead of hiding it behind optimization", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
+  await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("embargo_or_auction");
+
+  const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Revisión jurídica prioritaria del proceso/ });
+  await expect(primary).toBeVisible();
+  await expect(primary.getByText("Revisión jurídica necesaria", { exact: true })).toBeVisible();
+  await expect(primary.getByText("Revisión humana", { exact: true })).toBeVisible();
+});
+
+test("explains the 40 percent rule without turning current payment burden into automatic illegality", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
+  await workspace.getByLabel("Sí, quiero que el router evalúe la ruta de reestructuración.").check();
+  await workspace.getByLabel("Ingreso familiar actualmente acreditable").fill("5000000");
+  await workspace.getByLabel("Primera cuota que propondrías después de reestructurar").fill("2100000");
+
+  await expect(workspace.getByText("El 40% no se usa como detector automático de ilegalidad.", { exact: true })).toBeVisible();
+  await expect(workspace.getByText(/no convierte una cuota vigente superior a ese porcentaje en una infracción automática/i)).toBeVisible();
+  await expect(workspace.getByText(/primera cuota propuesta supera el 40%/i)).toBeVisible();
 });
