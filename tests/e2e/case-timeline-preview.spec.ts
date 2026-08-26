@@ -40,7 +40,7 @@ async function openTermPrepaymentTimeline(page: import("@playwright/test").Page)
 
 function capabilityRow(timeline: import("@playwright/test").Locator, label: string) {
   const capabilities = timeline.getByLabel("Capacidades separadas del expediente");
-  return capabilities.locator("div").filter({ has: capabilities.getByText(label, { exact: true }) }).last();
+  return capabilities.getByText(label, { exact: true }).locator("..");
 }
 
 test("starts the local Case Log at version one without claiming persistence or execution", async ({ page }) => {
@@ -53,7 +53,7 @@ test("starts the local Case Log at version one without claiming persistence or e
   await expect(timeline.getByText("eligible_now", { exact: true })).toBeVisible();
   await expect(timeline.getByText("C2", { exact: true })).toBeVisible();
   await expect(timeline.getByText("self_service", { exact: true })).toBeVisible();
-  await expect(timeline.getByText(/no crea un expediente productivo/i)).toBeVisible();
+  await expect(timeline.getByText(/no crean un expediente productivo/i)).toBeVisible();
 
   const log = timeline.getByLabel("Timeline local del expediente");
   await expect(log.getByRole("article", { name: /Evento 1: Expediente local creado/ })).toBeVisible();
