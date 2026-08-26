@@ -1,5 +1,6 @@
 -- VIVIENDA v0.8 — retry-safe cleanup for expired quarantine objects.
 -- An object whose first Storage delete fails must remain discoverable on later worker runs.
+-- Expired intents that never acquired a physical object are intentionally not returned.
 
 begin;
 
@@ -18,16 +19,17 @@ begin
     and i.expires_at <= p_before;
 
   -- Return every expired intent whose reserved physical object is still unconfirmed as deleted,
-  -- not only rows transitioned by this invocation. This makes cleanup safely retryable.
+  -- not only rows transitioned by this invocation. INNER JOIN deliberately excludes intents that
+  -- never acquired a physical mapping, because there is nothing for the Storage worker to delete.
   return query
   select i.intent_id, o.storage_locator, o.object_path
   from private.vivienda_evidence_intents i
-  left join private.vivienda_evidence_objects o
+  join private.vivienda_evidence_objects o
     on o.intent_id = i.intent_id
    and o.evidence_id = i.evidence_id
-   and o.deleted_at is null
   where i.status = 'expired'
     and i.expires_at <= p_before
+    and o.deleted_at is null
   order by i.expires_at, i.intent_id;
 end;
 $$;
