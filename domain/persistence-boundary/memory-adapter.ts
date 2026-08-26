@@ -163,9 +163,14 @@ export class MemoryCasePersistence implements CasePersistencePort {
 
   async revokeDataAuthorization(caseId: string, subjectRef: string, revokedAt: string, reason: string): Promise<void> {
     const stored = this.requireCase(caseId);
-    const activeIndex = stored.dataAuthorizations.findLastIndex(
-      (item) => item.status === "active" && item.subjectRef === subjectRef,
-    );
+    let activeIndex = -1;
+    for (let index = stored.dataAuthorizations.length - 1; index >= 0; index -= 1) {
+      const item = stored.dataAuthorizations[index];
+      if (item?.status === "active" && item.subjectRef === subjectRef) {
+        activeIndex = index;
+        break;
+      }
+    }
     if (activeIndex < 0) {
       throw new PersistenceBoundaryError(
         "data_authorization_subject_mismatch",
