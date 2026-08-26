@@ -29,7 +29,7 @@ Inputs:
 - extra payments: none
 
 Expected:
-- monthly effective rate: 0.789274% approximately
+- monthly effective rate: 0.948879% approximately
 - modeled contractual payment excluding insurance: 2,321,974.68
 - payoff month: 180
 - total modeled interest: 217,955,442.33
