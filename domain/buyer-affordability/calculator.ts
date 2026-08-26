@@ -23,7 +23,7 @@ export type BuyerHousingScenario = {
   minimumEquityRatio: number;
   propertyCeilingFromDownPayment: number;
   modeledPrincipal?: number;
-  propertyCeilingFromPayment?: number;
+  propertyCeilingFromCreditAndCash?: number;
   modeledPropertyCeiling?: number;
   bindingConstraint?: BindingConstraint;
 };
@@ -164,10 +164,10 @@ function principalFromPayment(payment: number, monthlyRate: number, termMonths: 
   return payment * (1 - (1 + monthlyRate) ** (-termMonths)) / monthlyRate;
 }
 
-function bindingConstraint(paymentCeiling: number, downPaymentCeiling: number): BindingConstraint {
-  const scale = Math.max(1, Math.abs(paymentCeiling), Math.abs(downPaymentCeiling));
-  if (Math.abs(paymentCeiling - downPaymentCeiling) <= scale * 1e-12) return "both";
-  return paymentCeiling < downPaymentCeiling ? "payment" : "down_payment";
+function bindingConstraint(creditAndCashCeiling: number, downPaymentCeiling: number): BindingConstraint {
+  const scale = Math.max(1, Math.abs(creditAndCashCeiling), Math.abs(downPaymentCeiling));
+  if (Math.abs(creditAndCashCeiling - downPaymentCeiling) <= scale * 1e-12) return "both";
+  return creditAndCashCeiling < downPaymentCeiling ? "payment" : "down_payment";
 }
 
 export function calculateBuyerAffordability(input: BuyerAffordabilityInput): BuyerAffordabilityResult {
@@ -243,18 +243,22 @@ export function calculateBuyerAffordability(input: BuyerAffordabilityInput): Buy
   );
 
   const scenarios = baseScenarios.map((scenario): BuyerHousingScenario => {
-    const propertyCeilingFromPayment = scenario.maxLtv === 0 ? 0 : modeledPrincipal / scenario.maxLtv;
+    // Payment capacity constrains the modeled principal. The buyer may use more equity than
+    // the regulatory minimum, so we must not divide the principal by max LTV as if every
+    // purchase were financed exactly at that maximum. The cash available can be added to
+    // the modeled principal, and the LTV rule remains an independent structural ceiling.
+    const propertyCeilingFromCreditAndCash = modeledPrincipal + input.availableDownPayment;
     const modeledPropertyCeiling = Math.min(
-      propertyCeilingFromPayment,
+      propertyCeilingFromCreditAndCash,
       scenario.propertyCeilingFromDownPayment,
     );
     return {
       ...scenario,
       modeledPrincipal,
-      propertyCeilingFromPayment,
+      propertyCeilingFromCreditAndCash,
       modeledPropertyCeiling,
       bindingConstraint: bindingConstraint(
-        propertyCeilingFromPayment,
+        propertyCeilingFromCreditAndCash,
         scenario.propertyCeilingFromDownPayment,
       ),
     };
@@ -282,6 +286,7 @@ export function calculateBuyerAffordability(input: BuyerAffordabilityInput): Buy
     notices: [
       "El escenario C2 usa una tasa y plazo suministrados/confirmados; no es una oferta ni aprobación bancaria.",
       "Los máximos LTV son referencias regulatorias y una entidad puede financiar un porcentaje menor.",
+      "El techo por crédito y efectivo suma el principal modelado y la cuota inicial disponible; no incluye costos de cierre ni otros usos del efectivo.",
       nonCreditHousingCostsOmitted
         ? "No se informaron costos mensuales no crediticios; el escenario no representa el costo total de tener vivienda."
         : "Los costos mensuales no crediticios declarados reducen el presupuesto destinado al crédito.",
