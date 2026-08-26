@@ -1,0 +1,39 @@
+name: Bootstrap package lock
+
+on:
+  push:
+    branches:
+      - implementation/warm-path-vertical-slice-v0.2
+    paths:
+      - .github/workflows/bootstrap-lockfile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: implementation/warm-path-vertical-slice-v0.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+
+      - name: Generate lockfile only
+        run: npm install --package-lock-only --no-audit --no-fund
+
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "Lockfile already current"
+            exit 0
+          fi
+          git commit -m "build: add reproducible npm lockfile"
+          git push origin HEAD:implementation/warm-path-vertical-slice-v0.2
