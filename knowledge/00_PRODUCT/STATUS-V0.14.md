@@ -3,6 +3,7 @@
 Date: 2026-08-26
 Branch: `product/payment-pressure-v0.14`
 Base: v0.13 `1dd5ab2dba7d57911f3aee4f3f6fd11dcc401b64`
+Final validated head: `cc6461ebff93a3f34e1ef1817350841f14f4579c`
 
 ## Objective
 
@@ -161,6 +162,21 @@ Covers:
 - first-screen privacy;
 - keyboard reachability;
 - mobile no-overflow.
+
+## Final gate
+
+Validated on `cc6461ebff93a3f34e1ef1817350841f14f4579c`:
+
+- TypeScript: PASS;
+- domain tests: **230/230 PASS**;
+- Next production build: PASS;
+- Playwright: **94/94 PASS** across desktop Chromium and mobile 390 px;
+- inherited borrower and buyer journeys: PASS;
+- Payment Pressure state matrix: PASS;
+- contextual Home entry: preserved;
+- judicial guardrail is asserted within its semantic result region rather than by global copy matching.
+
+v0.14 is therefore a valid frozen baseline for the next stacked product slice.
 
 ## Still out of scope
 
