@@ -1,0 +1,208 @@
+{
+  "schema_version": "1.0.0",
+  "project": "VIVIENDA",
+  "updated_at": "2026-08-25",
+  "purpose": "Curated skill registry for product, UX, conversion, design engineering, frontend quality and verification.",
+  "policy": {
+    "precedence": [
+      "verified legal, financial and product truth",
+      "privacy, security, ethics and accessibility",
+      "domain contracts and calculations",
+      "customer journey and UX",
+      "conversion and content",
+      "design system and craft",
+      "external specialist skills",
+      "aesthetic preference"
+    ],
+    "external_skills_are_advisory": true,
+    "discovery_requires_review": true,
+    "pin_before_ci_enforcement": true,
+    "never_override": [
+      "legal and financial truth",
+      "claims policy",
+      "privacy and consent semantics",
+      "accessibility requirements",
+      "verified calculation contracts",
+      "security controls"
+    ]
+  },
+  "skills": [
+    {
+      "id": "find-skills",
+      "source": "vercel-labs/skills",
+      "role": "skill-discovery",
+      "status": "core",
+      "use_for": ["discovering candidate skills", "checking ecosystem alternatives"],
+      "notes": "Discovery only. Verify source reputation, installs, repository and SKILL.md before adoption."
+    },
+    {
+      "id": "impeccable",
+      "source": "pbakaus/impeccable",
+      "observed_version": "4.1.1",
+      "role": "holistic-ui-ux-craft",
+      "status": "core",
+      "use_for": ["shape", "critique", "audit", "forms", "onboarding", "responsive", "hardening", "polish"],
+      "required_for": ["major public surfaces", "major product flows"]
+    },
+    {
+      "id": "design-taste-frontend",
+      "source": "Leonxlnx/taste-skill",
+      "role": "anti-generic-marketing-design",
+      "status": "core-specialist",
+      "use_for": ["landing pages", "marketing redesign", "visual direction", "anti-slop preflight"],
+      "do_not_use_as_primary_for": ["dashboards", "data tables", "multi-step product UI"],
+      "notes": "Its own current skill explicitly excludes dashboards and multi-step product UI."
+    },
+    {
+      "id": "frontend-design-review",
+      "source": "microsoft/skills",
+      "role": "independent-design-review",
+      "status": "core-review",
+      "use_for": ["frictionless review", "quality craft", "trustworthy UI", "responsive", "accessibility", "design-system compliance"],
+      "required_for": ["major visual freeze", "pre-merge review of critical user journeys"]
+    },
+    {
+      "id": "web-design-guidelines",
+      "source": "vercel-labs/agent-skills",
+      "observed_version": "1.0.0",
+      "role": "web-interface-quality",
+      "status": "core",
+      "use_for": ["forms", "web UX", "keyboard", "responsive", "accessibility", "interface best practices"],
+      "required_for": ["all user-facing frontend changes"]
+    },
+    {
+      "id": "vercel-react-best-practices",
+      "source": "vercel-labs/agent-skills",
+      "observed_version": "1.0.0",
+      "role": "react-next-performance",
+      "status": "core-engineering",
+      "use_for": ["waterfalls", "bundle size", "server performance", "data fetching", "rerenders", "rendering performance"]
+    },
+    {
+      "id": "vercel-composition-patterns",
+      "source": "vercel-labs/agent-skills",
+      "observed_version": "1.0.0",
+      "role": "component-architecture",
+      "status": "core-engineering",
+      "use_for": ["compound components", "component APIs", "state boundaries", "avoiding boolean prop proliferation"]
+    },
+    {
+      "id": "building-components",
+      "source": "vercel/components.build",
+      "role": "accessible-component-system",
+      "status": "core-engineering",
+      "use_for": ["primitives", "components", "tokens", "ARIA", "keyboard", "focus management", "controlled-uncontrolled state", "component documentation"]
+    },
+    {
+      "id": "emil-design-eng",
+      "source": "Emil Kowalski design-engineering skill ecosystem",
+      "role": "motion-and-interaction",
+      "status": "specialist-pin-required",
+      "use_for": ["purposeful motion", "micro-interactions", "interaction feel", "animation review"],
+      "required_for": ["motion-heavy interfaces"],
+      "notes": "Resolve current canonical upstream before vendoring/pinning because the historical repository path has moved."
+    },
+    {
+      "id": "ui-craft",
+      "source": "educlopez/ui-craft",
+      "role": "design-system-quality-gate",
+      "status": "specialist-pin-required",
+      "use_for": ["tokens", "anti-slop review", "design system", "acceptance bar"]
+    },
+    {
+      "id": "make-interfaces-feel-better",
+      "source": "jakubkrehel/make-interfaces-feel-better",
+      "role": "late-stage-polish",
+      "status": "specialist-pin-required",
+      "use_for": ["typography detail", "icons", "hover states", "optical alignment", "surfaces", "micro-interactions"]
+    },
+    {
+      "id": "product-marketing-context",
+      "source": "coreyhaines31/marketingskills",
+      "role": "marketing-context-canon",
+      "status": "core-growth",
+      "use_for": ["positioning", "audiences", "problems", "competitive context", "objections", "voice"],
+      "artifact": ".agents/product-marketing-context.md"
+    },
+    {
+      "id": "offers",
+      "source": "coreyhaines31/marketingskills",
+      "role": "offer-design",
+      "status": "core-growth",
+      "use_for": ["offer construction", "value exchange", "packaging", "reducing reliance on copy-only optimization"]
+    },
+    {
+      "id": "form-cro",
+      "source": "coreyhaines31/marketingskills",
+      "role": "form-conversion",
+      "status": "core-growth",
+      "use_for": ["lead forms", "profile flows", "document upload", "conditional forms", "progressive commitment", "mobile input UX"]
+    },
+    {
+      "id": "onboarding-cro",
+      "source": "coreyhaines31/marketingskills",
+      "role": "activation-and-time-to-value",
+      "status": "core-growth",
+      "use_for": ["first-run", "aha moment", "empty states", "activation", "stalled-user recovery"]
+    },
+    {
+      "id": "page-cro",
+      "source": "coreyhaines31/marketingskills",
+      "role": "marketing-page-conversion",
+      "status": "specialist-growth",
+      "use_for": ["homepage", "landing pages", "service pages", "traffic-specific CRO"]
+    },
+    {
+      "id": "cro-methodology",
+      "source": "wondelai/skills",
+      "role": "evidence-based-cro",
+      "status": "specialist-growth-pin-required",
+      "use_for": ["research synthesis", "objection mapping", "experiment hypotheses", "prioritization"]
+    },
+    {
+      "id": "ux-writing",
+      "source": "content-designer/ux-writing-skill",
+      "role": "interface-language",
+      "status": "specialist-content-pin-required",
+      "use_for": ["labels", "help text", "errors", "empty states", "onboarding", "financial explanations"]
+    },
+    {
+      "id": "seo",
+      "source": "addyosmani/web-quality-skills",
+      "role": "technical-seo",
+      "status": "specialist-acquisition-pin-required",
+      "use_for": ["crawlability", "metadata", "structured data", "Core Web Vitals", "technical SEO"]
+    },
+    {
+      "id": "e2e-testing-patterns",
+      "source": "wshobson/agents",
+      "role": "journey-verification",
+      "status": "specialist-quality-pin-required",
+      "use_for": ["Playwright", "critical journeys", "visual regression", "responsive verification"]
+    },
+    {
+      "id": "frontend-accessibility-best-practices",
+      "source": "sergiodxa/agent-skills",
+      "role": "accessibility-specialist",
+      "status": "specialist-quality",
+      "use_for": ["semantic HTML", "screen readers", "keyboard navigation", "user preferences"]
+    }
+  ],
+  "candidates_not_yet_adopted": [
+    {
+      "id": "frontend-design",
+      "source": "vercel-labs/agent-eval",
+      "reason": "Useful creative lens but substantially overlaps Impeccable, Taste and Microsoft review. Evaluate only if a real gap emerges."
+    },
+    {
+      "id": "design-system",
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "reason": "High adoption but overlaps building-components/UI Craft. Do not add until token-system needs justify it."
+    },
+    {
+      "id": "forms-inputs-checkout",
+      "source": "hueyexe/frontend-agent-skills",
+      "reason": "Promising and security-audited but low adoption; Form CRO + Vercel + accessibility currently cover the need."
+    }
+  ]
+}
