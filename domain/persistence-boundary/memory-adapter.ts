@@ -22,7 +22,7 @@ type InternalCase = {
     assignedLawyerSubjectRefs: string[];
   };
   journal: CaseJournalRecord[];
-  dataAuthorization: DataAuthorizationRecord | null;
+  dataAuthorizations: DataAuthorizationRecord[];
   evidence: Map<string, EvidenceMetadata>;
 };
 
@@ -42,8 +42,7 @@ function cloneRecord(record: CaseJournalRecord): CaseJournalRecord {
   };
 }
 
-function cloneAuthorization(value: DataAuthorizationRecord | null): DataAuthorizationRecord | null {
-  if (!value) return null;
+function cloneAuthorization(value: DataAuthorizationRecord): DataAuthorizationRecord {
   return {
     ...value,
     purposes: [...value.purposes],
@@ -66,7 +65,7 @@ function cloneSnapshot(value: InternalCase): PersistedCaseSnapshot {
       assignedLawyerSubjectRefs: [...value.access.assignedLawyerSubjectRefs],
     },
     journal: value.journal.map(cloneRecord),
-    dataAuthorization: cloneAuthorization(value.dataAuthorization),
+    dataAuthorizations: value.dataAuthorizations.map(cloneAuthorization),
     evidence: [...value.evidence.values()].map(cloneEvidence),
   };
 }
@@ -109,7 +108,7 @@ export class MemoryCasePersistence implements CasePersistencePort {
         assignedLawyerSubjectRefs: [],
       },
       journal: [cloneRecord(input.firstRecord)],
-      dataAuthorization: null,
+      dataAuthorizations: [],
       evidence: new Map(),
     };
 
@@ -144,7 +143,18 @@ export class MemoryCasePersistence implements CasePersistencePort {
     });
 
     if (result.kind === "appended") {
-      stored.dataAuthorization = cloneAuthorization(input.authorization);
+      stored.dataAuthorizations = stored.dataAuthorizations.map((item) =>
+        item.status === "active"
+          ? {
+              ...item,
+              purposes: [...item.purposes],
+              status: "superseded",
+              revokedAt: input.authorization.grantedAt,
+              revokedReason: `Superseded by ${input.authorization.authorizationId}`,
+            }
+          : cloneAuthorization(item),
+      );
+      stored.dataAuthorizations.push(cloneAuthorization(input.authorization));
       return { kind: "appended", snapshot: cloneSnapshot(stored) };
     }
 
@@ -153,15 +163,18 @@ export class MemoryCasePersistence implements CasePersistencePort {
 
   async revokeDataAuthorization(caseId: string, subjectRef: string, revokedAt: string, reason: string): Promise<void> {
     const stored = this.requireCase(caseId);
-    const authorization = stored.dataAuthorization;
-    if (!authorization || authorization.subjectRef !== subjectRef) {
+    const activeIndex = stored.dataAuthorizations.findLastIndex(
+      (item) => item.status === "active" && item.subjectRef === subjectRef,
+    );
+    if (activeIndex < 0) {
       throw new PersistenceBoundaryError(
         "data_authorization_subject_mismatch",
-        "No existe una autorización de datos correspondiente al titular indicado.",
+        "No existe una autorización activa correspondiente al titular indicado.",
       );
     }
 
-    stored.dataAuthorization = {
+    const authorization = stored.dataAuthorizations[activeIndex]!;
+    stored.dataAuthorizations[activeIndex] = {
       ...authorization,
       purposes: [...authorization.purposes],
       status: "revoked",
