@@ -316,7 +316,11 @@ function validateReceipt(command: FinalizeEvidenceCommand) {
 }
 
 function activeDataAuthorization(snapshot: PersistedCaseSnapshot): DataAuthorizationRecord | null {
-  return snapshot.dataAuthorizations.findLast((item) => item.status === "active") ?? null;
+  for (let index = snapshot.dataAuthorizations.length - 1; index >= 0; index -= 1) {
+    const item = snapshot.dataAuthorizations[index];
+    if (item?.status === "active") return item;
+  }
+  return null;
 }
 
 function assertEvidenceTreatmentAuthorization(snapshot: PersistedCaseSnapshot): DataAuthorizationRecord {
