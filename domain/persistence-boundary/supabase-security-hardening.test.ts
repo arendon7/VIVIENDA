@@ -46,4 +46,20 @@ describe("Supabase v0.7 final privilege state", () => {
       /grant execute on function public\.vivienda_persist_[^(]+\([^;]+\) to authenticated;/i,
     );
   });
+
+  it("keeps the Case Journal append-only at the SQL privilege layer", () => {
+    expect(hardeningSql).toContain(
+      "grant select, insert on private.vivienda_case_journal to service_role;",
+    );
+    expect(hardeningSql).not.toMatch(
+      /grant[^;]*(?:update|delete)[^;]*private\.vivienda_case_journal[^;]*service_role/i,
+    );
+  });
+
+  it("removes DELETE from every canonical service-role table grant", () => {
+    expect(hardeningSql).toContain("revoke all on all tables in schema private from service_role;");
+    const grants = hardeningSql.match(/grant [^;]+ on private\.[^;]+ to service_role;/gi) ?? [];
+    expect(grants.length).toBeGreaterThanOrEqual(9);
+    expect(grants.every((grant) => !/\bdelete\b/i.test(grant))).toBe(true);
+  });
 });
