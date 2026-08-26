@@ -178,6 +178,11 @@ export function ModeledScenario({
                 { label: "Intereses futuros nominales que el modelo estima que dejarían de causarse", value: formatCop(comparison.interestAvoided), kind: "positive" },
                 { label: "Valor atribuible a VIVIENDA en esta simulación self-service", value: formatCop(0) },
               ]} />
+              <div className="actions">
+                <a className="button button-primary" href="/verificar">Verificar con extracto</a>
+                <button className="button button-secondary" type="button" onClick={onBack}>Cambiar mis datos</button>
+              </div>
+              <p className="field-hint">El siguiente salto de precisión depende de evidencia documental reconciliada; no de añadir más supuestos manuales.</p>
             </div>
           </DecisionResult>
         </div>
