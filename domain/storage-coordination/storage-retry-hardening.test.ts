@@ -17,6 +17,14 @@ describe("Supabase Storage retry hardening v0.8", () => {
     expect(sql).not.toMatch(/with\s+expired\s+as\s*\(\s*update/i);
   });
 
+  it("returns only expired intents that actually have a physical object still pending deletion", () => {
+    expect(sql).toMatch(/from\s+private\.vivienda_evidence_intents\s+i\s+join\s+private\.vivienda_evidence_objects\s+o/i);
+    expect(sql).not.toMatch(/left\s+join\s+private\.vivienda_evidence_objects/i);
+    expect(sql).toMatch(/o\.intent_id\s*=\s*i\.intent_id/i);
+    expect(sql).toMatch(/o\.evidence_id\s*=\s*i\.evidence_id/i);
+    expect(sql).toMatch(/and\s+o\.deleted_at\s+is\s+null/i);
+  });
+
   it("keeps the retryable cleanup RPC service-only and SECURITY INVOKER", () => {
     expect(sql).toContain("security invoker");
     expect(sql).toContain("set search_path = ''");
