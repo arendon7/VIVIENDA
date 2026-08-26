@@ -61,7 +61,7 @@ type PersistMutationEnvelope<TKind extends "created" | "duplicate" | "appended">
 type PersistCreateEnvelope = PersistMutationEnvelope<"created" | "duplicate">;
 type PersistAppendEnvelope = PersistMutationEnvelope<"appended" | "duplicate">;
 
-type ExpiredEvidenceObject = {
+export type ExpiredEvidenceObject = {
   intentId: string;
   storageLocator: string | null;
   objectPath: string | null;
@@ -163,7 +163,7 @@ function assertAppendEnvelope(value: unknown, operation: string): PersistAppendE
   return { kind: candidate.kind, snapshot: assertSnapshot(candidate.snapshot, operation) };
 }
 
-function toSnakeCaseAuthorization(value: DataAuthorizationRecord): Record<string, unknown> {
+function toProviderAuthorization(value: DataAuthorizationRecord): Record<string, unknown> {
   return {
     authorizationId: value.authorizationId,
     caseId: value.caseId,
@@ -229,7 +229,7 @@ export class SupabaseCasePersistenceAdapter implements CasePersistencePort {
       p_case_id: input.caseId,
       p_expected_version: input.expectedVersion,
       p_record: input.record,
-      p_authorization: toSnakeCaseAuthorization(input.authorization),
+      p_authorization: toProviderAuthorization(input.authorization),
     });
     if (error) throwRpcError("grantDataAuthorizationAtomic", error);
     const envelope = assertAppendEnvelope(
@@ -327,6 +327,14 @@ export class SupabaseEvidenceObjectRegistry {
       storageLocator: item.storageLocator ?? item.storage_locator ?? null,
       objectPath: item.objectPath ?? item.object_path ?? null,
     }));
+  }
+
+  async markOrphanObjectDeleted(storageLocator: string, deletedAt: string): Promise<void> {
+    const { error } = await this.client.rpc("vivienda_persist_mark_orphan_object_deleted", {
+      p_storage_locator: storageLocator,
+      p_deleted_at: deletedAt,
+    });
+    if (error) throwRpcError("markOrphanObjectDeleted", error);
   }
 }
 
