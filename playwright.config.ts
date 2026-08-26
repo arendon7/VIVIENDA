@@ -5,7 +5,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? "github" : "html",
+  reporter: process.env.CI
+    ? [
+        ["github"],
+        ["junit", { outputFile: "test-results/e2e-junit.xml" }],
+      ]
+    : "html",
   use: {
     baseURL: "http://127.0.0.1:3000",
     trace: "retain-on-failure",
