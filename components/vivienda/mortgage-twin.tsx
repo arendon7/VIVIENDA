@@ -24,7 +24,7 @@ export function MortgageTwin({
 }: {
   data: MortgageTwinData;
   mode: "preview" | "verified";
-  documentName?: string;
+  documentName?: string | undefined;
 }) {
   const verified = mode === "verified";
 
