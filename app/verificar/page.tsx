@@ -1,3 +1,4 @@
+import "./review.css";
 import { DocumentReviewDemo } from "./review-demo";
 
 export default function VerificarPage() {
