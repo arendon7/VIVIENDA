@@ -162,7 +162,9 @@ function assertExactKeys(body: Record<string, unknown>, allowed: readonly string
 }
 
 function guard(status: number, code: string, message: string, headers?: Record<string, string>): HttpGuardError {
-  return new HttpGuardError({ status, error: { code, message }, headers });
+  const failure: GuardFailure = { status, error: { code, message } };
+  if (headers !== undefined) failure.headers = headers;
+  return new HttpGuardError(failure);
 }
 
 function parseContentType(value: string | null): boolean {
@@ -420,7 +422,11 @@ export class EvidenceHttpApi {
         throw new Error("invalid request context");
       }
     } catch {
-      return jsonResponse(500, { error: { code: "request_context_unavailable", message: "No fue posible procesar la solicitud." } }, "req_unavailable");
+      return jsonResponse(
+        500,
+        { error: { code: "request_context_unavailable", message: "No fue posible procesar la solicitud." } },
+        "req_unavailable",
+      );
     }
 
     try {
