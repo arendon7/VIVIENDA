@@ -1,34 +1,32 @@
+import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
 import {
   FinancialNumber,
   PrecisionBadge,
   SourceFreshness,
 } from "@/components/vivienda/signature-components";
+import { evaluateLoanHealth } from "@/domain/loan-health/evaluator";
+import {
+  evaluateOpportunityRoutes,
+  type OpportunityRouterInput,
+} from "@/domain/opportunity/router";
 import styles from "./mi-vivienda.module.css";
 
-const opportunities = [
-  {
-    label: "Prepago",
-    status: "Listo para simular",
-    title: "Compara qué pasa si aportas capital adicional.",
-    copy: "El motor puede modelar reducción de plazo para el caso soportado en pesos y cuota constante cuando confirmas tasa y cuotas restantes.",
-    href: "/revisar",
-    action: "Simular escenario",
-  },
-  {
-    label: "Precisión",
-    status: "Requiere documento",
-    title: "Verifica los datos materiales del crédito.",
-    copy: "Para llegar a C3 necesitamos información derivada de documento y reconciliación completa; una confirmación manual no basta.",
-    href: "/verificar",
-    action: "Revisar un extracto",
-  },
-  {
-    label: "Mercado",
-    status: "Falta referencia externa",
-    title: "Compra de cartera merece comparación, no una promesa.",
-    copy: "Todavía no hay adapter bancario ni tasa externa activa. La oportunidad se mantiene como ruta futura, no como oferta o aprobación.",
-  },
-];
+const demoRouterInput: OpportunityRouterInput = {
+  asOfDate: "2026-08-26",
+  precision: "C2",
+  productType: "mortgage_housing",
+  modality: "pesos",
+  paymentState: "current",
+  extraPaymentCapacity: 500_000,
+  wantsFinishSooner: true,
+};
+
+const demoLoanHealth = evaluateLoanHealth({
+  precision: demoRouterInput.precision,
+  productType: demoRouterInput.productType,
+  paymentState: demoRouterInput.paymentState,
+  routerResult: evaluateOpportunityRoutes(demoRouterInput),
+});
 
 export default function MiViviendaPage() {
   return (
@@ -64,9 +62,9 @@ export default function MiViviendaPage() {
               <PrecisionBadge level="C2" />
             </div>
             <p className="section-copy">
-              Hay suficiente información confirmada para modelar un escenario compatible, pero todavía no para afirmar un estado documental C3.
+              Hay suficiente información confirmada para modelar el escenario soportado. Verificar documentalmente sigue siendo un paso distinto y necesario para C3.
             </p>
-            <a className="button button-primary" href="/verificar">Subir de precisión</a>
+            <a className="button button-primary" href="/revisar">Comparar una decisión</a>
           </div>
         </section>
 
@@ -83,56 +81,34 @@ export default function MiViviendaPage() {
             <dl className={styles.facts}>
               <FinancialNumber label="Saldo" value="$180.000.000" detail="Declarado / ejemplo" />
               <FinancialNumber label="Cuota" value="$2.100.000" detail="Declarado / ejemplo" />
-              <FinancialNumber label="Modalidad" value="Pesos" detail="Confirmado para la simulación" />
-              <FinancialNumber label="Plazo restante" value="17 años" detail="Aproximado" />
+              <FinancialNumber label="Modalidad" value="Pesos" detail="Confirmada para la simulación" />
+              <FinancialNumber label="Plazo restante" value="17 años" detail="Confirmado para la demo" />
+              <FinancialNumber label="Tasa" value="11,7 % EA" detail="Confirmada para la demo" />
+              <FinancialNumber label="Sistema" value="Cuota constante" detail="Caso soportado en C2" />
             </dl>
 
-            <SourceFreshness source="Valores de demostración del Warm Path" cutoff="Preview v0.10">
-              <p>La superficie conserva provenance explícito. No representa un crédito real guardado.</p>
+            <SourceFreshness source="Valores de demostración del Warm Path" cutoff="Preview v0.11">
+              <p>La superficie conserva provenance explícito. No representa un crédito real guardado ni verificado documentalmente.</p>
             </SourceFreshness>
           </article>
 
           <aside className={`surface ${styles.nextAction}`} aria-labelledby="next-action-heading">
             <p className="eyebrow">Siguiente mejor acción</p>
-            <h2 id="next-action-heading">Verificar antes de comparar decisiones externas.</h2>
+            <h2 id="next-action-heading">Compara el prepago antes de buscar una solución externa.</h2>
             <p className="section-copy">
-              El salto útil ahora no es inventar una tasa de mercado: es confirmar documentalmente los campos que cambian el análisis.
+              El ejemplo ya tiene precisión C2 para el motor soportado y declara capacidad de abono. Primero conviene comparar reducción de plazo frente a reducción de cuota.
             </p>
             <ol className={styles.steps}>
-              <li><span>1</span><div><strong>Revisar extracto</strong><p>Confirmar saldo, tasa, modalidad, cuotas y sistema.</p></div></li>
-              <li><span>2</span><div><strong>Reconciliar</strong><p>Resolver faltantes o diferencias antes de elevar precisión.</p></div></li>
-              <li><span>3</span><div><strong>Comparar acciones</strong><p>Solo después, priorizar prepago, transferencia u otra ruta.</p></div></li>
+              <li><span>1</span><div><strong>Simular</strong><p>Comparar la misma aportación bajo dos objetivos distintos.</p></div></li>
+              <li><span>2</span><div><strong>Entender el efecto</strong><p>Separar capital aportado por ti de intereses futuros modelados.</p></div></li>
+              <li><span>3</span><div><strong>Verificar si hace falta</strong><p>Subir a C3 antes de una decisión que requiera precisión documental.</p></div></li>
             </ol>
-            <a className="button button-primary" href="/verificar">Verificar mi crédito</a>
+            <a className="button button-primary" href="/revisar">Simular prepago</a>
           </aside>
         </section>
 
-        <section className={styles.section} aria-labelledby="opportunities-heading">
-          <div className={styles.sectionHeading}>
-            <div>
-              <p className="eyebrow">Oportunidades</p>
-              <h2 id="opportunities-heading">Acciones, no un score decorativo.</h2>
-              <p className="section-copy">v0.10 prioriza estados explicables hasta que Loan Health tenga metodología y test vectors propios.</p>
-            </div>
-          </div>
-
-          <div className={styles.opportunityGrid}>
-            {opportunities.map((opportunity) => (
-              <article className={`surface ${styles.opportunity}`} key={opportunity.label}>
-                <div className={styles.opportunityMeta}>
-                  <span>{opportunity.label}</span>
-                  <strong>{opportunity.status}</strong>
-                </div>
-                <h3>{opportunity.title}</h3>
-                <p className="section-copy">{opportunity.copy}</p>
-                {opportunity.href ? (
-                  <a className="button button-secondary" href={opportunity.href}>{opportunity.action}</a>
-                ) : (
-                  <span className={styles.noAction}>Sin CTA hasta tener datos externos verificables</span>
-                )}
-              </article>
-            ))}
-          </div>
+        <section className={styles.section} aria-label="Loan Health">
+          <LoanHealthPanel result={demoLoanHealth} />
         </section>
 
         <section className={styles.section} aria-labelledby="precision-heading">
@@ -176,7 +152,7 @@ export default function MiViviendaPage() {
       </main>
 
       <footer className="shell site-footer">
-        VIVIENDA · Preview v0.10 · Información, simulaciones y rutas con niveles de precisión explícitos.
+        VIVIENDA · Preview v0.11 · Loan Health cualitativo, simulaciones y rutas con precisión explícita.
       </footer>
     </>
   );
