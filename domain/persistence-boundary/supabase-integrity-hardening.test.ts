@@ -14,8 +14,9 @@ describe("Supabase v0.7 concurrency and integrity hardening", () => {
     const createSql = integritySql.slice(createStart, createEnd);
 
     const lock = createSql.indexOf("pg_advisory_xact_lock");
-    const lookup = createSql.indexOf("private.vivienda_case_creation_keys");
+    const lookup = createSql.indexOf("select * into v_existing");
     expect(lock).toBeGreaterThanOrEqual(0);
+    expect(lookup).toBeGreaterThanOrEqual(0);
     expect(lock).toBeLessThan(lookup);
     expect(createSql).toContain("p_owner_subject_ref");
     expect(createSql).toContain("p_creation_idempotency_key");
