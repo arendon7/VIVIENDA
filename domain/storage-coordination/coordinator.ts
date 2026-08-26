@@ -17,8 +17,9 @@ export const MAX_DOWNLOAD_TTL_SECONDS = 300;
 const STORAGE_LOCATOR = /^obj_[A-Za-z0-9_-]{6,}$/;
 const INTENT_ID = /^upl_[A-Za-z0-9_-]{3,}$/;
 const EVIDENCE_ID = /^evd_[A-Za-z0-9_-]{3,}$/;
-const SAFE_OBJECT_PATH = /^quarantine\/upl_[A-Za-z0-9_-]{3,}\/evd_[A-Za-z0-9_-]{3,}\/obj_[A-Za-z0-9_-]{6,}$/;
+const OBJECT_PATH = /^quarantine\/(upl_[A-Za-z0-9_-]{3,})\/(evd_[A-Za-z0-9_-]{3,})\/(obj_[A-Za-z0-9_-]{6,})$/;
 const SHA256 = /^[A-Fa-f0-9]{64}$/;
+const GRANT_EXPIRY_SKEW_SECONDS = 5;
 
 export type UserPrincipal = Exclude<Principal, { kind: "anonymous" } | { kind: "service" }>;
 
@@ -164,6 +165,19 @@ export type DeleteWorkerReport = {
   failures: DeleteWorkerFailure[];
 };
 
+type ObjectPathParts = {
+  intentId: string;
+  evidenceId: string;
+  storageLocator: string;
+};
+
+type DeleteCandidate = {
+  storageLocator: string;
+  bucketId: typeof EVIDENCE_BUCKET_ID;
+  objectPath: string;
+  expectedIntentId?: string;
+};
+
 function requirePrincipal(principal: UserPrincipal | null): UserPrincipal {
   if (!principal) {
     throw new PersistenceBoundaryError(
@@ -174,25 +188,77 @@ function requirePrincipal(principal: UserPrincipal | null): UserPrincipal {
   return principal;
 }
 
-function assertCoordinates(value: ReservedObjectCoordinates) {
-  if (value.bucketId !== EVIDENCE_BUCKET_ID) {
-    throw new PersistenceBoundaryError("provider_error", "La reserva de Storage devolvió un bucket inválido.");
-  }
-  if (!STORAGE_LOCATOR.test(value.storageLocator) || !SAFE_OBJECT_PATH.test(value.objectPath)) {
-    throw new PersistenceBoundaryError("provider_error", "La reserva de Storage no cumple el formato opaco requerido.");
+function parseObjectPath(objectPath: string): ObjectPathParts | null {
+  const match = OBJECT_PATH.exec(objectPath);
+  if (!match) return null;
+  return {
+    intentId: match[1]!,
+    evidenceId: match[2]!,
+    storageLocator: match[3]!,
+  };
+}
+
+function assertCoordinates(value: ReservedObjectCoordinates, intent: EvidenceUploadIntent) {
+  const parts = parseObjectPath(value.objectPath);
+  if (
+    value.bucketId !== EVIDENCE_BUCKET_ID ||
+    !INTENT_ID.test(intent.intentId) ||
+    !EVIDENCE_ID.test(intent.evidenceId) ||
+    !STORAGE_LOCATOR.test(value.storageLocator) ||
+    !parts ||
+    parts.intentId !== intent.intentId ||
+    parts.evidenceId !== intent.evidenceId ||
+    parts.storageLocator !== value.storageLocator
+  ) {
+    throw new PersistenceBoundaryError("provider_error", "La reserva de Storage no cumple la relación opaca requerida.");
   }
 }
 
 function assertIntentResolution(value: IntentObjectResolution, intentId: string) {
+  const parts = parseObjectPath(value.objectPath);
   if (
     value.intentId !== intentId ||
     !INTENT_ID.test(value.intentId) ||
     !EVIDENCE_ID.test(value.evidenceId) ||
     !STORAGE_LOCATOR.test(value.storageLocator) ||
     value.bucketId !== EVIDENCE_BUCKET_ID ||
-    !SAFE_OBJECT_PATH.test(value.objectPath)
+    Number.isNaN(Date.parse(value.expiresAt)) ||
+    (value.deletedAt !== null && Number.isNaN(Date.parse(value.deletedAt))) ||
+    !parts ||
+    parts.intentId !== value.intentId ||
+    parts.evidenceId !== value.evidenceId ||
+    parts.storageLocator !== value.storageLocator
   ) {
     throw new PersistenceBoundaryError("provider_error", "El registry devolvió una reserva inconsistente.");
+  }
+}
+
+function assertEvidenceResolution(value: EvidenceObjectResolution, caseId: string, evidenceId: string) {
+  const parts = parseObjectPath(value.objectPath);
+  if (
+    value.caseId !== caseId ||
+    value.evidenceId !== evidenceId ||
+    !EVIDENCE_ID.test(value.evidenceId) ||
+    value.bucketId !== EVIDENCE_BUCKET_ID ||
+    !STORAGE_LOCATOR.test(value.storageLocator) ||
+    !parts ||
+    parts.evidenceId !== value.evidenceId ||
+    parts.storageLocator !== value.storageLocator
+  ) {
+    throw new PersistenceBoundaryError("provider_error", "El registry devolvió coordenadas físicas inconsistentes.");
+  }
+}
+
+function assertDeleteCandidate(candidate: DeleteCandidate) {
+  const parts = parseObjectPath(candidate.objectPath);
+  if (
+    !STORAGE_LOCATOR.test(candidate.storageLocator) ||
+    candidate.bucketId !== EVIDENCE_BUCKET_ID ||
+    !parts ||
+    parts.storageLocator !== candidate.storageLocator ||
+    (candidate.expectedIntentId !== undefined && parts.intentId !== candidate.expectedIntentId)
+  ) {
+    throw new PersistenceBoundaryError("provider_error", "Coordenadas de borrado inválidas.");
   }
 }
 
@@ -205,6 +271,22 @@ function assertInspection(value: ObjectInspection) {
     Number.isNaN(Date.parse(value.verifiedAt))
   ) {
     throw new PersistenceBoundaryError("provider_error", "La verificación del objeto devolvió metadata inválida.");
+  }
+}
+
+function assertFutureExpiry(expiresAt: string, now: string, operation: string) {
+  const expiryMs = Date.parse(expiresAt);
+  const nowMs = Date.parse(now);
+  if (Number.isNaN(expiryMs) || Number.isNaN(nowMs) || expiryMs <= nowMs) {
+    throw new PersistenceBoundaryError("provider_error", `El proveedor emitió un grant de ${operation} vencido o inválido.`);
+  }
+}
+
+function assertDownloadExpiry(expiresAt: string, now: string, requestedTtlSeconds: number) {
+  assertFutureExpiry(expiresAt, now, "download");
+  const maximum = Date.parse(now) + (requestedTtlSeconds + GRANT_EXPIRY_SKEW_SECONDS) * 1000;
+  if (Date.parse(expiresAt) > maximum) {
+    throw new PersistenceBoundaryError("provider_error", "El proveedor emitió un acceso temporal más largo que el solicitado.");
   }
 }
 
@@ -233,7 +315,7 @@ export class EvidenceStorageCoordinator {
     const principal = requirePrincipal(await this.principals.resolve());
     const intent = await this.cases.prepareEvidenceUpload(principal, caseId, command);
     const reserved = this.coordinates.reserve(intent);
-    assertCoordinates(reserved);
+    assertCoordinates(reserved, intent);
 
     // Reserve the physical coordinates before issuing a usable upload grant. If signing fails,
     // the quarantined reservation remains discoverable by cleanup instead of becoming untracked.
@@ -248,9 +330,10 @@ export class EvidenceStorageCoordinator {
       objectPath: reserved.objectPath,
       upsert: false,
     });
-    if (!grant.token || Number.isNaN(Date.parse(grant.expiresAt))) {
-      throw new PersistenceBoundaryError("provider_error", "El proveedor no emitió un grant de upload válido.");
+    if (!grant.token || grant.token.trim() === "") {
+      throw new PersistenceBoundaryError("provider_error", "El proveedor no emitió un token de upload válido.");
     }
+    assertFutureExpiry(grant.expiresAt, this.clock.now(), "upload");
 
     return {
       intentId: intent.intentId,
@@ -319,6 +402,7 @@ export class EvidenceStorageCoordinator {
     evidenceId: string;
     expiresInSeconds?: number;
   }): Promise<EvidenceDownloadGrant> {
+    const ttl = resolveTtl(input.expiresInSeconds);
     const principal = requirePrincipal(await this.principals.resolve());
     const model = await this.cases.readCase(principal, input.caseId);
     const evidence = model.evidence.find((item) => item.evidenceId === input.evidenceId);
@@ -327,26 +411,20 @@ export class EvidenceStorageCoordinator {
     }
 
     const physical = await this.registry.resolveReadableEvidenceObject(input.caseId, input.evidenceId);
-    if (!physical || physical.caseId !== input.caseId || physical.evidenceId !== input.evidenceId) {
+    if (!physical) {
       throw new PersistenceBoundaryError("evidence_not_found", "No existe un objeto físico activo para esta evidencia.");
     }
-    if (
-      physical.bucketId !== EVIDENCE_BUCKET_ID ||
-      !STORAGE_LOCATOR.test(physical.storageLocator) ||
-      !SAFE_OBJECT_PATH.test(physical.objectPath)
-    ) {
-      throw new PersistenceBoundaryError("provider_error", "El registry devolvió coordenadas físicas inválidas.");
-    }
+    assertEvidenceResolution(physical, input.caseId, input.evidenceId);
 
-    const ttl = resolveTtl(input.expiresInSeconds);
     const grant = await this.storage.createSignedDownloadGrant({
       bucketId: physical.bucketId,
       objectPath: physical.objectPath,
       expiresInSeconds: ttl,
     });
-    if (!grant.url || Number.isNaN(Date.parse(grant.expiresAt))) {
+    if (!grant.url || grant.url.trim() === "") {
       throw new PersistenceBoundaryError("provider_error", "El proveedor no emitió un acceso temporal válido.");
     }
+    assertDownloadExpiry(grant.expiresAt, this.clock.now(), ttl);
 
     return {
       evidenceId: input.evidenceId,
@@ -373,6 +451,7 @@ export class EvidenceDeletionWorker {
         storageLocator: item.storageLocator,
         bucketId: EVIDENCE_BUCKET_ID,
         objectPath: item.objectPath,
+        expectedIntentId: item.intentId,
       }));
     return this.deleteCandidates(candidates);
   }
@@ -382,21 +461,13 @@ export class EvidenceDeletionWorker {
     return this.deleteCandidates(candidates);
   }
 
-  private async deleteCandidates(
-    candidates: Array<{ storageLocator: string; bucketId: typeof EVIDENCE_BUCKET_ID; objectPath: string }>,
-  ): Promise<DeleteWorkerReport> {
+  private async deleteCandidates(candidates: DeleteCandidate[]): Promise<DeleteWorkerReport> {
     const failures: DeleteWorkerFailure[] = [];
     let confirmedDeleted = 0;
 
     for (const candidate of candidates) {
       try {
-        if (
-          !STORAGE_LOCATOR.test(candidate.storageLocator) ||
-          candidate.bucketId !== EVIDENCE_BUCKET_ID ||
-          !SAFE_OBJECT_PATH.test(candidate.objectPath)
-        ) {
-          throw new PersistenceBoundaryError("provider_error", "Coordenadas de borrado inválidas.");
-        }
+        assertDeleteCandidate(candidate);
         await this.storage.deleteObject({
           bucketId: candidate.bucketId,
           objectPath: candidate.objectPath,
