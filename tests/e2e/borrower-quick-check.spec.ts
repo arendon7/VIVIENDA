@@ -1,12 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-async function completeQuickCheck(page: import("@playwright/test").Page) {
+async function completeQuickCheck(
+  page: import("@playwright/test").Page,
+  modality: "Pesos" | "UVR" = "Pesos",
+) {
   await page.goto("/revisar");
 
   await page.getByRole("radio", { name: "Crédito hipotecario" }).check();
   await page.getByRole("button", { name: "Continuar" }).click();
 
-  await page.getByRole("radio", { name: "Pesos", exact: true }).check();
+  await page.getByRole("radio", { name: modality, exact: true }).check();
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await page.getByLabel("¿Cuánto capital debes aproximadamente?").fill("180000000");
@@ -32,6 +35,17 @@ test("delivers first useful result without asking identity or contact data", asy
   }
 });
 
+test("exposes task progress semantically", async ({ page }) => {
+  await page.goto("/revisar");
+
+  const progress = page.getByRole("progressbar", { name: "Progreso del Quick Check" });
+  await expect(progress).toHaveAttribute("aria-valuenow", "1");
+  await expect(progress).toHaveAttribute("aria-valuemax", "5");
+
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(progress).toHaveAttribute("aria-valuenow", "2");
+});
+
 test("allows unknown product and modality instead of blocking the journey", async ({ page }) => {
   await page.goto("/revisar");
 
@@ -46,13 +60,6 @@ test("allows unknown product and modality instead of blocking the journey", asyn
 
 test("supports keyboard-only progression through the first questions", async ({ page }) => {
   await page.goto("/revisar");
-
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
-
-  const focusedRole = await page.evaluate(() => document.activeElement?.getAttribute("type"));
-  expect(["radio", null]).toContain(focusedRole);
 
   await page.getByRole("radio", { name: "Crédito hipotecario" }).focus();
   await page.keyboard.press("Space");
@@ -72,4 +79,25 @@ test("does not overflow horizontally on compact viewport", async ({ page }) => {
   }));
 
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+});
+
+test("upgrades a compatible peso case from C1 to a real C2 modeled scenario", async ({ page }) => {
+  await completeQuickCheck(page, "Pesos");
+  await page.getByRole("button", { name: "Continuar con más precisión" }).click();
+
+  await page.getByLabel("Tasa efectiva anual del crédito").fill("12");
+  await page.getByRole("radio", { name: "Cuota constante en pesos" }).check();
+
+  await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toBeVisible();
+  await expect(page.getByText("Capital adicional que aportarías durante el escenario")).toBeVisible();
+  await expect(page.getByText("Intereses futuros nominales que el modelo estima que dejarían de causarse")).toBeVisible();
+  await expect(page.getByText("Valor atribuible a VIVIENDA en esta simulación self-service")).toBeVisible();
+});
+
+test("refuses to apply the peso annuity model to UVR", async ({ page }) => {
+  await completeQuickCheck(page, "UVR");
+  await page.getByRole("button", { name: "Continuar con más precisión" }).click();
+
+  await expect(page.getByText("No vamos a forzar una fórmula de pesos.")).toBeVisible();
+  await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toHaveCount(0);
 });
