@@ -14,7 +14,9 @@ La meta no es conectar Supabase/Postgres todavía. La meta es impedir que una fu
 - almacenar PII o documentos dentro del event log;
 - crear metadata de evidencia sin que el evento correspondiente exista, o viceversa;
 - tratar una projection/cache mutable como fuente de verdad;
-- confundir categorías jurídicas de datos con niveles internos de seguridad.
+- confundir categorías jurídicas de datos con niveles internos de seguridad;
+- habilitar tratamiento documental con una autorización cuya finalidad no cubra ese tratamiento;
+- exponer a un read model ordinario coordenadas de storage, fingerprints o identificadores internos de auditoría.
 
 Principio central:
 
@@ -216,6 +218,18 @@ El envelope sirve para:
 - trazabilidad operacional;
 - investigar impersonation/retries/integraciones.
 
+### 9.1 El envelope no es el read model ordinario
+
+El envelope de seguridad se conserva en persistence/audit. No debe devolverse completo por defecto a cliente o UI.
+
+El read model ordinario:
+- no expone `recordedBySubjectRef`;
+- no expone `requestId`;
+- no expone `semanticFingerprint`;
+- elimina `actorId` interno y conserva únicamente el `actor.kind` semántico necesario para el timeline.
+
+Una futura superficie de auditoría privilegiada deberá tener una operación y autorización separadas.
+
 ---
 
 ## 10. Clasificación jurídica de datos vs seguridad interna
@@ -267,7 +281,7 @@ El Case Log NO debe almacenar directamente:
 - secretos/tokens/credenciales.
 
 Se permiten referencias opacas:
-- `subjectRef`;
+- `subjectRef` solo en capas internas autorizadas;
 - `evidenceId`;
 - referencias operacionales no reversibles a PII.
 
@@ -295,6 +309,22 @@ Metadata mínima futura:
 
 El filename original no se persiste por defecto. Un `displayName` debe ser generado/controlado por el sistema.
 
+### 12.1 Redacción del read model
+
+El storage metadata completo es interno. La lectura ordinaria no expone:
+- `storageLocator`;
+- `checksumSha256`;
+- `createdBySubjectRef`.
+
+Puede exponer metadata necesaria para UX, por ejemplo:
+- `evidenceId` opaco;
+- tipo;
+- clasificación;
+- tier;
+- nombre controlado por sistema;
+- MIME/tamaño si procede;
+- lifecycle/tombstone.
+
 ### Regla fundamental
 `EVIDENCE_ATTACHED` debe referenciar `evidenceId`, no path/URL/filename.
 
@@ -312,7 +342,7 @@ Un blob store externo no comparte transacción ACID con Postgres. Por eso la arq
 
 ### Fase B — finalize
 1. verificar objeto/tamaño/MIME/checksum;
-2. confirmar autorización de datos vigente y acceso al caso;
+2. confirmar autorización de datos **activa y con finalidad compatible** y acceso al caso;
 3. en una transacción DB:
    - crear/finalizar metadata;
    - append `EVIDENCE_ATTACHED` con ese `evidenceId`;
@@ -340,13 +370,40 @@ Un `legal_hold` futuro puede impedir eliminación física cuando exista una base
 
 ## 15. Authorization / consent lifecycle
 
-La autorización registrada debe ser consultable y versionada.
+La autorización registrada debe ser consultable y **versionada**.
 
-V0.6 distingue conceptualmente:
-- autorización registrada alguna vez;
-- autorización actualmente activa para nuevas operaciones de tratamiento.
+V0.6 no conserva una única bandera mutable. Conserva un historial de `DataAuthorizationRecord` con:
+- `authorizationId`;
+- `consentVersion`;
+- finalidades (`purposes`);
+- status;
+- fecha de otorgamiento;
+- fecha/motivo de revocación o supersesión.
 
-La arquitectura debe soportar revocación/supresión futura sin borrar el hecho histórico de que una autorización existió.
+Estados iniciales:
+- `active`;
+- `revoked`;
+- `superseded`.
+
+Al registrar una nueva autorización válida:
+- la nueva queda `active`;
+- una autorización activa anterior se conserva y pasa a `superseded`;
+- no se destruye su versión ni sus finalidades históricas.
+
+Al revocar:
+- se revoca la autorización activa aplicable;
+- el hecho histórico de autorizaciones anteriores permanece.
+
+### 15.1 Finalidad compatible
+
+“Autorización activa” no significa “autorización para cualquier cosa”.
+
+Para preparar/finalizar evidencia documental de un expediente en v0.6, la autorización activa debe incluir al menos una finalidad compatible:
+- `mortgage_analysis`;
+- `case_management`;
+- `legal_service`.
+
+Una autorización únicamente para `marketing`, `customer_support` o `external_credit_data` no habilita automáticamente persistencia de extractos/documentos del expediente.
 
 No se reutiliza autorización para fines nuevos no incluidos en la versión/finalidad informada.
 
@@ -414,7 +471,7 @@ El slice no se considera verde hasta probar al menos:
 21. mismo idempotency+semántica distinta falla;
 22. journal load retorna copias defensivas;
 23. projection se reconstruye exclusivamente desde CaseEvent[];
-24. eliminar una projection cache no pierde estado;
+24. eliminar/mutar una projection cache no cambia el estado reconstruido;
 25. event log no acepta evidenceRefs que sean paths/URLs/filenames;
 26. evidenceRef debe ser un ID opaco válido;
 27. metadata exige `legalDataCategory`;
@@ -422,15 +479,23 @@ El slice no se considera verde hasta probar al menos:
 29. financial semiprivate y sensitive son categorías distintas;
 30. filename original no entra al Case Event;
 31. bytes/base64 nunca entran al Case Event;
-32. finalizeEvidence requiere autorización de datos vigente;
-33. finalizeEvidence requiere acceso al caso;
-34. finalizeEvidence crea metadata + EVIDENCE_ATTACHED como unidad atómica lógica;
-35. conflicto de versión no deja metadata activa huérfana;
-36. tombstone de evidencia elimina locator sin borrar el event log;
-37. un expediente sigue replayable después de tombstone;
-38. ownerSubjectRef no se acepta desde payload del cliente;
-39. el store no expone provider-specific types;
-40. no existe conexión real a Supabase/Postgres en este slice.
+32. prepare/finalize evidence requiere autorización activa;
+33. autorización solo-marketing no habilita evidencia de expediente;
+34. autorización de evidencia exige finalidad compatible;
+35. autorizaciones se conservan versionadas;
+36. nueva autorización supersede pero no borra la anterior;
+37. revocación conserva historial;
+38. finalizeEvidence requiere acceso al caso;
+39. finalizeEvidence crea metadata + EVIDENCE_ATTACHED como unidad atómica lógica;
+40. conflicto de versión no deja metadata activa huérfana;
+41. tombstone de evidencia elimina locator sin borrar el event log;
+42. un expediente sigue replayable después de tombstone;
+43. ownerSubjectRef no se acepta desde payload del cliente;
+44. read model normal no expone `actorId` interno;
+45. read model normal no expone envelope (`recordedBySubjectRef`, requestId, fingerprint);
+46. read model normal no expone storageLocator/checksum/createdBySubjectRef;
+47. el store no expone provider-specific types;
+48. no existe conexión real a Supabase/Postgres en este slice.
 
 ---
 
@@ -456,7 +521,7 @@ El slice no se considera verde hasta probar al menos:
 
 ## 20. Próximo gate
 
-Después de validar el contrato y un adapter in-memory, el siguiente slice podrá ser:
+Después de validar el contrato y el adapter in-memory, el siguiente slice podrá ser:
 
 **v0.7 — Supabase/Postgres Persistence Adapter**
 
