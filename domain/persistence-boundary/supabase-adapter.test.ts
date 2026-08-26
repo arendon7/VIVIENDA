@@ -287,7 +287,9 @@ describe("Supabase/Postgres migration contract v0.7", () => {
 
   it("creates a private evidence bucket and never persists a signed URL", () => {
     expect(schemaSql).toContain("'vivienda-evidence'");
-    expect(schemaSql).toMatch(/'vivienda-evidence',\s*\n\s*false,/);
+    expect(schemaSql).toMatch(
+      /values\s*\(\s*'vivienda-evidence',\s*'vivienda-evidence',\s*false,/i,
+    );
     expect(`${schemaSql}\n${rpcSql}`).not.toMatch(/signed[_ ]?url/i);
   });
 
