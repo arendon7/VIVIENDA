@@ -92,7 +92,6 @@ describe("document verification reconciliation", () => {
       rate: "12 % EA",
       remaining: "204",
       system: "Cuota constante en pesos",
-      insurance: undefined,
     });
   });
 });
