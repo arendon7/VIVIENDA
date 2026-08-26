@@ -236,3 +236,70 @@ test("explains the 40 percent rule without turning current payment burden into a
     workspace.getByText("La primera cuota propuesta supera el 40% del ingreso familiar acreditado y debe rediseñarse.", { exact: true }),
   ).toBeVisible();
 });
+
+test("builds an unknown-product Case Plan without pretending to save or open a matter", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Primero necesitamos clasificar el producto/ });
+  await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
+
+  const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+  await expect(plan.getByRole("heading", { name: /Clasificar el producto antes de escoger una ruta jurídica/ })).toBeVisible();
+  await expect(plan.getByText("Vista local de planificación.", { exact: true })).toBeVisible();
+  await expect(plan.getByText(/todavía no crea un expediente ni guarda tu información/i)).toBeVisible();
+  await expect(plan.getByText(/no prepara todavía una solicitud del artículo 20/i)).toBeVisible();
+  await expect(plan.getByRole("button", { name: /guardar/i })).toHaveCount(0);
+  await expect(plan.getByText(/completad[oa]/i)).toHaveCount(0);
+});
+
+test("keeps the Article 24 clock relative until real delivery evidence exists", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
+  await workspace.getByLabel("Sí, ya existe una oferta vinculante real.").check();
+
+  const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Activar la cesión con oferta vinculante/ });
+  await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
+
+  const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+  await expect(plan.getByRole("heading", { name: "Plan para activar la cesión del artículo 24" })).toBeVisible();
+  await expect(plan.getByText(/Máximo 10 días hábiles después de la entrega comprobada/i)).toBeVisible();
+  await expect(plan.getByText(/Sin fecha real de entrega no se calcula una fecha límite/i)).toBeVisible();
+  await expect(plan.getByText(/El trigger todavía no está establecido/i)).toBeVisible();
+  await expect(plan.getByText(/El reloj no se considera iniciado por seleccionar esta ruta o generar el plan/i)).toBeVisible();
+});
+
+test("keeps executive-defense Case Plan behind professional review and contains no automated defense recipe", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
+  await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("embargo_or_auction");
+
+  const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Revisión jurídica prioritaria del proceso/ });
+  await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
+
+  const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+  await expect(plan.getByRole("heading", { name: "Plan de preparación para revisión jurídica prioritaria" })).toBeVisible();
+  await expect(plan.getByRole("article", { name: /Fase 2: Revisión profesional/ })).toBeVisible();
+  await expect(plan.getByRole("article", { name: /Fase 3: Definir estrategia/ })).toBeVisible();
+  await expect(plan.getByText("Revisión jurídica prioritaria", { exact: true })).toBeVisible();
+  await expect(plan.getByText(/no contiene excepciones, recursos ni instrucciones procesales automáticas/i)).toBeVisible();
+  await expect(plan.getByRole("button", { name: /presentar|radicar|interponer|oponerse/i })).toHaveCount(0);
+});
+
+test("builds an Article 20 seasonal plan for the next window instead of saying file now", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+
+  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
+  await workspace.getByLabel("Sí, quiero que el router evalúe la ruta de reestructuración.").check();
+
+  const article20 = workspace.getByRole("article", { name: /Ruta alternativa: Preparar la próxima ventana del artículo 20/ });
+  await expect(article20).toBeVisible();
+  await article20.getByRole("button", { name: "Preparar esta ruta" }).click();
+
+  const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+  await expect(plan.getByRole("heading", { name: "Plan de preparación para la próxima ventana del artículo 20" })).toBeVisible();
+  await expect(plan.getByText("enero-febrero de 2027", { exact: true })).toBeVisible();
+  await expect(plan.getByText(/no afirma que pueda radicarse hoy bajo la ventana especial/i)).toBeVisible();
+  await expect(plan.getByRole("button", { name: /radicar hoy/i })).toHaveCount(0);
+});
