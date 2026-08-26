@@ -1,61 +1,105 @@
 # VIVIENDA
 
-Plataforma colombiana para tomar y ejecutar mejores decisiones financieras y jurídicas alrededor de la vivienda.
+VIVIENDA es un producto LegalTech/FinTech para entender, comparar, optimizar y proteger decisiones asociadas al crédito de vivienda en Colombia.
 
-## Tesis
+Este repositorio contiene el diseño y la implementación del **Warm Path borrower vertical slice v0.2**.
 
-VIVIENDA acompaña el ciclo:
+## Estado del vertical slice
 
-**Preparar → Comprar → Financiar → Administrar → Optimizar → Proteger**
+El flujo ejecutable actual cubre:
 
-No nace como portal inmobiliario, banco, central de riesgo ni landing de Ley 546. La tesis central es construir una capa de inteligencia y ejecución que ayude a entender qué conviene hacer con la financiación de vivienda y permita avanzar cuando el usuario decide actuar.
+1. Home Warm Path.
+2. `/revisar` · Quick Check anónimo de cinco pasos.
+3. Resultado C1 con datos declarados.
+4. C1 → C2 mediante simulación modelada para créditos compatibles en pesos con cuota constante.
+5. `/verificar` · demostración local de revisión documental.
+6. Reconciliación explícita de campos materiales.
+7. Mortgage Twin `preview` separado de un futuro estado `verified`.
 
-## Cuña inicial
+### Contrato de precisión
 
-El primer usuario prioritario es quien ya tiene crédito de vivienda/leasing y se pregunta:
+- **C0**: orientación.
+- **C1**: estimación.
+- **C2**: simulación modelada.
+- **C3**: verificado documentalmente.
 
-> ¿Estoy pagando mi vivienda de la mejor manera disponible para mí?
+C3 no es un badge decorativo. Requiere evidencia `document_derived` y reconciliación completa de los campos materiales. La evidencia simulada nunca puede conceder C3, aunque el usuario confirme todos sus valores.
 
-Entrada secundaria: personas que quieren saber cuánto pueden comprar de forma sostenible y cómo prepararse para financiar vivienda.
+## Motor financiero inicial
 
-## Principios
+El primer motor soporta únicamente el caso explícito:
 
-- valor antes de pedir datos sensibles;
-- decisiones antes que catálogo de productos;
-- costo total además de cuota;
-- cálculos explicables y con fuentes;
-- distinguir simulación, recomendación, oferta y aprobación;
-- mostrar cuándo el usuario puede hacer algo directamente y gratis;
-- asistencia pagada donde realmente agrega valor;
-- mobile-first;
-- accesibilidad y performance desde foundation;
-- separación clara entre flujos comerciales/financieros y relación profesional jurídica.
+- crédito en pesos;
+- cuota constante;
+- tasa EA confirmada;
+- cuotas restantes confirmadas;
+- abono adicional positivo.
 
-## Foundation docs
+No se aplica la fórmula de anualidad en pesos a créditos UVR. El capital adicional aportado por el usuario se informa por separado y nunca se presenta como ahorro generado por VIVIENDA.
 
-- [`PRODUCT.md`](PRODUCT.md) — contexto canónico de producto.
-- [`AGENTS.md`](AGENTS.md) — contrato de trabajo para agentes.
-- [`design-skills.lock.json`](design-skills.lock.json) — registro curado de skills.
-- [`skills/housing-finance-design-orchestrator/SKILL.md`](skills/housing-finance-design-orchestrator/SKILL.md) — orquestador local de UX/diseño/CRO/frontend.
-- [`skills/UPSTREAM-PINS.md`](skills/UPSTREAM-PINS.md) — upstreams inspeccionados y pins.
-- [`knowledge/00_PRODUCT/MVP-SCOPE.md`](knowledge/00_PRODUCT/MVP-SCOPE.md) — alcance MVP y gates.
-- [`knowledge/00_PRODUCT/INFORMATION-ARCHITECTURE.md`](knowledge/00_PRODUCT/INFORMATION-ARCHITECTURE.md) — IA propuesta.
-- [`knowledge/00_PRODUCT/JOURNEY-MAP.md`](knowledge/00_PRODUCT/JOURNEY-MAP.md) — journeys iniciales.
-- [`knowledge/20_DESIGN/DESIGN-OPERATING-MODEL.md`](knowledge/20_DESIGN/DESIGN-OPERATING-MODEL.md) — proceso de diseño.
-- [`knowledge/20_DESIGN/VISUAL-DISCOVERY-BRIEF.md`](knowledge/20_DESIGN/VISUAL-DISCOVERY-BRIEF.md) — brief para explorar dirección visual.
-- [`knowledge/30_RESEARCH/UX-RESEARCH-PLAN.md`](knowledge/30_RESEARCH/UX-RESEARCH-PLAN.md) — plan de investigación UX.
-- [`knowledge/30_RESEARCH/COMPETITIVE-UX-BENCHMARK.md`](knowledge/30_RESEARCH/COMPETITIVE-UX-BENCHMARK.md) — benchmark actual de mercado.
-- [`.agents/product-marketing-context.md`](.agents/product-marketing-context.md) — contexto compartido para marketing/CRO/copy.
+## Desarrollo
 
-## Estado
+Requisitos:
 
-Foundation de producto/diseño en construcción. No existe todavía un frontend público ni un `DESIGN.md` congelado: la dirección visual debe salir de discovery, wireframes y una muestra representativa antes de convertirse en sistema.
+- Node.js 22.12 o superior.
 
-## Próximo bloque
+```bash
+npm ci
+npm run typecheck
+npm run test
+npm run build
+npm run test:e2e
+```
 
-1. cerrar research y lenguaje real de usuarios;
-2. definir contratos de cálculo del primer producto;
-3. diseñar low-fi del borrower journey;
-4. explorar tres territorios visuales;
-5. validar un vertical slice: home + calculadora + Perfil + Mortgage Twin + mobile;
-6. solo entonces scaffold/implementación y design system definitivo.
+Playwright ejecuta el borrower journey sobre un build de producción (`next build` + `next start`), no sobre HMR/Turbopack de desarrollo.
+
+## CI
+
+`Frontend CI` verifica:
+
+- instalación reproducible con `npm ci`;
+- TypeScript estricto;
+- tests de dominio y golden vectors;
+- build de Next;
+- E2E Chromium desktop;
+- E2E móvil 390 px;
+- navegación por teclado;
+- progreso semántico;
+- ausencia de overflow móvil;
+- guardrails C1/C2/C3;
+- validación de archivo documental;
+- provenance del Mortgage Twin;
+- home sin C3 decorativo ni CTAs hacia anchors inexistentes.
+
+Baseline validado el 25/26 de agosto de 2026:
+
+- head: `af2b7f84ad3b5449dd07888b769bab167caf9813`;
+- verify: PASS;
+- E2E: **22/22 PASS** sobre servidor de producción;
+- PR: `#7`, todavía en draft.
+
+## Preview Vercel
+
+El código está listo para preview y contiene `noindex` más cabeceras defensivas. El intento de deployment llegó hasta la creación inicial de Vercel, pero la API administrativa del team devuelve un bloqueo RBAC para Preview Deployments. No se ha forzado producción ni se ha debilitado el gate para evitar ese bloqueo.
+
+El PR debe permanecer en draft hasta que un preview accesible pueda auditarse renderizado en `/`, `/revisar` y `/verificar`.
+
+## Seguridad del preview
+
+- `robots`: noindex / nofollow / nocache;
+- `X-Robots-Tag: noindex, nofollow, noarchive`;
+- `X-Content-Type-Options: nosniff`;
+- `Referrer-Policy: strict-origin-when-cross-origin`;
+- `Permissions-Policy`: cámara, micrófono, geolocalización y pagos deshabilitados.
+
+CSP se posterga hasta implementar correctamente nonces para Next; no se añadirá una política superficial que rompa hidratación.
+
+## Fuera de alcance deliberadamente en este slice
+
+- OCR productivo;
+- transferencia/persistencia de extractos financieros;
+- autenticación y base de datos;
+- motor UVR completo;
+- adapters bancarios productivos;
+- representación jurídica automática;
+- vertical de compra de vivienda.
