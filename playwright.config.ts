@@ -1,11 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const isCI = Boolean(process.env.CI);
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI
+  workers: isCI ? 4 : undefined,
+  forbidOnly: isCI,
+  retries: isCI ? 1 : 0,
+  reporter: isCI
     ? [
         ["github"],
         ["junit", { outputFile: "test-results/e2e-junit.xml" }],
@@ -27,9 +30,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
+    command: isCI ? "npm run build && npm run start" : "npm run dev",
     url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    reuseExistingServer: !isCI,
+    timeout: 180_000,
   },
 });
