@@ -58,18 +58,18 @@ describe("canonical idempotency authority v0.9", () => {
     expect(() => assertCanonicalIdempotencyKey(key)).toThrow(PersistenceBoundaryError);
   });
 
-  it("blocks non-canonical keys before invoking the inner persistence application", async () => {
+  it("blocks non-canonical keys before invoking the inner persistence application", () => {
     const inner = new RecordingApplication();
     const app = new ServerClassifiedEvidenceApplication(inner);
 
-    await expect(
+    expect(() =>
       app.completeUpload({
         caseId: "case_demo",
         intentId: "upl_demo",
         expectedVersion: 2,
         idempotencyKey: " idem-browser-001",
       }),
-    ).rejects.toMatchObject({ code: "invalid_command" });
+    ).toThrow(PersistenceBoundaryError);
     expect(inner.completes).toHaveLength(0);
   });
 
