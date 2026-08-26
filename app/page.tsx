@@ -22,6 +22,7 @@ export default function HomePage() {
         <nav aria-label="Principal">
           <a className="nav-link" href="#como-funciona">Cómo funciona</a>
           <a className="nav-link" href="/comprar/cuanto-puedo-comprar">Comprar vivienda</a>
+          <a className="nav-link" href="/ayuda">Tengo un problema</a>
           <a className="nav-link" href="/mi-vivienda">Mi Vivienda · preview</a>
         </nav>
       </header>
@@ -39,6 +40,7 @@ export default function HomePage() {
               <a className="button button-secondary" href="/mi-vivienda">Ver Mi Vivienda · preview</a>
             </div>
             <p className="trust-line">No necesitas cédula, teléfono ni extracto para empezar. Si todavía no tienes crédito, la ruta de compra usa un cálculo separado y no desplaza este análisis.</p>
+            <p className="trust-line"><a href="/ayuda">¿Te está costando pagar o ya te están cobrando? Ubica primero qué tan urgente es →</a></p>
           </div>
 
           <aside className="surface hero-instrument" aria-label="Ejemplo de análisis">
