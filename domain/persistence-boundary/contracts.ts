@@ -3,13 +3,13 @@ import type {
   CaseEvent,
   CaseEventDraft,
   CaseProjection,
+  CaseTrack,
 } from "@/domain/case-state/machine";
 import type {
   OpportunityPrecision,
   OpportunityRouteCode,
   OpportunityRouteStatus,
 } from "@/domain/opportunity/router";
-import type { CaseTrack } from "@/domain/case-state/machine";
 
 export type ServiceScope = "case:read" | "case:append_system" | "case:record_external";
 
@@ -44,13 +44,15 @@ export type PrivacyPurpose =
   | "external_credit_data"
   | "marketing";
 
+export type DataAuthorizationStatus = "active" | "revoked" | "superseded";
+
 export type DataAuthorizationRecord = {
   authorizationId: string;
   caseId: string;
   subjectRef: string;
   consentVersion: string;
   purposes: PrivacyPurpose[];
-  status: "active" | "revoked";
+  status: DataAuthorizationStatus;
   grantedAt: string;
   revokedAt: string | null;
   revokedReason: string | null;
@@ -119,7 +121,7 @@ export type PersistedCaseSnapshot = {
   caseId: string;
   access: CaseAccessSnapshot;
   journal: CaseJournalRecord[];
-  dataAuthorization: DataAuthorizationRecord | null;
+  dataAuthorizations: DataAuthorizationRecord[];
   evidence: EvidenceMetadata[];
 };
 
@@ -211,7 +213,6 @@ export type PrepareEvidenceUploadCommand = {
   kind: EvidenceKind;
   legalDataCategory: LegalDataCategory;
   securityTier: SecurityTier;
-  displayName: string;
 };
 
 export type FinalizeEvidenceCommand = {
@@ -221,12 +222,20 @@ export type FinalizeEvidenceCommand = {
   receipt: VerifiedUploadReceipt;
 };
 
+export type CaseTimelineEvent = Omit<CaseEvent, "actor"> & {
+  actor: { kind: CaseActorKind };
+};
+
+export type DataAuthorizationReadModel = Omit<DataAuthorizationRecord, "subjectRef">;
+
+export type EvidenceReadModel = Omit<EvidenceMetadata, "storageLocator" | "checksumSha256" | "createdBySubjectRef">;
+
 export type CaseReadModel = {
   caseId: string;
   projection: CaseProjection;
-  journal: CaseJournalRecord[];
-  dataAuthorization: DataAuthorizationRecord | null;
-  evidence: EvidenceMetadata[];
+  timeline: CaseTimelineEvent[];
+  dataAuthorizations: DataAuthorizationReadModel[];
+  evidence: EvidenceReadModel[];
 };
 
 export type BoundaryErrorCode =
