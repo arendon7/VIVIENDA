@@ -67,6 +67,13 @@ export type ExpiredEvidenceObject = {
   objectPath: string | null;
 };
 
+export type PendingEvidenceDeletion = {
+  storageLocator: string;
+  bucketId: string;
+  objectPath: string;
+  deletionRequestedAt: string;
+};
+
 export type RegisteredEvidenceObject = {
   intentId: string;
   storageLocator: string;
@@ -329,12 +336,39 @@ export class SupabaseEvidenceObjectRegistry {
     }));
   }
 
-  async markOrphanObjectDeleted(storageLocator: string, deletedAt: string): Promise<void> {
-    const { error } = await this.client.rpc("vivienda_persist_mark_orphan_object_deleted", {
+  async listPendingDeletions(limit = 100): Promise<PendingEvidenceDeletion[]> {
+    const { data, error } = await this.client.rpc<Array<{
+      storage_locator?: string;
+      bucket_id?: string;
+      object_path?: string;
+      deletion_requested_at?: string;
+      storageLocator?: string;
+      bucketId?: string;
+      objectPath?: string;
+      deletionRequestedAt?: string;
+    }>>("vivienda_persist_list_pending_object_deletions", {
+      p_limit: limit,
+    });
+    if (error) throwRpcError("listPendingObjectDeletions", error);
+
+    return (data ?? []).map((item) => {
+      const storageLocator = item.storageLocator ?? item.storage_locator;
+      const bucketId = item.bucketId ?? item.bucket_id;
+      const objectPath = item.objectPath ?? item.object_path;
+      const deletionRequestedAt = item.deletionRequestedAt ?? item.deletion_requested_at;
+      if (!storageLocator || !bucketId || !objectPath || !deletionRequestedAt) {
+        throw providerError("listPendingObjectDeletions");
+      }
+      return { storageLocator, bucketId, objectPath, deletionRequestedAt };
+    });
+  }
+
+  async markObjectDeleted(storageLocator: string, deletedAt: string): Promise<void> {
+    const { error } = await this.client.rpc("vivienda_persist_mark_evidence_object_deleted", {
       p_storage_locator: storageLocator,
       p_deleted_at: deletedAt,
     });
-    if (error) throwRpcError("markOrphanObjectDeleted", error);
+    if (error) throwRpcError("markEvidenceObjectDeleted", error);
   }
 }
 
