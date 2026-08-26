@@ -10,17 +10,17 @@ La cuña inicial es el usuario que ya tiene un crédito de vivienda y quiere ent
 
 ## Estado actual
 
-La línea de desarrollo está apilada y validada por slices. v0.10 quedó verde y el slice activo es:
+La línea de desarrollo está apilada y validada por slices. v0.10 y el slice funcional v0.11 quedaron verdes. El slice activo es:
 
-**v0.11 — Loan Health cualitativo dentro de Mi Vivienda**
+**v0.12 — primera ruta asistida: Auditoría Hipotecaria R7**
 
-Base v0.10:
+Base v0.11:
 
-`cff54e319f0a3255318184371d4e1f76d424325f`
+`6dec13bc7ba35abc05020bcabfb60e7a10a6de7f`
 
 Rama activa:
 
-`product/loan-health-v0.11`
+`product/mortgage-audit-assisted-v0.12`
 
 ## Superficies ejecutables
 
@@ -29,6 +29,7 @@ Rama activa:
 - C1 → C2 — simulación modelada para el caso financiero soportado.
 - `/verificar` — flujo de demostración para revisión/reconciliación documental.
 - `/mi-vivienda` — Mortgage Twin + Loan Health V1 + precisión + siguientes acciones.
+- `/auditoria-hipotecaria` — preview de la primera ruta asistida R7, sin contratación ni representación activa.
 
 ## Contrato de precisión
 
@@ -41,9 +42,9 @@ C3 requiere evidencia realmente derivada de documento y reconciliación completa
 
 ## Loan Health V1
 
-Loan Health v0.11 es una evaluación **cualitativa de decisiones**, no un score crediticio o de riesgo.
+Loan Health es una evaluación **cualitativa de decisiones**, no un score crediticio o de riesgo.
 
-Dimensiones iniciales:
+Dimensiones:
 
 1. estructura del crédito;
 2. prepago;
@@ -52,15 +53,30 @@ Dimensiones iniciales:
 5. consistencia / cobros;
 6. mora / estado procesal.
 
-Estados permitidos incluyen `ready`, `explore`, `needs_data`, `seasonal`, `attention`, `professional_review`, `no_flag_reported` y `not_applicable`.
-
 No publica `76/100`, probabilidades de aprobación ni matching bancario porcentual.
+
+## Auditoría Hipotecaria v0.12
+
+La primera ruta asistida se activa únicamente cuando el Opportunity Router detecta una inconsistencia concreta R7.
+
+Secuencia mínima:
+
+`CASE_CREATED → DATA_AUTHORIZATION_RECORDED → SERVICE_AGREEMENT_ACCEPTED → EVIDENCE_REQUESTED → EVIDENCE_ATTACHED → EVIDENCE_VERIFIED → PROFESSIONAL_REVIEW_REQUESTED → PROFESSIONAL_REVIEW_COMPLETED`
+
+Aceptar el servicio:
+
+- no concede facultad extrajudicial;
+- no concede poder judicial;
+- no crea una radicación;
+- no garantiza ahorro, corrección ni resultado.
+
+Si R10 aparece por proceso ejecutivo/embargo/remate, esa ruta domina y la auditoría R7 ordinaria debe re-rutearse.
 
 ## Arquitectura de dominio implementada
 
-La cadena actual separa explícitamente:
+La cadena actual separa:
 
-`Mortgage Twin → Opportunity Router → Loan Health → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
+`Mortgage Twin → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
 
 Incluye:
 
@@ -68,6 +84,7 @@ Incluye:
 - provenance/trust contracts;
 - Opportunity Router;
 - Loan Health evaluator;
+- Mortgage Audit R7 blueprint;
 - Case Plan;
 - Case State Machine append-only;
 - Persistence & Identity Boundary;
@@ -75,7 +92,7 @@ Incluye:
 - Storage/Auth Coordination provider-ready;
 - Next Server API/Auth Wiring v0.9.
 
-## Importante: provider-ready no significa live
+## Provider-ready no significa live
 
 En la conexión actual todavía no existe:
 
@@ -86,9 +103,8 @@ En la conexión actual todavía no existe:
 - OCR productivo;
 - proyecto/deployment Vercel de VIVIENDA;
 - bank adapters;
-- Open Finance.
-
-Por eso ninguna superficie puede afirmar guardado, sincronización, ofertas o aprobaciones que todavía no existen.
+- Open Finance;
+- pagos/contratación productiva.
 
 ## Journeys canónicos
 
@@ -102,9 +118,7 @@ Por eso ninguna superficie puede afirmar guardado, sincronización, ofertas o ap
 
 ## Desarrollo local
 
-Requisitos:
-
-- Node.js 22.12 o superior.
+Requisitos: Node.js 22.12 o superior.
 
 ```bash
 npm ci
@@ -126,8 +140,9 @@ Leer antes de cambios sustanciales:
 - `knowledge/00_PRODUCT/JOURNEY-MAP.md`
 - `knowledge/00_PRODUCT/INFORMATION-ARCHITECTURE.md`
 - `knowledge/00_PRODUCT/STATUS-V0.10.md`
-- `knowledge/00_PRODUCT/PRODUCT-INTEGRATION-V0.10.md`
 - `knowledge/00_PRODUCT/STATUS-V0.11.md`
+- `knowledge/00_PRODUCT/MORTGAGE-AUDIT-ASSISTED-V0.12.md`
+- `knowledge/00_PRODUCT/STATUS-V0.12.md`
 - `knowledge/40_DOMAIN/LOAN-HEALTH-CONTRACT-V0.11.md`
 - `skills/housing-finance-design-orchestrator/SKILL.md`
 
