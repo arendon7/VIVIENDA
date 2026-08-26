@@ -48,7 +48,7 @@ test.describe("Buyer affordability v0.13", () => {
 
     await expect(page.getByText("No VIS", { exact: true })).toBeVisible();
     await expect(page.getByText("VIS", { exact: true })).toBeVisible();
-    await expect(page.getByText("Si no lo sabes, mostramos ambas referencias sin adivinar la clasificación.")).toBeVisible();
+    await expect(page.getByRole("article")).toHaveCount(2);
   });
 
   test("shows a valid zero-room result when existing debt exhausts the planning benchmark", async ({ page }) => {
