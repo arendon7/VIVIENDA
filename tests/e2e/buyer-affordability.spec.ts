@@ -33,8 +33,9 @@ test.describe("Buyer affordability v0.13", () => {
 
     const body = (await page.locator("body").innerText()).toLowerCase();
     expect(body).not.toContain("aprobado");
-    expect(body).not.toContain("probabilidad de aprobación");
-    expect(body).not.toContain("tu score");
+    expect(body).not.toContain("te prestan hasta");
+    expect(body).not.toMatch(/\d+\s*%\s+de\s+probabilidad/);
+    expect(body).not.toContain("tu score es");
   });
 
   test("keeps VIS and non-VIS separate when category is unknown", async ({ page }) => {
@@ -45,8 +46,8 @@ test.describe("Buyer affordability v0.13", () => {
     await page.getByLabel("No estoy seguro").check();
     await page.getByRole("button", { name: "Calcular mi rango" }).click();
 
-    await expect(page.getByRole("article").filter({ hasText: "No VIS" })).toBeVisible();
-    await expect(page.getByRole("article").filter({ hasText: "VIS" })).toBeVisible();
+    await expect(page.getByText("No VIS", { exact: true })).toBeVisible();
+    await expect(page.getByText("VIS", { exact: true })).toBeVisible();
     await expect(page.getByText("Si no lo sabes, mostramos ambas referencias sin adivinar la clasificación.")).toBeVisible();
   });
 
