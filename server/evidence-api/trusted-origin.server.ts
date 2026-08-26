@@ -1,8 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+import { rebindRequestToConfiguredOrigin } from "./trusted-origin-policy";
 
 function failClosedOriginPolicy(): Response {
   return new Response(
@@ -25,18 +24,6 @@ function failClosedOriginPolicy(): Response {
   );
 }
 
-export function canonicalTrustedOrigin(raw: string | undefined): string | null {
-  if (!raw || raw.trim() === "") return null;
-  try {
-    const url = new URL(raw.trim());
-    if (url.username || url.password || url.pathname !== "/" || url.search || url.hash) return null;
-    if (url.protocol !== "https:" && !(url.protocol === "http:" && LOCAL_HOSTS.has(url.hostname))) return null;
-    return url.origin;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Rebind request.url to a server-configured application origin before the inner HTTP boundary
  * performs its same-origin comparison. This makes the configured origin authoritative instead
@@ -46,16 +33,5 @@ export function bindRequestToTrustedOrigin(
   request: Request,
   rawTrustedOrigin = process.env.VIVIENDA_TRUSTED_ORIGIN,
 ): Request | Response {
-  const trustedOrigin = canonicalTrustedOrigin(rawTrustedOrigin);
-  if (!trustedOrigin) return failClosedOriginPolicy();
-
-  let incoming: URL;
-  try {
-    incoming = new URL(request.url);
-  } catch {
-    return failClosedOriginPolicy();
-  }
-
-  const trustedUrl = `${trustedOrigin}${incoming.pathname}${incoming.search}`;
-  return new Request(trustedUrl, request);
+  return rebindRequestToConfiguredOrigin(request, rawTrustedOrigin) ?? failClosedOriginPolicy();
 }
