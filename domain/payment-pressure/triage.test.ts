@@ -127,13 +127,14 @@ describe("Payment Pressure triage v0.14", () => {
     expect(result.notices.some((notice) => notice.includes("Leasing habitacional requiere reglas propias"))).toBe(true);
   });
 
-  it("contains no automated procedural deadline, countdown or guaranteed restructuring claim", () => {
+  it("contains no automated procedural deadline, countdown or unconditional restructuring guarantee", () => {
     const result = evaluate({ paymentState: "executive", materialEconomicChange: "yes" });
     const serialized = JSON.stringify(result).toLowerCase();
 
     expect(serialized).not.toContain("countdown");
     expect(serialized).not.toContain("vence en");
-    expect(serialized).not.toContain("debe aceptar");
+    expect(serialized).not.toContain("tu entidad debe aceptar");
+    expect(serialized).not.toContain("reestructuración garantizada");
     expect(result.legalStrategyAutomated).toBe(false);
   });
 });
