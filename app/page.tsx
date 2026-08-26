@@ -21,6 +21,7 @@ export default function HomePage() {
         <a className="brand" href="/">VIVIENDA</a>
         <nav aria-label="Principal">
           <a className="nav-link" href="#como-funciona">Cómo funciona</a>
+          <a className="nav-link" href="/comprar/cuanto-puedo-comprar">Comprar vivienda</a>
           <a className="nav-link" href="/mi-vivienda">Mi Vivienda · preview</a>
         </nav>
       </header>
@@ -37,7 +38,7 @@ export default function HomePage() {
               <a className="button button-primary" href="/revisar">Revisar mi crédito</a>
               <a className="button button-secondary" href="/mi-vivienda">Ver Mi Vivienda · preview</a>
             </div>
-            <p className="trust-line">No necesitas cédula, teléfono ni extracto para empezar. La ruta para compra de vivienda se desarrollará como un recorrido separado.</p>
+            <p className="trust-line">No necesitas cédula, teléfono ni extracto para empezar. Si todavía no tienes crédito, la ruta de compra usa un cálculo separado y no desplaza este análisis.</p>
           </div>
 
           <aside className="surface hero-instrument" aria-label="Ejemplo de análisis">
@@ -59,6 +60,17 @@ export default function HomePage() {
             <article className="surface feature"><span className="feature-index">01</span><h3>Describe tu crédito</h3><p>Con pocos datos aproximados obtenemos una primera lectura sin pedir identidad ni teléfono.</p></article>
             <article className="surface feature"><span className="feature-index">02</span><h3>Compara decisiones</h3><p>Separamos el efecto de tus propios abonos, la tasa, el plazo y otras variables relevantes.</p></article>
             <article className="surface feature"><span className="feature-index">03</span><h3>Elige cómo actuar</h3><p>Si puedes hacerlo directamente, te lo decimos. Si necesitas precisión o defensa, el siguiente paso cambia.</p></article>
+          </div>
+        </section>
+
+        <section className="shell section" aria-labelledby="buyer-path-heading">
+          <div className="surface choice-card">
+            <p className="eyebrow">Todavía no tengo crédito</p>
+            <h2 id="buyer-path-heading">¿Estás planeando comprar vivienda?</h2>
+            <p className="section-copy">Calcula una referencia de cuota e inicial antes de comparar financiación. El primer resultado no pide nombre, teléfono, correo ni score.</p>
+            <div className="actions">
+              <a className="button button-secondary" href="/comprar/cuanto-puedo-comprar">Calcular cuánto puedo planear</a>
+            </div>
           </div>
         </section>
 
