@@ -35,6 +35,25 @@ const statusLabels = {
   legal_review: "Revisión jurídica necesaria",
 } as const;
 
+const reasonLabels: Record<string, string> = {
+  covered_housing_mortgage: "El producto fue clasificado como crédito hipotecario de vivienda.",
+  positive_extra_principal: "Declaraste capacidad para hacer un abono adicional a capital.",
+  goal_finish_sooner: "Tu objetivo declarado es terminar antes.",
+  goal_lower_payment: "Tu objetivo declarado es bajar la cuota.",
+  article20_window_open: "La fecha de evaluación está dentro de enero-febrero.",
+  article20_window_closed: "La ventana especial enero-febrero no está abierta en esta fecha.",
+  material_economic_change_reported: "Reportaste un cambio material en tu capacidad real de pago.",
+  post_restructure_first_installment_ratio_available: "Tenemos ingreso familiar y primera cuota propuesta para validar la estructura.",
+  proposed_first_installment_above_40_percent: "La primera cuota propuesta supera el 40% del ingreso familiar acreditado.",
+  binding_transfer_offer_available: "Declaraste que ya existe una oferta vinculante de un nuevo acreedor.",
+  binding_transfer_offer_missing: "Todavía no existe una oferta vinculante declarada.",
+  unexplained_charge_or_allocation_issue: "Reportaste un cobro o aplicación de abono que requiere auditoría.",
+  material_document_or_contract_conflict: "Existe un conflicto material entre documento, contrato o datos del caso.",
+  executive_proceeding_reported: "Reportaste un proceso ejecutivo en curso.",
+  embargo_or_auction_reported: "Reportaste embargo, secuestro o remate.",
+  housing_regime_not_established: "Todavía no está confirmado que el producto pertenezca al régimen especial de vivienda.",
+};
+
 function bogotaToday() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Bogota",
@@ -62,37 +81,39 @@ export function OpportunityWorkspace({ precision }: { precision: OpportunityPrec
   const [auditIssue, setAuditIssue] = useState(false);
   const asOfDate = bogotaToday();
 
-  const result = useMemo(
-    () =>
-      evaluateOpportunityRoutes({
-        asOfDate,
-        precision,
-        productType,
-        modality: "unknown",
-        paymentState,
-        extraPaymentCapacity: optionalPositive(extraPayment),
-        wantsFinishSooner: goal === "finish_sooner",
-        wantsLowerPayment: goal === "lower_payment",
-        materialEconomicChange,
-        currentAccreditedFamilyIncome: optionalPositive(familyIncome),
-        proposedRestructuredFirstInstallment: optionalPositive(proposedInstallment),
-        hasBindingTransferOffer: bindingOffer,
-        unexplainedChargeOrAllocationIssue: auditIssue,
-      }),
-    [
+  const result = useMemo(() => {
+    const extraPaymentCapacity = optionalPositive(extraPayment);
+    const currentAccreditedFamilyIncome = optionalPositive(familyIncome);
+    const proposedRestructuredFirstInstallment = optionalPositive(proposedInstallment);
+
+    return evaluateOpportunityRoutes({
       asOfDate,
-      auditIssue,
-      bindingOffer,
-      extraPayment,
-      familyIncome,
-      goal,
-      materialEconomicChange,
-      paymentState,
       precision,
       productType,
-      proposedInstallment,
-    ],
-  );
+      modality: "unknown",
+      paymentState,
+      wantsFinishSooner: goal === "finish_sooner",
+      wantsLowerPayment: goal === "lower_payment",
+      materialEconomicChange,
+      hasBindingTransferOffer: bindingOffer,
+      unexplainedChargeOrAllocationIssue: auditIssue,
+      ...(extraPaymentCapacity !== undefined ? { extraPaymentCapacity } : {}),
+      ...(currentAccreditedFamilyIncome !== undefined ? { currentAccreditedFamilyIncome } : {}),
+      ...(proposedRestructuredFirstInstallment !== undefined ? { proposedRestructuredFirstInstallment } : {}),
+    });
+  }, [
+    asOfDate,
+    auditIssue,
+    bindingOffer,
+    extraPayment,
+    familyIncome,
+    goal,
+    materialEconomicChange,
+    paymentState,
+    precision,
+    productType,
+    proposedInstallment,
+  ]);
 
   return (
     <section className="surface form-card" style={{ marginTop: 20 }} aria-labelledby="opportunity-workspace-title">
@@ -253,7 +274,9 @@ export function OpportunityWorkspace({ precision }: { precision: OpportunityPrec
                 <div className="extraction-actions" style={{ alignItems: "stretch" }}>
                   <div>
                     <strong>Por qué aparece</strong>
-                    <p className="section-copy">{routeItem.reasonCodes.join(" · ")}</p>
+                    <ul>
+                      {routeItem.reasonCodes.map((code) => <li key={code}>{reasonLabels[code] ?? "Existe una condición relevante para esta ruta."}</li>)}
+                    </ul>
                   </div>
 
                   {routeItem.blockers.length > 0 ? (
