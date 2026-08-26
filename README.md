@@ -6,30 +6,30 @@ Tesis de producto:
 
 **Prepare → Buy → Finance → Manage → Optimize → Protect**
 
-La cuña inicial es el usuario que ya tiene un crédito de vivienda y quiere entender si está pagando de la mejor manera disponible. El comprador potencial es la segunda ruta de adquisición.
+La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y quiere entender si está pagando de la mejor manera disponible. El comprador potencial es la segunda ruta de adquisición.
 
 ## Estado actual
 
-La línea de desarrollo está apilada y validada por slices. v0.10 y el slice funcional v0.11 quedaron verdes. El slice activo es:
+Los slices v0.10–v0.12 quedaron verdes. El slice activo es:
 
-**v0.12 — primera ruta asistida: Auditoría Hipotecaria R7**
+**v0.13 — Journey 2 / Buyer Affordability**
 
-Base v0.11:
+Base v0.12:
 
-`6dec13bc7ba35abc05020bcabfb60e7a10a6de7f`
+`01c55eb115be1f1c4c48ccda5c2fe5daec0a7dcd`
 
 Rama activa:
 
-`product/mortgage-audit-assisted-v0.12`
+`product/buyer-affordability-v0.13`
 
 ## Superficies ejecutables
 
-- `/` — Home Warm Path.
-- `/revisar` — Quick Check anónimo.
-- C1 → C2 — simulación modelada para el caso financiero soportado.
+- `/` — Home Warm Path; existing borrower continúa como CTA primario.
+- `/revisar` — Quick Check anónimo para crédito existente.
 - `/verificar` — flujo de demostración para revisión/reconciliación documental.
 - `/mi-vivienda` — Mortgage Twin + Loan Health V1 + precisión + siguientes acciones.
 - `/auditoria-hipotecaria` — preview de la primera ruta asistida R7, sin contratación ni representación activa.
+- `/comprar/cuanto-puedo-comprar` — Journey 2 C1→C2 para comprador potencial, sin identidad antes del primer valor.
 
 ## Contrato de precisión
 
@@ -39,6 +39,49 @@ Rama activa:
 - **C3** — verificado documentalmente.
 
 C3 requiere evidencia realmente derivada de documento y reconciliación completa de campos materiales. Una confirmación manual o evidencia simulada no concede C3.
+
+## Buyer Affordability v0.13
+
+C1 usa únicamente:
+
+- ingreso neto mensual del hogar;
+- cuotas recurrentes de otras deudas;
+- cuota inicial disponible;
+- VIS / no VIS / no sabe.
+
+No pide nombre, correo, teléfono, cédula, score ni documentos.
+
+### Planificación vs regulación
+
+v0.13 mantiene separados:
+
+- **30%** — benchmark educativo de planificación sobre endeudamiento recurrente total e ingreso neto declarado;
+- **40%** — techo regulatorio vigente de primera cuota sobre ingreso familiar acreditable;
+- **70% no VIS / 80% VIS** — referencias máximas regulatorias de financiación/LTV.
+
+El 30% no es una regla bancaria y el 40% no es una recomendación de sostenibilidad.
+
+### C2
+
+Solo después del resultado C1 el usuario puede suministrar:
+
+- tasa EA del escenario;
+- plazo 5–30 años soportado por v0.13;
+- costos mensuales adicionales opcionales.
+
+No existe tasa de mercado automática.
+
+### Invariante de precio corregido
+
+El principal modelado limita el crédito; no se fuerza la compra a financiarse exactamente al LTV máximo.
+
+```text
+propertyCeilingFromCreditAndCash = modeledPrincipal + availableDownPayment
+propertyCeilingFromDownPayment = availableDownPayment / (1 - maxLtv)
+modeledPropertyCeiling = min(propertyCeilingFromCreditAndCash, propertyCeilingFromDownPayment)
+```
+
+Así una inicial mayor puede aumentar el valor modelado hasta que la restricción estructural LTV/inicial sea la dominante.
 
 ## Loan Health V1
 
@@ -63,24 +106,18 @@ Secuencia mínima:
 
 `CASE_CREATED → DATA_AUTHORIZATION_RECORDED → SERVICE_AGREEMENT_ACCEPTED → EVIDENCE_REQUESTED → EVIDENCE_ATTACHED → EVIDENCE_VERIFIED → PROFESSIONAL_REVIEW_REQUESTED → PROFESSIONAL_REVIEW_COMPLETED`
 
-Aceptar el servicio:
-
-- no concede facultad extrajudicial;
-- no concede poder judicial;
-- no crea una radicación;
-- no garantiza ahorro, corrección ni resultado.
-
-Si R10 aparece por proceso ejecutivo/embargo/remate, esa ruta domina y la auditoría R7 ordinaria debe re-rutearse.
+Aceptar el servicio no concede facultad extrajudicial, poder judicial ni crea una radicación.
 
 ## Arquitectura de dominio implementada
 
-La cadena actual separa:
+La cadena separa:
 
-`Mortgage Twin → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
+`Buyer Affordability / Mortgage Twin → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
 
 Incluye:
 
-- motor financiero inicial con golden vectors;
+- motores financieros con golden vectors;
+- buyer affordability v0.13;
 - provenance/trust contracts;
 - Opportunity Router;
 - Loan Health evaluator;
@@ -94,16 +131,16 @@ Incluye:
 
 ## Provider-ready no significa live
 
-En la conexión actual todavía no existe:
+Todavía no existe:
 
 - proyecto Supabase propio de VIVIENDA;
 - autenticación productiva;
 - persistencia real de perfiles/casos/documentos;
-- Storage live;
-- OCR productivo;
+- Storage/OCR live;
 - proyecto/deployment Vercel de VIVIENDA;
 - bank adapters;
 - Open Finance;
+- tasas de mercado automáticas;
 - pagos/contratación productiva.
 
 ## Journeys canónicos
@@ -143,7 +180,10 @@ Leer antes de cambios sustanciales:
 - `knowledge/00_PRODUCT/STATUS-V0.11.md`
 - `knowledge/00_PRODUCT/MORTGAGE-AUDIT-ASSISTED-V0.12.md`
 - `knowledge/00_PRODUCT/STATUS-V0.12.md`
+- `knowledge/00_PRODUCT/STATUS-V0.13.md`
+- `knowledge/20_DESIGN/BUYER-AFFORDABILITY-UX-SPEC-V0.13.md`
 - `knowledge/40_DOMAIN/LOAN-HEALTH-CONTRACT-V0.11.md`
+- `knowledge/40_DOMAIN/BUYER-AFFORDABILITY-CONTRACT-V0.13.md`
 - `skills/housing-finance-design-orchestrator/SKILL.md`
 
 La precedencia es: verdad jurídica/financiera → privacidad/seguridad → contratos de dominio → journey/UX → conversión → diseño → skills externas.
