@@ -5,6 +5,7 @@ import {
   PersistenceBoundaryError,
   type AppendCaseEventCommand,
   type Clock,
+  type GrantDataAuthorizationCommand,
   type IdGenerator,
   type Principal,
 } from "./contracts";
@@ -54,22 +55,29 @@ async function createCase(service: CasePersistenceService, principal: Principal 
   });
 }
 
-async function grantAuthorization(service: CasePersistenceService, caseId: string, expectedVersion = 1) {
+async function grantAuthorization(
+  service: CasePersistenceService,
+  caseId: string,
+  expectedVersion = 1,
+  overrides: Partial<GrantDataAuthorizationCommand> = {},
+) {
   return service.grantDataAuthorization(clientA, caseId, expectedVersion, {
-    idempotencyKey: "grant-auth-1",
-    consentVersion: "privacy-v1",
-    purposes: ["mortgage_analysis", "case_management"],
+    idempotencyKey: overrides.idempotencyKey ?? "grant-auth-1",
+    consentVersion: overrides.consentVersion ?? "privacy-v1",
+    purposes: overrides.purposes ?? ["mortgage_analysis", "case_management"],
+  });
+}
+
+async function prepareStatement(service: CasePersistenceService, caseId: string) {
+  return service.prepareEvidenceUpload(clientA, caseId, {
+    kind: "statement",
+    legalDataCategory: "financial_credit_semiprivate",
+    securityTier: "restricted",
   });
 }
 
 async function finalizeStatement(service: CasePersistenceService, caseId: string, expectedVersion = 2) {
-  const intent = await service.prepareEvidenceUpload(clientA, caseId, {
-    kind: "statement",
-    legalDataCategory: "financial_credit_semiprivate",
-    securityTier: "restricted",
-    displayName: "Juan-Perez-CC-123456789.pdf",
-  });
-
+  const intent = await prepareStatement(service, caseId);
   const result = await service.finalizeEvidenceUpload(clientA, caseId, {
     idempotencyKey: "finalize-statement-1",
     intentId: intent.intentId,
@@ -83,12 +91,11 @@ async function finalizeStatement(service: CasePersistenceService, caseId: string
       verifiedAt: "2026-08-26T06:31:00.000Z",
     },
   });
-
   return { intent, result };
 }
 
 describe("Persistence & Identity Boundary v0.6", () => {
-  it("requires authentication and only lets the client create its own persisted case", async () => {
+  it("requires authentication and creates server-owned identity fields", async () => {
     const { service } = setup();
 
     await expect(createCase(service, { kind: "anonymous" })).rejects.toMatchObject({ code: "authentication_required" });
@@ -98,12 +105,12 @@ describe("Persistence & Identity Boundary v0.6", () => {
     expect(created.kind).toBe("created");
     expect(created.model.caseId).toMatch(/^case_/);
     expect(created.model.projection.version).toBe(1);
-    expect(created.model.journal[0]?.event.eventId).toMatch(/^evt_/);
-    expect(created.model.journal[0]?.event.actor).toEqual({ kind: "client", actorId: "sub_client_a" });
-    expect(created.model.journal[0]?.recordedBySubjectRef).toBe("sub_client_a");
+    expect(created.model.timeline[0]?.eventId).toMatch(/^evt_/);
+    expect(created.model.timeline[0]?.actor).toEqual({ kind: "client" });
+    expect((created.model.timeline[0]?.actor as { actorId?: string }).actorId).toBeUndefined();
   });
 
-  it("makes create-case retries idempotent and rejects semantic reuse of the same key", async () => {
+  it("makes case creation idempotent and rejects semantic key reuse", async () => {
     const { service } = setup();
     const first = await createCase(service);
     const retry = await createCase(service);
@@ -122,7 +129,7 @@ describe("Persistence & Identity Boundary v0.6", () => {
     ).rejects.toMatchObject({ code: "idempotency_conflict" });
   });
 
-  it("prevents cross-client IDOR and requires explicit lawyer assignment", async () => {
+  it("prevents client IDOR and requires explicit lawyer assignment", async () => {
     const { service } = setup();
     const created = await createCase(service);
 
@@ -130,11 +137,10 @@ describe("Persistence & Identity Boundary v0.6", () => {
     await expect(service.readCase(lawyer, created.model.caseId)).rejects.toMatchObject({ code: "forbidden" });
 
     await service.assignLawyer(admin, created.model.caseId, "sub_lawyer_1");
-    const lawyerView = await service.readCase(lawyer, created.model.caseId);
-    expect(lawyerView.caseId).toBe(created.model.caseId);
+    expect((await service.readCase(lawyer, created.model.caseId)).caseId).toBe(created.model.caseId);
   });
 
-  it("keeps service read and system-append scopes separate", async () => {
+  it("keeps service read, system-write and external-record scopes separate", async () => {
     const { service } = setup();
     const created = await createCase(service);
     const noScopes: Principal = { kind: "service", subjectRef: "svc_worker_1", scopes: [] };
@@ -154,16 +160,12 @@ describe("Persistence & Identity Boundary v0.6", () => {
       payload: { reason: "Ruta requiere revisión humana." },
     };
     await expect(service.appendEvent(readOnly, created.model.caseId, 1, command)).rejects.toMatchObject({ code: "forbidden" });
-
-    const result = await service.appendEvent(writer, created.model.caseId, 1, command);
-    expect(result.model.journal.at(-1)?.event.actor.kind).toBe("system");
-    expect(result.model.journal.at(-1)?.recordedBySubjectRef).toBe("svc_worker_3");
+    expect((await service.appendEvent(writer, created.model.caseId, 1, command)).model.timeline.at(-1)?.actor.kind).toBe("system");
   });
 
-  it("derives actor server-side even when a malicious runtime object tries to inject one", async () => {
+  it("derives actor and recordedAt server-side despite runtime injection", async () => {
     const { service } = setup();
     const created = await createCase(service);
-
     const malicious = {
       type: "PROFESSIONAL_REVIEW_REQUESTED",
       idempotencyKey: "malicious-actor",
@@ -173,16 +175,15 @@ describe("Persistence & Identity Boundary v0.6", () => {
     } as unknown as AppendCaseEventCommand;
 
     const result = await service.appendEvent(clientA, created.model.caseId, 1, malicious);
-    const persisted = result.model.journal.at(-1)!;
-    expect(persisted.event.actor).toEqual({ kind: "client", actorId: "sub_client_a" });
-    expect(persisted.event.recordedAt).toBe("2026-08-26T06:30:00.000Z");
+    const persisted = result.model.timeline.at(-1)!;
+    expect(persisted.actor).toEqual({ kind: "client" });
+    expect(persisted.recordedAt).toBe("2026-08-26T06:30:00.000Z");
   });
 
   it("does not let admin impersonate a lawyer for professional conclusions", async () => {
     const { service } = setup();
     const created = await createCase(service);
     await service.assignLawyer(admin, created.model.caseId, "sub_lawyer_1");
-
     await service.appendEvent(admin, created.model.caseId, 1, {
       type: "PROFESSIONAL_REVIEW_REQUESTED",
       idempotencyKey: "review-request-admin",
@@ -197,15 +198,18 @@ describe("Persistence & Identity Boundary v0.6", () => {
       }),
     ).rejects.toThrow(/solo un actor lawyer/i);
 
-    const lawyerResult = await service.appendEvent(lawyer, created.model.caseId, 2, {
-      type: "PROFESSIONAL_REVIEW_COMPLETED",
-      idempotencyKey: "review-complete-lawyer",
-      payload: { summary: "Conclusión jurídica profesional." },
-    });
-    expect(lawyerResult.model.projection.capabilities.professionalReviewCompleted).toBe(true);
+    expect(
+      (
+        await service.appendEvent(lawyer, created.model.caseId, 2, {
+          type: "PROFESSIONAL_REVIEW_COMPLETED",
+          idempotencyKey: "review-complete-lawyer",
+          payload: { summary: "Conclusión jurídica profesional." },
+        })
+      ).model.projection.capabilities.professionalReviewCompleted,
+    ).toBe(true);
   });
 
-  it("uses strict idempotency for event retries and rejects incompatible reuse", async () => {
+  it("uses strict idempotency for event retries", async () => {
     const { service } = setup();
     const created = await createCase(service);
     const command: AppendCaseEventCommand = {
@@ -214,9 +218,7 @@ describe("Persistence & Identity Boundary v0.6", () => {
       payload: { agreementVersion: "services-v1" },
     };
 
-    const first = await service.appendEvent(clientA, created.model.caseId, 1, command);
-    expect(first.kind).toBe("appended");
-
+    expect((await service.appendEvent(clientA, created.model.caseId, 1, command)).kind).toBe("appended");
     const retry = await service.appendEvent(clientA, created.model.caseId, 1, command);
     expect(retry.kind).toBe("duplicate");
     expect(retry.model.projection.version).toBe(2);
@@ -229,27 +231,20 @@ describe("Persistence & Identity Boundary v0.6", () => {
     ).rejects.toMatchObject({ code: "idempotency_conflict" });
   });
 
-  it("rechecks expectedVersion and uniqueness inside the persistence adapter", async () => {
+  it("rechecks version, sequence and eventId uniqueness inside the store", async () => {
     const { service, store } = setup();
     const created = await createCase(service);
     const snapshot = await store.loadCase(created.model.caseId);
     const first = snapshot!.journal[0]!;
-
     const forged = {
       ...first,
       semanticFingerprint: "forged-fingerprint",
-      event: {
-        ...first.event,
-        eventId: "evt_manual_2",
-        idempotencyKey: "manual-append",
-        sequence: 2,
-      },
+      event: { ...first.event, eventId: "evt_manual_2", idempotencyKey: "manual-append", sequence: 2 },
     };
 
-    await expect(
-      store.appendJournalAtomic({ caseId: created.model.caseId, expectedVersion: 0, record: forged }),
-    ).rejects.toMatchObject({ code: "version_conflict" });
-
+    await expect(store.appendJournalAtomic({ caseId: created.model.caseId, expectedVersion: 0, record: forged })).rejects.toMatchObject({
+      code: "version_conflict",
+    });
     await expect(
       store.appendJournalAtomic({
         caseId: created.model.caseId,
@@ -257,7 +252,6 @@ describe("Persistence & Identity Boundary v0.6", () => {
         record: { ...forged, event: { ...forged.event, sequence: 1 } },
       }),
     ).rejects.toMatchObject({ code: "duplicate_sequence" });
-
     await expect(
       store.appendJournalAtomic({
         caseId: created.model.caseId,
@@ -267,11 +261,10 @@ describe("Persistence & Identity Boundary v0.6", () => {
     ).rejects.toMatchObject({ code: "duplicate_event_id" });
   });
 
-  it("returns defensive snapshots instead of mutable storage references", async () => {
+  it("returns defensive storage snapshots", async () => {
     const { service, store } = setup();
     const created = await createCase(service);
     const snapshot = await store.loadCase(created.model.caseId);
-
     snapshot!.access.assignedLawyerSubjectRefs.push("sub_intruder");
     (snapshot!.journal[0]!.event.payload as { track: string }).track = "mutated";
 
@@ -280,32 +273,46 @@ describe("Persistence & Identity Boundary v0.6", () => {
     expect((reloaded!.journal[0]!.event.payload as { track: string }).track).toBe("self_service");
   });
 
-  it("requires active, purpose-bound data authorization before preparing evidence", async () => {
+  it("requires an active authorization with an evidence-compatible purpose", async () => {
     const { service } = setup();
     const created = await createCase(service);
 
-    await expect(
-      service.prepareEvidenceUpload(clientA, created.model.caseId, {
-        kind: "statement",
-        legalDataCategory: "financial_credit_semiprivate",
-        securityTier: "restricted",
-        displayName: "ignored.pdf",
-      }),
-    ).rejects.toMatchObject({ code: "data_authorization_required" });
+    await expect(prepareStatement(service, created.model.caseId)).rejects.toMatchObject({ code: "data_authorization_required" });
 
-    const granted = await grantAuthorization(service, created.model.caseId);
-    expect(granted.model.dataAuthorization?.status).toBe("active");
-    expect(granted.model.dataAuthorization?.purposes).toEqual(["case_management", "mortgage_analysis"]);
+    await grantAuthorization(service, created.model.caseId, 1, {
+      idempotencyKey: "marketing-only",
+      consentVersion: "marketing-v1",
+      purposes: ["marketing"],
+    });
+    await expect(prepareStatement(service, created.model.caseId)).rejects.toMatchObject({ code: "data_authorization_required" });
 
-    await service.revokeDataAuthorization(clientA, created.model.caseId, "El titular revocó autorización para nuevos tratamientos.");
-    await expect(
-      service.prepareEvidenceUpload(clientA, created.model.caseId, {
-        kind: "statement",
-        legalDataCategory: "financial_credit_semiprivate",
-        securityTier: "restricted",
-        displayName: "ignored.pdf",
-      }),
-    ).rejects.toMatchObject({ code: "data_authorization_required" });
+    await grantAuthorization(service, created.model.caseId, 2, {
+      idempotencyKey: "case-auth-v2",
+      consentVersion: "privacy-v2",
+      purposes: ["case_management"],
+    });
+    expect((await prepareStatement(service, created.model.caseId)).status).toBe("quarantine");
+  });
+
+  it("retains versioned authorization history, supersedes the prior active version and supports revocation", async () => {
+    const { service, store } = setup();
+    const created = await createCase(service);
+    await grantAuthorization(service, created.model.caseId);
+    const second = await grantAuthorization(service, created.model.caseId, 2, {
+      idempotencyKey: "grant-auth-2",
+      consentVersion: "privacy-v2",
+      purposes: ["legal_service"],
+    });
+
+    expect(second.model.dataAuthorizations).toHaveLength(2);
+    expect(second.model.dataAuthorizations[0]).toMatchObject({ consentVersion: "privacy-v1", status: "superseded" });
+    expect(second.model.dataAuthorizations[1]).toMatchObject({ consentVersion: "privacy-v2", status: "active" });
+    expect(second.model.dataAuthorizations.every((item) => !("subjectRef" in item))).toBe(true);
+
+    const revoked = await service.revokeDataAuthorization(clientA, created.model.caseId, "Revocación solicitada por el titular.");
+    expect(revoked.dataAuthorizations[1]).toMatchObject({ status: "revoked" });
+    expect((await store.loadCase(created.model.caseId))!.dataAuthorizations).toHaveLength(2);
+    await expect(prepareStatement(service, created.model.caseId)).rejects.toMatchObject({ code: "data_authorization_required" });
   });
 
   it("keeps legal data category separate from technical security tier", async () => {
@@ -313,44 +320,33 @@ describe("Persistence & Identity Boundary v0.6", () => {
     const created = await createCase(service);
     await grantAuthorization(service, created.model.caseId);
 
-    const financial = await service.prepareEvidenceUpload(clientA, created.model.caseId, {
-      kind: "statement",
-      legalDataCategory: "financial_credit_semiprivate",
-      securityTier: "restricted",
-      displayName: "not-used.pdf",
-    });
-    expect(financial.legalDataCategory).toBe("financial_credit_semiprivate");
-    expect(financial.securityTier).toBe("restricted");
+    const financial = await prepareStatement(service, created.model.caseId);
+    expect(financial).toMatchObject({ legalDataCategory: "financial_credit_semiprivate", securityTier: "restricted" });
 
     await expect(
       service.prepareEvidenceUpload(clientA, created.model.caseId, {
         kind: "statement",
         legalDataCategory: "financial_credit_semiprivate",
         securityTier: "controlled",
-        displayName: "not-used.pdf",
       }),
     ).rejects.toMatchObject({ code: "invalid_command" });
-
     await expect(
       service.prepareEvidenceUpload(clientA, created.model.caseId, {
         kind: "other",
         legalDataCategory: "sensitive",
         securityTier: "restricted",
-        displayName: "not-used.pdf",
       }),
     ).rejects.toMatchObject({ code: "invalid_command" });
   });
 
-  it("finalizes evidence as metadata + EVIDENCE_ATTACHED without leaking original filename", async () => {
-    const { service } = setup();
+  it("finalizes evidence atomically and keeps storage coordinates out of the normal read model", async () => {
+    const { service, store } = setup();
     const created = await createCase(service);
     await grantAuthorization(service, created.model.caseId);
-
     const { intent, result } = await finalizeStatement(service, created.model.caseId);
-    expect(result.model.projection.version).toBe(3);
-    expect(result.model.projection.stage).toBe("collecting_evidence");
+
+    expect(result.model.projection).toMatchObject({ version: 3, stage: "collecting_evidence" });
     expect(result.model.projection.attachedEvidenceIds).toEqual([intent.evidenceId]);
-    expect(result.model.evidence).toHaveLength(1);
     expect(result.model.evidence[0]).toMatchObject({
       evidenceId: intent.evidenceId,
       legalDataCategory: "financial_credit_semiprivate",
@@ -358,25 +354,20 @@ describe("Persistence & Identity Boundary v0.6", () => {
       displayName: "Extracto hipotecario",
       lifecycle: "active",
     });
+    expect("storageLocator" in result.model.evidence[0]!).toBe(false);
+    expect("checksumSha256" in result.model.evidence[0]!).toBe(false);
+    expect("createdBySubjectRef" in result.model.evidence[0]!).toBe(false);
 
-    const serializedJournal = JSON.stringify(result.model.journal);
-    expect(serializedJournal).not.toContain("Juan-Perez");
-    expect(serializedJournal).not.toContain("123456789.pdf");
-    expect(serializedJournal).not.toContain("obj_statement_0001");
-    expect(result.model.journal.at(-1)?.event.type).toBe("EVIDENCE_ATTACHED");
+    const internal = await store.loadCase(created.model.caseId);
+    expect(internal!.evidence[0]).toMatchObject({ storageLocator: "obj_statement_0001", checksumSha256: "a".repeat(64) });
+    expect(result.model.timeline.at(-1)?.type).toBe("EVIDENCE_ATTACHED");
   });
 
-  it("does not activate evidence metadata when a stale expectedVersion blocks finalization", async () => {
+  it("does not activate evidence metadata after a stale-version finalization", async () => {
     const { service, store } = setup();
     const created = await createCase(service);
     await grantAuthorization(service, created.model.caseId);
-
-    const intent = await service.prepareEvidenceUpload(clientA, created.model.caseId, {
-      kind: "statement",
-      legalDataCategory: "financial_credit_semiprivate",
-      securityTier: "restricted",
-      displayName: "ignored.pdf",
-    });
+    const intent = await prepareStatement(service, created.model.caseId);
 
     await service.appendEvent(clientA, created.model.caseId, 2, {
       type: "SERVICE_AGREEMENT_ACCEPTED",
@@ -400,13 +391,12 @@ describe("Persistence & Identity Boundary v0.6", () => {
       }),
     ).rejects.toThrow(/expectedVersion 2/i);
 
-    const snapshot = await store.loadCase(created.model.caseId);
-    expect(snapshot!.evidence).toEqual([]);
+    expect((await store.loadCase(created.model.caseId))!.evidence).toEqual([]);
     expect((await store.loadEvidenceIntent(intent.intentId))?.status).toBe("quarantine");
   });
 
-  it("tombstones document location without deleting the historical event or breaking replay", async () => {
-    const { service } = setup();
+  it("tombstones storage material without deleting the historical event or breaking replay", async () => {
+    const { service, store } = setup();
     const created = await createCase(service);
     await grantAuthorization(service, created.model.caseId);
     const { intent, result } = await finalizeStatement(service, created.model.caseId);
@@ -418,20 +408,16 @@ describe("Persistence & Identity Boundary v0.6", () => {
       intent.evidenceId,
       "Solicitud de supresión aplicable al objeto almacenado.",
     );
-
-    expect(tombstoned.evidence[0]).toMatchObject({
-      evidenceId: intent.evidenceId,
-      lifecycle: "tombstoned",
-      storageLocator: null,
-      checksumSha256: null,
-      byteSize: null,
-    });
-    expect(tombstoned.journal.some((item) => item.event.type === "EVIDENCE_ATTACHED")).toBe(true);
+    expect(tombstoned.evidence[0]).toMatchObject({ evidenceId: intent.evidenceId, lifecycle: "tombstoned" });
+    expect(tombstoned.timeline.some((event) => event.type === "EVIDENCE_ATTACHED")).toBe(true);
     expect(tombstoned.projection).toEqual(before);
     expect(await service.rebuildProjection(clientA, created.model.caseId)).toEqual(before);
+
+    const internal = (await store.loadCase(created.model.caseId))!.evidence[0]!;
+    expect(internal).toMatchObject({ storageLocator: null, checksumSha256: null, byteSize: null });
   });
 
-  it("rejects filenames, URLs, emails, base64-like material and non-opaque evidence references from the journal", async () => {
+  it("rejects emails, filenames and non-opaque evidence references from the Case Log", async () => {
     const { service } = setup();
     const created = await createCase(service);
 
@@ -453,17 +439,15 @@ describe("Persistence & Identity Boundary v0.6", () => {
     ).rejects.toMatchObject({ code: "invalid_evidence_reference" });
   });
 
-  it("records an external response source separately from the authenticated lawyer who incorporated it", async () => {
-    const { service } = setup();
+  it("separates an external fact source from the authenticated recorder and redacts audit IDs from normal reads", async () => {
+    const { service, store } = setup();
     const created = await createCase(service);
     await service.assignLawyer(admin, created.model.caseId, "sub_lawyer_1");
-
     await service.appendEvent(clientA, created.model.caseId, 1, {
       type: "SUBMISSION_RECORDED",
       idempotencyKey: "client-submission",
       payload: { submittedBy: "client", channel: "PQR", reference: "RAD-100" },
     });
-
     const response = await service.appendEvent(lawyer, created.model.caseId, 2, {
       type: "RESPONSE_RECORDED",
       idempotencyKey: "external-response",
@@ -471,10 +455,13 @@ describe("Persistence & Identity Boundary v0.6", () => {
       payload: { source: "Banco", reference: "RESP-200" },
     });
 
-    const record = response.model.journal.at(-1)!;
-    expect(record.event.actor.kind).toBe("external_recorded");
-    expect(record.recordedByPrincipalKind).toBe("lawyer");
-    expect(record.recordedBySubjectRef).toBe("sub_lawyer_1");
+    expect(response.model.timeline.at(-1)?.actor).toEqual({ kind: "external_recorded" });
+    expect(JSON.stringify(response.model)).not.toContain("sub_lawyer_1");
+    expect(JSON.stringify(response.model)).not.toContain("semanticFingerprint");
+    expect(JSON.stringify(response.model)).not.toContain("requestId");
+
+    const internalRecord = (await store.loadCase(created.model.caseId))!.journal.at(-1)!;
+    expect(internalRecord).toMatchObject({ recordedByPrincipalKind: "lawyer", recordedBySubjectRef: "sub_lawyer_1" });
 
     await expect(
       service.appendEvent(clientA, created.model.caseId, 3, {
@@ -486,22 +473,21 @@ describe("Persistence & Identity Boundary v0.6", () => {
     ).rejects.toMatchObject({ code: "forbidden" });
   });
 
-  it("rebuilds projection only from journal records, with no mutable projection source of truth", async () => {
+  it("rebuilds projection only from the journal, never from a mutable read-model cache", async () => {
     const { service } = setup();
     const created = await createCase(service);
     const authorization = await grantAuthorization(service, created.model.caseId);
-
     const rebuilt = await service.rebuildProjection(clientA, created.model.caseId);
     expect(rebuilt).toEqual(authorization.model.projection);
 
     const localMutation = authorization.model.projection as typeof authorization.model.projection & { stage: string };
     localMutation.stage = "cancelled";
     const rebuiltAgain = await service.rebuildProjection(clientA, created.model.caseId);
+    expect(rebuiltAgain).toMatchObject({ version: 2 });
     expect(rebuiltAgain.stage).not.toBe("cancelled");
-    expect(rebuiltAgain.version).toBe(2);
   });
 
-  it("surfaces typed boundary errors for invalid opaque subject references", async () => {
+  it("surfaces typed errors for non-opaque authenticated subject references", async () => {
     const { service } = setup();
     const badPrincipal: Principal = { kind: "client", subjectRef: "person@example.com" };
 
