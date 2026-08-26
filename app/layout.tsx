@@ -5,6 +5,16 @@ export const metadata: Metadata = {
   title: "VIVIENDA",
   description:
     "Herramientas para entender, comparar, optimizar y proteger las decisiones financieras de tu vivienda.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
 };
 
 export default function RootLayout({
