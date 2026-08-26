@@ -55,11 +55,12 @@ export function AffordabilityTool() {
   const [otherHousingCosts, setOtherHousingCosts] = useState("");
   const [c2, setC2] = useState<BuyerAffordabilityResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+  const activeResult = c2 ?? c1;
 
   useEffect(() => {
-    if (c1 || c2) resultRef.current?.focus();
-  }, [c1, c2]);
+    if (activeResult) resultHeadingRef.current?.focus();
+  }, [activeResult]);
 
   const baseInput = useMemo(() => ({
     netHouseholdIncomeMonthly: parseMoney(income),
@@ -130,8 +131,6 @@ export function AffordabilityTool() {
     setError(null);
   }
 
-  const activeResult = c2 ?? c1;
-
   return (
     <div className={`shell ${styles.page}`}>
       <section className={styles.intro}>
@@ -199,25 +198,25 @@ export function AffordabilityTool() {
       ) : null}
 
       {activeResult ? (
-        <div ref={resultRef} tabIndex={-1} aria-live="polite" className={styles.results}>
+        <div aria-live="polite" className={styles.results}>
           {!c2 ? (
             <section className={`surface ${styles.resultHero}`} aria-labelledby="c1-result-heading">
               <div className={styles.resultTopline}>
                 <PrecisionBadge level="C1" />
                 <span>Estimación de planificación</span>
               </div>
-              <h2 id="c1-result-heading">Tu primer rango de planificación</h2>
+              <h2 ref={resultHeadingRef} tabIndex={-1} id="c1-result-heading">Tu primer rango de planificación</h2>
               <div className={styles.primaryNumber}>
                 <span>Cuota mensual para planear</span>
-                <strong>{money(c1.planning.planningHousingPaymentRoom)}</strong>
+                <strong>{money(activeResult.planning.planningHousingPaymentRoom)}</strong>
               </div>
-              {c1.planning.planningHousingPaymentRoom === 0 ? (
+              {activeResult.planning.planningHousingPaymentRoom === 0 ? (
                 <p className={styles.warning}>Con el benchmark de planificación actual no queda espacio mensual para una nueva cuota de vivienda.</p>
               ) : (
                 <p className="section-copy">Es el espacio que queda bajo el benchmark educativo del 30% de endeudamiento recurrente total después de las otras cuotas declaradas.</p>
               )}
               <div className={styles.factRow}>
-                <div><span>Endeudamiento actual declarado</span><strong>{percent.format(c1.planning.currentDebtRatio)}</strong></div>
+                <div><span>Endeudamiento actual declarado</span><strong>{percent.format(activeResult.planning.currentDebtRatio)}</strong></div>
                 <div><span>Benchmark de planificación</span><strong>30%</strong></div>
                 <div><span>Cuota inicial declarada</span><strong>{money(baseInput.availableDownPayment)}</strong></div>
               </div>
@@ -228,7 +227,7 @@ export function AffordabilityTool() {
                 <PrecisionBadge level="C2" />
                 <span>Escenario modelado · pesos · cuota constante</span>
               </div>
-              <h2 id="c2-result-heading">Con estas suposiciones, este es tu rango modelado.</h2>
+              <h2 ref={resultHeadingRef} tabIndex={-1} id="c2-result-heading">Con estas suposiciones, este es tu rango modelado.</h2>
               {c2.scenarios.length === 1 ? (
                 <div className={styles.primaryNumber}>
                   <span>Techo del escenario modelado</span>
