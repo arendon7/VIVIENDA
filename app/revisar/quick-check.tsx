@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DecisionResult, SourceFreshness } from "@/components/vivienda/signature-components";
 
 type Product = "hipotecario" | "leasing" | "unknown";
@@ -49,9 +49,14 @@ export function QuickCheck() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>(initialAnswers);
   const [showResult, setShowResult] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const steps = 5;
   const progress = Math.round(((step + 1) / steps) * 100);
+
+  useEffect(() => {
+    if (showResult) resultRef.current?.focus();
+  }, [showResult]);
 
   const canContinue = useMemo(() => {
     if (step === 2) return Number(answers.balance) > 0;
@@ -87,7 +92,12 @@ export function QuickCheck() {
     ];
 
     return (
-      <div>
+      <div
+        ref={resultRef}
+        tabIndex={-1}
+        aria-live="polite"
+        aria-labelledby="decision-title"
+      >
         <button className="button button-quiet" type="button" onClick={back}>← Editar respuestas</button>
         <div style={{ marginTop: 20 }}>
           <DecisionResult
@@ -118,7 +128,17 @@ export function QuickCheck() {
   return (
     <section className="surface form-card" aria-labelledby="quick-check-title">
       <div className="progress-label">Paso {step + 1} de {steps}</div>
-      <div className="progress-track" aria-hidden="true"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
+      <div
+        className="progress-track"
+        role="progressbar"
+        aria-label="Progreso del Quick Check"
+        aria-valuemin={1}
+        aria-valuemax={steps}
+        aria-valuenow={step + 1}
+        aria-valuetext={`Paso ${step + 1} de ${steps}`}
+      >
+        <div className="progress-fill" style={{ width: `${progress}%` }} />
+      </div>
       <p className="eyebrow" style={{ marginTop: 28 }}>Quick Check</p>
       <h1 id="quick-check-title" style={{ fontSize: "clamp(32px, 6vw, 46px)" }}>Cuéntanos lo mínimo para entender tu crédito.</h1>
       <p className="section-copy">Puedes usar valores aproximados. No necesitamos cédula, teléfono, correo ni extracto en esta etapa.</p>
