@@ -52,7 +52,8 @@ Un mismo `idempotencyKey` no puede producir dos hechos equivalentes. Reintentar 
 ### 3.5 Hecho ≠ intención
 `SUBMISSION_PREPARED` no significa `SUBMISSION_RECORDED`.
 `SERVICE_AGREEMENT_ACCEPTED` no significa que exista poder.
-`RESPONSE_EXPECTED` no significa que exista respuesta.
+`RESPONSE_RECORDED` no significa que la respuesta ya haya sido jurídicamente revisada.
+`RESPONSE_REVIEW_STARTED` no significa que la revisión esté completada.
 `RESOLUTION_RECORDED` no significa que el resultado esté verificado.
 
 ### 3.6 Evidencia para hechos externos
@@ -68,7 +69,10 @@ Se registran por separado:
 Ninguno implica automáticamente a los demás.
 
 ### 3.8 Revisión profesional
-Los eventos que representan conclusión o revisión jurídica sustantiva solo pueden ser producidos por actor profesional autorizado en el modelo de dominio.
+Los eventos que representan inicio o conclusión de revisión jurídica sustantiva solo pueden ser producidos por actor profesional autorizado en el modelo de dominio cuando el contrato así lo exige.
+
+### 3.9 Lifecycle monotónico
+Una proyección no debe “retroceder” semánticamente porque se registre un hecho posterior. Los hitos de análisis se representan mediante eventos explícitos cuando sea necesario distinguir recepción, inicio de revisión y finalización de revisión.
 
 ---
 
@@ -125,6 +129,7 @@ V0.5 reconoce:
 
 ### Respuesta y análisis
 - `RESPONSE_RECORDED`
+- `RESPONSE_REVIEW_STARTED`
 - `RESPONSE_REVIEW_COMPLETED`
 - `NEGOTIATION_STARTED`
 - `ESCALATION_REVIEW_STARTED`
@@ -142,9 +147,14 @@ V0.5 reconoce:
 
 ### Eventos exclusivos de abogado
 - `PROFESSIONAL_REVIEW_COMPLETED`
+- `RESPONSE_REVIEW_STARTED`
 - `RESPONSE_REVIEW_COMPLETED`
 
-V0.5 permite que `lawyer` produzca estos eventos. Un `system` puede clasificar o resumir evidencia, pero no registrar una conclusión profesional como si fuera humana.
+Un `system` puede clasificar o resumir evidencia, solicitar revisión o apoyar el flujo, pero no registrar una revisión jurídica iniciada/completada como si hubiera sido realizada por un abogado.
+
+`RESPONSE_REVIEW_COMPLETED` requiere además que exista previamente `RESPONSE_REVIEW_STARTED`. Esto permite diferenciar tres hechos y tres estados observables:
+
+`RESPONSE_RECORDED → RESPONSE_REVIEW_STARTED → RESPONSE_REVIEW_COMPLETED`
 
 ### Radicación realizada por representante
 Si `SUBMISSION_RECORDED.submittedBy = representative`, debe existir antes `EXTRAJUDICIAL_AUTHORITY_VERIFIED`.
@@ -166,8 +176,29 @@ Debe incluir al menos uno de:
 
 Nunca se crea por haber generado un documento o plan.
 
+Una radicación registrada deriva directamente a `awaiting_response`; no se conserva una etapa durable adicional llamada `submitted`, porque el hecho `SUBMISSION_RECORDED` ya prueba la radicación y el siguiente estado operativo es esperar respuesta.
+
 ### `RESPONSE_RECORDED`
 Requiere `evidenceRefs` o una referencia externa verificable. No puede ser generado por actor `system` como hecho externo autónomo.
+
+Su registro deriva `response_received`, no `response_under_review`. El análisis jurídico comienza solamente cuando existe el evento separado `RESPONSE_REVIEW_STARTED`.
+
+### `RESPONSE_REVIEW_STARTED`
+Requiere:
+- `RESPONSE_RECORDED` previo;
+- actor `lawyer`;
+- una razón no vacía.
+
+Deriva la etapa `response_under_review`.
+
+### `RESPONSE_REVIEW_COMPLETED`
+Requiere:
+- `RESPONSE_RECORDED` previo;
+- `RESPONSE_REVIEW_STARTED` previo;
+- actor `lawyer`;
+- summary no vacío.
+
+Deriva la etapa `response_reviewed`. Completar la revisión nunca devuelve el caso a `response_received`.
 
 ### `RESOLUTION_RECORDED`
 Requiere evidencia del resultado comunicado/observado.
@@ -187,10 +218,10 @@ V0.5 usa una proyección simple y legible:
 4. `under_review`
 5. `ready_to_prepare`
 6. `preparing_submission`
-7. `submitted`
-8. `awaiting_response`
-9. `response_received`
-10. `response_under_review`
+7. `awaiting_response`
+8. `response_received`
+9. `response_under_review`
+10. `response_reviewed`
 11. `negotiating`
 12. `escalation_review`
 13. `resolved_unverified`
@@ -199,6 +230,14 @@ V0.5 usa una proyección simple y legible:
 16. `cancelled`
 
 No todos los casos recorren todas las etapas. El track `self_service` puede omitir revisión profesional o contrato de servicios.
+
+`submitted` no existe como etapa durable en v0.5: `SUBMISSION_RECORDED` es el hecho auditable y, una vez registrado, el estado operativo relevante es `awaiting_response`.
+
+El lifecycle de respuesta debe ser monotónico:
+
+`awaiting_response → response_received → response_under_review → response_reviewed`
+
+Las etapas posteriores —negociación, escalamiento o resultado— pueden continuar desde allí conforme a hechos adicionales.
 
 ---
 
@@ -210,12 +249,19 @@ La proyección debe exponer, como hechos separados:
 - `serviceAgreementAccepted: boolean`
 - `extrajudicialAuthorityVerified: boolean`
 - `judicialPowerVerified: boolean`
+- `professionalReviewRequested: boolean`
 - `professionalReviewCompleted: boolean`
+- `submissionPrepared: boolean`
 - `submissionRecorded: boolean`
 - `responseRecorded: boolean`
+- `responseReviewStarted: boolean`
+- `responseReviewCompleted: boolean`
+- `negotiationStarted: boolean`
+- `escalationReviewStarted: boolean`
+- `resolutionRecorded: boolean`
 - `outcomeVerified: boolean`
 
-Esto evita usar una sola bandera ambigua como `authorized = true`.
+Esto evita usar una sola bandera ambigua como `authorized = true` y evita inferir que recibir una respuesta equivale a revisarla.
 
 ---
 
@@ -264,9 +310,9 @@ Un expediente cerrado solo puede recibir:
 - `CASE_REOPENED`, o
 - eventos técnicos de auditoría que una versión posterior defina expresamente.
 
-`CASE_REOPENED` conserva toda la historia y vuelve a una etapa operativa derivada de los hechos previos.
+`CASE_CLOSED` se reserva para un expediente con `OUTCOME_VERIFIED`. Si el usuario decide terminar sin resultado verificado se utiliza `CASE_CANCELLED`, que no implica resolución favorable ni desfavorable.
 
-`CASE_CANCELLED` cierra la operación sin afirmar resolución favorable o desfavorable.
+`CASE_REOPENED` conserva toda la historia y vuelve a una etapa operativa derivada de los hechos previos.
 
 ---
 
@@ -299,30 +345,59 @@ El slice v0.5 no se considera válido hasta probar, como mínimo:
 7. `idempotencyKey` evita duplicados.
 8. append no muta el historial original.
 9. persistir evidencia requiere autorización de datos previa.
-10. revisión profesional completada requiere actor `lawyer`.
-11. submission por representante requiere autoridad extrajudicial verificada.
-12. submission real requiere evidencia o referencia real.
-13. respuesta real requiere evidencia y no puede ser inventada por `system`.
-14. resultado registrado requiere evidencia.
-15. resultado verificado requiere evidencia posterior.
-16. aceptar servicio no concede poder.
-17. autoridad extrajudicial no concede poder judicial.
-18. cerrar no borra eventos.
-19. expediente cerrado bloquea eventos ordinarios.
-20. reapertura preserva historia.
-21. cancelar no equivale a resolver.
-22. generar/reproyectar no altera la ruta/status/precisión de origen.
+10. verificación de evidencia no puede ser atribuida autónomamente al `system`.
+11. revisión profesional completada requiere solicitud previa y actor `lawyer`.
+12. aceptar servicio no concede poder.
+13. autoridad extrajudicial no concede poder judicial.
+14. verificar autoridad/poder requiere evidencia.
+15. submission por representante requiere autoridad extrajudicial verificada.
+16. submission real requiere evidencia o referencia real.
+17. una submission registrada deriva `awaiting_response`.
+18. respuesta real requiere submission previa, evidencia/referencia y no puede ser inventada por `system`.
+19. `RESPONSE_RECORDED` deriva `response_received`.
+20. `RESPONSE_REVIEW_STARTED` requiere actor `lawyer` y deriva `response_under_review`.
+21. `RESPONSE_REVIEW_COMPLETED` requiere inicio previo, actor `lawyer` y deriva `response_reviewed`.
+22. completar la revisión no puede hacer retroceder la proyección a `response_received`.
+23. resultado registrado requiere evidencia.
+24. resultado verificado requiere evidencia posterior.
+25. `CASE_CLOSED` requiere resultado verificado.
+26. cerrar no borra eventos.
+27. expediente cerrado/cancelado bloquea eventos ordinarios.
+28. reapertura preserva historia.
+29. cancelar no equivale a resolver.
+30. generar/reproyectar no altera la ruta/status/precisión/track de origen.
 
 ---
 
-## 17. Próximo slice después de este contrato
+## 17. Case Timeline Preview v0.5
 
-Cuando el dominio de v0.5 sea verde, la integración visual será un **Case Timeline Preview** local:
-- crear expediente desde un Case Plan;
-- registrar eventos de demostración explícitos;
-- mostrar timeline, versión, actor y evidencia;
-- mostrar capacidades separadas;
-- mostrar estado derivado;
-- impedir en UI eventos inválidos según las mismas reglas del dominio.
+La integración visual de v0.5 es un **Case Timeline Preview** local:
+- crea un expediente de demostración desde un Case Plan;
+- registra únicamente eventos internos simulados que el dominio permite;
+- muestra timeline append-only, versión, actor y referencias de evidencia;
+- muestra capacidades separadas;
+- muestra estado derivado;
+- mantiene origen route/status/precision/track visible e inmutable;
+- no ofrece un botón para fingir una revisión jurídica completada;
+- no ofrece acciones de radicación o respuesta externa simuladas como si fueran reales;
+- declara explícitamente que no existe persistencia productiva.
 
 Solo después de validar esta máquina de estados debe elegirse e integrar storage productivo.
+
+---
+
+## 18. Próximo slice
+
+Después de congelar v0.5, el siguiente slice debe definir el **Persistence & Identity Boundary** antes de conectar una base de datos:
+- repository/storage ports;
+- identidad de actor y matriz RBAC;
+- clasificación de datos y frontera de privacidad;
+- transacción atómica de append;
+- restricciones únicas para sequence e idempotency;
+- metadata de evidencia separada de bytes/objetos;
+- política de cifrado, retención y eliminación;
+- rebuild de proyecciones;
+- persistencia de optimistic concurrency;
+- audit metadata.
+
+No debe persistirse PII real hasta que ese contrato esté fijado y probado.
