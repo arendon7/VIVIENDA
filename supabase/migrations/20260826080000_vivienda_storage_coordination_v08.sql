@@ -45,7 +45,9 @@ revoke all on function public.vivienda_persist_resolve_intent_object(text)
 grant execute on function public.vivienda_persist_resolve_intent_object(text)
   to service_role;
 
-create or replace function public.vivienda_persist_resolve_active_evidence_object(
+-- legal_hold preserves the object and blocks deletion; it is not by itself a read-denial state.
+-- The application service still authorizes the caller before this service-only lookup is reached.
+create or replace function public.vivienda_persist_resolve_readable_evidence_object(
   p_case_id text,
   p_evidence_id text
 )
@@ -73,16 +75,16 @@ as $$
    and o.evidence_id = e.evidence_id
   where e.case_id = p_case_id
     and e.evidence_id = p_evidence_id
-    and e.lifecycle = 'active'
+    and e.lifecycle in ('active','legal_hold')
     and e.storage_locator is not null
     and o.deleted_at is null
     and o.deletion_requested_at is null
   limit 1;
 $$;
 
-revoke all on function public.vivienda_persist_resolve_active_evidence_object(text,text)
+revoke all on function public.vivienda_persist_resolve_readable_evidence_object(text,text)
   from public, anon, authenticated;
-grant execute on function public.vivienda_persist_resolve_active_evidence_object(text,text)
+grant execute on function public.vivienda_persist_resolve_readable_evidence_object(text,text)
   to service_role;
 
 commit;
