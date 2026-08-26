@@ -22,6 +22,17 @@ async function completeQuickCheck(
   await page.getByRole("button", { name: "Ver mi primera lectura" }).click();
 }
 
+test("keeps the home conceptual Mortgage Twin outside verified C3 and exposes only real routes", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByText("Vista conceptual · no verificada", { exact: true })).toBeVisible();
+  await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
+  await expect(page.locator('a[href="#comprar"]')).toHaveCount(0);
+  await expect(page.locator('a[href="#diy"]')).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Revisar mi crédito" })).toHaveAttribute("href", "/revisar");
+  await expect(page.getByRole("link", { name: "Preparar mi ruta" })).toHaveAttribute("href", "/revisar");
+});
+
 test("delivers first useful result without asking identity or contact data", async ({ page }) => {
   await completeQuickCheck(page);
 
