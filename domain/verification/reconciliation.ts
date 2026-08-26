@@ -106,6 +106,8 @@ export function buildMortgageTwinData(fields: VerificationField[]): MortgageTwin
     }
   }
 
+  const insurance = byKey.get("insurance");
+
   return {
     balance: byKey.get("balance")!,
     cutoff: byKey.get("cutoff")!,
@@ -113,6 +115,6 @@ export function buildMortgageTwinData(fields: VerificationField[]): MortgageTwin
     rate: byKey.get("rate")!,
     remaining: byKey.get("remaining")!,
     system: byKey.get("system")!,
-    insurance: byKey.get("insurance") || undefined,
+    ...(insurance ? { insurance } : {}),
   };
 }
