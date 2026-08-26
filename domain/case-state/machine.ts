@@ -19,10 +19,10 @@ export type CaseStage =
   | "under_review"
   | "ready_to_prepare"
   | "preparing_submission"
-  | "submitted"
   | "awaiting_response"
   | "response_received"
   | "response_under_review"
+  | "response_reviewed"
   | "negotiating"
   | "escalation_review"
   | "resolved_unverified"
@@ -44,6 +44,7 @@ export type CaseEventType =
   | "SUBMISSION_PREPARED"
   | "SUBMISSION_RECORDED"
   | "RESPONSE_RECORDED"
+  | "RESPONSE_REVIEW_STARTED"
   | "RESPONSE_REVIEW_COMPLETED"
   | "NEGOTIATION_STARTED"
   | "ESCALATION_REVIEW_STARTED"
@@ -96,6 +97,7 @@ export type CaseEventDraft =
       }
     >
   | EventDraftBase<"RESPONSE_RECORDED", { source: string; reference?: string }>
+  | EventDraftBase<"RESPONSE_REVIEW_STARTED", { reason: string }>
   | EventDraftBase<
       "RESPONSE_REVIEW_COMPLETED",
       {
@@ -136,6 +138,7 @@ export type CaseCapabilities = {
   submissionPrepared: boolean;
   submissionRecorded: boolean;
   responseRecorded: boolean;
+  responseReviewStarted: boolean;
   responseReviewCompleted: boolean;
   negotiationStarted: boolean;
   escalationReviewStarted: boolean;
@@ -187,6 +190,7 @@ export type CaseStateErrorCode =
   | "missing_extrajudicial_authority"
   | "missing_submission"
   | "missing_response"
+  | "missing_response_review_start"
   | "missing_resolution"
   | "outcome_not_verified"
   | "version_conflict";
@@ -251,6 +255,7 @@ function blankCapabilities(): CaseCapabilities {
     submissionPrepared: false,
     submissionRecorded: false,
     responseRecorded: false,
+    responseReviewStarted: false,
     responseReviewCompleted: false,
     negotiationStarted: false,
     escalationReviewStarted: false,
@@ -265,7 +270,9 @@ function inferActiveStage(projection: CaseProjection): CaseStage {
   if (c.resolutionRecorded) return "resolved_unverified";
   if (c.escalationReviewStarted) return "escalation_review";
   if (c.negotiationStarted) return "negotiating";
-  if (c.responseRecorded) return c.responseReviewCompleted ? "response_received" : "response_under_review";
+  if (c.responseReviewCompleted) return "response_reviewed";
+  if (c.responseReviewStarted) return "response_under_review";
+  if (c.responseRecorded) return "response_received";
   if (c.submissionRecorded) return "awaiting_response";
   if (c.submissionPrepared) return "preparing_submission";
   if (c.professionalReviewCompleted) return "ready_to_prepare";
@@ -411,11 +418,29 @@ function validateAgainstProjection(projection: CaseProjection | null, event: Cas
       }
       break;
 
+    case "RESPONSE_REVIEW_STARTED":
+      assertActor(event, ["lawyer"], "Solo un abogado puede iniciar la revisión jurídica de una respuesta.");
+      if (!projection.capabilities.responseRecorded) {
+        throw new CaseStateError("missing_response", "Debe existir una respuesta registrada antes de iniciar su revisión.");
+      }
+      if (projection.capabilities.responseReviewCompleted) {
+        throw new CaseStateError("invalid_transition", "La revisión de esta respuesta ya fue completada.");
+      }
+      assertNonBlank(event.payload.reason, "invalid_transition", "reason");
+      break;
+
     case "RESPONSE_REVIEW_COMPLETED":
       assertActor(event, ["lawyer"], "Solo un abogado puede registrar la revisión jurídica de una respuesta como completada.");
       if (!projection.capabilities.responseRecorded) {
         throw new CaseStateError("missing_response", "Debe existir una respuesta registrada antes de completar su revisión.");
       }
+      if (!projection.capabilities.responseReviewStarted) {
+        throw new CaseStateError(
+          "missing_response_review_start",
+          "Debe existir un inicio de revisión de respuesta antes de completarla.",
+        );
+      }
+      assertNonBlank(event.payload.summary, "invalid_transition", "summary");
       break;
 
     case "NEGOTIATION_STARTED":
@@ -545,6 +570,9 @@ function applyEvent(current: CaseProjection | null, event: CaseEvent): CaseProje
     case "RESPONSE_RECORDED":
       capabilities.responseRecorded = true;
       lastResponseReference = event.payload.reference?.trim() || null;
+      break;
+    case "RESPONSE_REVIEW_STARTED":
+      capabilities.responseReviewStarted = true;
       break;
     case "RESPONSE_REVIEW_COMPLETED":
       capabilities.responseReviewCompleted = true;
