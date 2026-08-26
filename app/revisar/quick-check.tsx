@@ -135,7 +135,7 @@ export function QuickCheck() {
             </div>
             <div className="actions">
               <button className="button button-primary" type="button" onClick={() => setShowModel(true)}>Continuar con más precisión</button>
-              <a className="button button-secondary" href="/">Guardar esto para después</a>
+              <a className="button button-secondary" href="/">Volver al inicio</a>
             </div>
           </DecisionResult>
         </div>
