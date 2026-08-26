@@ -39,7 +39,12 @@ test("delivers first useful result without asking identity or contact data", asy
   await expect(page.getByRole("heading", { name: "Ya podemos construir una primera fotografía de tu crédito." })).toBeVisible();
   await expect(page.getByText("C1 · Estimación")).toBeVisible();
   await expect(page.getByText("$ 180.000.000")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Volver al inicio" })).toHaveAttribute("href", "/");
+  const resultRegion = page.getByRole("region", {
+    name: /Ya podemos construir una primera fotografía/,
+  });
+  await expect(
+    resultRegion.getByRole("link", { name: "Volver al inicio" }),
+  ).toHaveAttribute("href", "/");
   await expect(page.getByText("Guardar esto para después", { exact: true })).toHaveCount(0);
 
   const forbiddenInputs = ["cédula", "teléfono", "correo", "email"];
