@@ -10,17 +10,17 @@ La cuña inicial es el usuario que ya tiene un crédito de vivienda y quiere ent
 
 ## Estado actual
 
-La línea de desarrollo está apilada y validada por slices desde foundation hasta v0.9. El slice activo es:
+La línea de desarrollo está apilada y validada por slices. v0.10 quedó verde y el slice activo es:
 
-**v0.10 — Product Integration / Mi Vivienda + Mortgage Twin**
+**v0.11 — Loan Health cualitativo dentro de Mi Vivienda**
 
-Base v0.9:
+Base v0.10:
 
-`ad4db678e4a8bc3aa15a90d794f56c8909f45d22`
+`cff54e319f0a3255318184371d4e1f76d424325f`
 
 Rama activa:
 
-`product/product-integration-account-mortgage-twin-v0.10`
+`product/loan-health-v0.11`
 
 ## Superficies ejecutables
 
@@ -28,7 +28,7 @@ Rama activa:
 - `/revisar` — Quick Check anónimo.
 - C1 → C2 — simulación modelada para el caso financiero soportado.
 - `/verificar` — flujo de demostración para revisión/reconciliación documental.
-- `/mi-vivienda` — preview v0.10 del producto recurrente: Mortgage Twin, precisión, oportunidades y siguientes acciones.
+- `/mi-vivienda` — Mortgage Twin + Loan Health V1 + precisión + siguientes acciones.
 
 ## Contrato de precisión
 
@@ -39,17 +39,35 @@ Rama activa:
 
 C3 requiere evidencia realmente derivada de documento y reconciliación completa de campos materiales. Una confirmación manual o evidencia simulada no concede C3.
 
+## Loan Health V1
+
+Loan Health v0.11 es una evaluación **cualitativa de decisiones**, no un score crediticio o de riesgo.
+
+Dimensiones iniciales:
+
+1. estructura del crédito;
+2. prepago;
+3. traslado / compra de cartera;
+4. reestructuración anual;
+5. consistencia / cobros;
+6. mora / estado procesal.
+
+Estados permitidos incluyen `ready`, `explore`, `needs_data`, `seasonal`, `attention`, `professional_review`, `no_flag_reported` y `not_applicable`.
+
+No publica `76/100`, probabilidades de aprobación ni matching bancario porcentual.
+
 ## Arquitectura de dominio implementada
 
 La cadena actual separa explícitamente:
 
-`Mortgage Twin → Opportunity Router → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
+`Mortgage Twin → Opportunity Router → Loan Health → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
 
 Incluye:
 
 - motor financiero inicial con golden vectors;
 - provenance/trust contracts;
 - Opportunity Router;
+- Loan Health evaluator;
 - Case Plan;
 - Case State Machine append-only;
 - Persistence & Identity Boundary;
@@ -70,13 +88,7 @@ En la conexión actual todavía no existe:
 - bank adapters;
 - Open Finance.
 
-Por eso las superficies v0.10 no deben afirmar guardado, sincronización, scoring, ofertas o aprobaciones que todavía no existen.
-
-## Scores
-
-`Home Readiness Index` y `Loan Health` son conceptos del producto, pero **no tienen aún fórmula pública aprobada**.
-
-No publicar porcentajes, `76/100`, probabilidades de aprobación o matching bancario hasta contar con contrato de dominio, metodología, test vectors y disclosure.
+Por eso ninguna superficie puede afirmar guardado, sincronización, ofertas o aprobaciones que todavía no existen.
 
 ## Journeys canónicos
 
@@ -115,6 +127,8 @@ Leer antes de cambios sustanciales:
 - `knowledge/00_PRODUCT/INFORMATION-ARCHITECTURE.md`
 - `knowledge/00_PRODUCT/STATUS-V0.10.md`
 - `knowledge/00_PRODUCT/PRODUCT-INTEGRATION-V0.10.md`
+- `knowledge/00_PRODUCT/STATUS-V0.11.md`
+- `knowledge/40_DOMAIN/LOAN-HEALTH-CONTRACT-V0.11.md`
 - `skills/housing-finance-design-orchestrator/SKILL.md`
 
 La precedencia es: verdad jurídica/financiera → privacidad/seguridad → contratos de dominio → journey/UX → conversión → diseño → skills externas.
