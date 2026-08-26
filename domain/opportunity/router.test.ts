@@ -115,6 +115,7 @@ describe("opportunity router v0.3", () => {
     expect(candidate?.blockers.join(" ")).toMatch(/oferta vinculante/i);
     expect(ready?.status).toBe("eligible_now");
     expect(ready?.legalBasis.join(" ")).toMatch(/10 días hábiles/i);
+    expect(ready?.nextAction).toMatch(/máximo de 10 días hábiles/i);
   });
 
   it("makes executive or embargo state the primary route and requires human review", () => {
@@ -153,7 +154,21 @@ describe("opportunity router v0.3", () => {
     expect(result.routes.some((item) => item.routeCode === "R5_CESION_546_24")).toBe(false);
     const art20 = result.routes.find((item) => item.routeCode === "R3_RESTRUCTURACION_546_20");
     expect(art20?.status).toBe("legal_review");
+    expect(art20?.humanReviewRequired).toBe(true);
     expect(result.notices.join(" ")).toMatch(/hipoteca como garantía no demuestra/i);
+  });
+
+  it("treats an unknown product as a classification task, not automatic legal escalation", () => {
+    const result = evaluateOpportunityRoutes({
+      ...base,
+      productType: "unknown",
+    });
+
+    const art20 = result.routes.find((item) => item.routeCode === "R3_RESTRUCTURACION_546_20");
+    expect(art20?.status).toBe("candidate");
+    expect(art20?.humanReviewRequired).toBe(false);
+    expect(art20?.title).toMatch(/clasificar el producto/i);
+    expect(result.notices.join(" ")).toMatch(/no obliga a escalar/i);
   });
 
   it("allows C1 routing but blocks exact monetary claims in prepayment routes", () => {
