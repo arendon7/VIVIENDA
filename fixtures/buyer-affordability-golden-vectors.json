@@ -51,9 +51,9 @@
       "modeledCreditPaymentBudget": 1700000,
       "monthlyRate": 0.009263183504735206,
       "modeledPrincipal": 163448623.32257652,
-      "propertyCeilingFromPayment": 233498033.31796646,
+      "propertyCeilingFromCreditAndCash": 263448623.32257652,
       "propertyCeilingFromDownPayment": 333333333.3333333,
-      "modeledPropertyCeiling": 233498033.31796646,
+      "modeledPropertyCeiling": 263448623.32257652,
       "bindingConstraint": "payment"
     }
   },
@@ -76,7 +76,7 @@
       "precision": "C2",
       "modeledCreditPaymentBudget": 2000000,
       "modeledPrincipal": 192292498.0265606,
-      "propertyCeilingFromPayment": 274703568.6093723,
+      "propertyCeilingFromCreditAndCash": 242292498.0265606,
       "propertyCeilingFromDownPayment": 166666666.66666666,
       "modeledPropertyCeiling": 166666666.66666666,
       "bindingConstraint": "down_payment"
@@ -98,9 +98,10 @@
     "expected": {
       "precision": "C2",
       "modeledCreditPaymentBudget": 2600000,
+      "propertyCeilingFromCreditAndCash": 357588109.57402843,
       "nonVisModeledPropertyCeiling": 266666666.66666663,
       "nonVisBindingConstraint": "down_payment",
-      "visModeledPropertyCeiling": 346985136.9675355,
+      "visModeledPropertyCeiling": 357588109.57402843,
       "visBindingConstraint": "payment"
     }
   },
@@ -123,7 +124,10 @@
       "planningHousingPaymentRoom": 6000000,
       "regulatoryFirstInstallmentCeiling": 4000000,
       "modeledCreditPaymentBudget": 4000000,
-      "modeledPrincipal": 427058630.11388993
+      "modeledPrincipal": 427058630.11388993,
+      "propertyCeilingFromCreditAndCash": 927058630.1138899,
+      "modeledPropertyCeiling": 927058630.1138899,
+      "bindingConstraint": "payment"
     }
   }
 ]
