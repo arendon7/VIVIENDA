@@ -224,7 +224,7 @@ test.describe("Quote Normalization v0.18 + Economic Comparison v0.19", () => {
     await page.getByRole("button", { name: "Modelar escenario económico" }).click();
     await expect(page.getByLabel("¿Qué variación anual de UVR quieres probar?")).toBeVisible();
     await page.getByRole("button", { name: "Modelar este escenario" }).click();
-    await expect(page.getByRole("alert")).toContainText("Completa la variación anual de UVR");
+    await expect(page.getByText("Completa la variación anual de UVR.", { exact: true })).toBeVisible();
 
     await page.getByLabel("¿Qué variación anual de UVR quieres probar?").fill("5");
     await page.getByRole("button", { name: "Modelar este escenario" }).click();
