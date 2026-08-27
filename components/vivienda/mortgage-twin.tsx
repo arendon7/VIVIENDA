@@ -18,39 +18,61 @@ function formatBalance(raw: string) {
   return Number.isFinite(value) && value > 0 ? cop.format(value) : raw;
 }
 
+type MortgageTwinMode = "declared" | "preview" | "verified";
+
+const precisionByMode: Record<MortgageTwinMode, "C1" | "C2" | "C3"> = {
+  declared: "C1",
+  preview: "C2",
+  verified: "C3",
+};
+
 export function MortgageTwin({
   data,
   mode,
   documentName,
+  showOpportunities = true,
 }: {
   data: MortgageTwinData;
-  mode: "preview" | "verified";
+  mode: MortgageTwinMode;
   documentName?: string | undefined;
+  showOpportunities?: boolean;
 }) {
   const verified = mode === "verified";
+  const declared = mode === "declared";
+  const precision = precisionByMode[mode];
+
+  const title = verified
+    ? "Tu crédito verificado, organizado para decidir."
+    : declared
+      ? "Ya organizamos la fotografía que transcribiste de tu extracto."
+      : "Así quedará tu crédito cuando la evidencia sea verificable.";
+
+  const explanation = verified
+    ? "Los campos materiales fueron derivados de evidencia documental y reconciliados antes de construir esta representación."
+    : declared
+      ? "Este Mortgage Twin usa datos que transcribiste mirando un extracto local. VIVIENDA no leyó, extrajo ni verificó el archivo."
+      : "Esta previsualización usa valores simulados confirmados dentro de una demostración. Sirve para validar la experiencia, pero no convierte la simulación en verificación documental.";
 
   return (
     <>
       <section className="surface result-frame" aria-labelledby="mortgage-twin-title">
         <div className="section-header">
           <div>
-            <p className="eyebrow">Mortgage Twin</p>
-            <h2 id="mortgage-twin-title">
-              {verified ? "Tu crédito verificado, organizado para decidir." : "Así quedará tu crédito cuando la evidencia sea verificable."}
-            </h2>
-            <p className="section-copy">
-              {verified
-                ? "Los campos materiales fueron derivados de evidencia documental y reconciliados antes de construir esta representación."
-                : "Esta previsualización usa los valores simulados que acabas de confirmar. Sirve para validar la experiencia, pero no convierte la simulación en verificación documental."}
-            </p>
+            <p className="eyebrow">Mortgage Twin{declared ? " guiado" : ""}</p>
+            <h2 id="mortgage-twin-title">{title}</h2>
+            <p className="section-copy">{explanation}</p>
           </div>
-          <PrecisionBadge level={verified ? "C3" : "C2"} />
+          <PrecisionBadge level={precision} />
         </div>
 
         {!verified ? (
           <div className="surface-warning" role="status">
-            <strong>Preview, no C3.</strong>
-            <p>El archivo seleccionado no fue leído por este prototipo. C3 requiere valores realmente derivados del documento, sin conflictos materiales y confirmados después de la extracción.</p>
+            <strong>{declared ? "Datos declarados, no C3." : "Preview, no C3."}</strong>
+            <p>
+              {declared
+                ? "Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo. C3 requiere evidencia realmente derivada del documento y reconciliación completa."
+                : "El archivo seleccionado no fue leído por este prototipo. C3 requiere valores realmente derivados del documento, sin conflictos materiales y confirmados después de la extracción."}
+            </p>
           </div>
         ) : null}
 
@@ -64,7 +86,7 @@ export function MortgageTwin({
         </dl>
 
         <ScenarioPath
-          start={verified ? "Estado verificado" : "Estado reconciliado en demo"}
+          start={verified ? "Estado verificado" : declared ? "Snapshot declarado" : "Estado reconciliado en demo"}
           action="Comparar decisión"
           outcome="Nueva trayectoria"
         />
@@ -74,12 +96,16 @@ export function MortgageTwin({
             source={
               verified
                 ? `Documento revisado${documentName ? ` · ${documentName}` : ""}`
-                : "Valores de demostración confirmados manualmente"
+                : declared
+                  ? "Datos transcritos por ti desde un extracto local"
+                  : "Valores de demostración confirmados manualmente"
             }
             cutoff={data.cutoff}
           >
             {verified ? (
               <p>C3 describe la evidencia del crédito; no equivale a aprobación bancaria ni garantiza una decisión futura.</p>
+            ) : declared ? (
+              <p>La referencia local ayudó a transcribir los campos, pero no constituye evidencia procesada por VIVIENDA.</p>
             ) : (
               <p>El nombre del archivo permanece local en este prototipo y no constituye evidencia procesada.</p>
             )}
@@ -94,12 +120,12 @@ export function MortgageTwin({
         ) : (
           <div className="surface-warning" style={{ marginTop: 18 }}>
             <strong>Seguros/costos todavía no confirmados.</strong>
-            <p>Este dato es no material para construir el snapshot base, pero seguirá separado hasta que exista evidencia suficiente.</p>
+            <p>Este dato es no material para construir el snapshot base y seguirá separado hasta que exista información suficiente.</p>
           </div>
         )}
       </section>
 
-      <OpportunityWorkspace precision={verified ? "C3" : "C2"} />
+      {showOpportunities ? <OpportunityWorkspace precision={precision} /> : null}
     </>
   );
 }
