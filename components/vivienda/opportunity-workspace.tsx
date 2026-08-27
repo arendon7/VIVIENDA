@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { CasePlanWorkspace } from "@/components/vivienda/case-plan-workspace";
 import {
   evaluateOpportunityRoutes,
+  type Modality,
   type OpportunityPrecision,
   type OpportunityRouteCode,
   type PaymentState,
@@ -12,11 +13,24 @@ import {
 
 type Goal = "finish_sooner" | "lower_payment" | "explore";
 
+type OpportunityWorkspaceProps = {
+  precision: OpportunityPrecision;
+  initialProductType?: ProductType;
+  initialModality?: Modality;
+  sourceLabel?: string;
+};
+
 const productLabels: Record<ProductType, string> = {
   mortgage_housing: "Crédito hipotecario de vivienda",
   housing_leasing: "Leasing habitacional",
   other_secured_credit: "Otro crédito con hipoteca como garantía",
   unknown: "No estoy seguro",
+};
+
+const modalityLabels: Record<Modality, string> = {
+  pesos: "Pesos",
+  uvr: "UVR",
+  unknown: "No confirmada",
 };
 
 const paymentStateLabels: Record<PaymentState, string> = {
@@ -71,8 +85,13 @@ function optionalPositive(raw: string): number | undefined {
   return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
-export function OpportunityWorkspace({ precision }: { precision: OpportunityPrecision }) {
-  const [productType, setProductType] = useState<ProductType>("unknown");
+export function OpportunityWorkspace({
+  precision,
+  initialProductType = "unknown",
+  initialModality = "unknown",
+  sourceLabel,
+}: OpportunityWorkspaceProps) {
+  const [productType, setProductType] = useState<ProductType>(initialProductType);
   const [goal, setGoal] = useState<Goal>("explore");
   const [extraPayment, setExtraPayment] = useState("");
   const [materialEconomicChange, setMaterialEconomicChange] = useState(false);
@@ -93,7 +112,7 @@ export function OpportunityWorkspace({ precision }: { precision: OpportunityPrec
       asOfDate,
       precision,
       productType,
-      modality: "unknown",
+      modality: initialModality,
       paymentState,
       wantsFinishSooner: goal === "finish_sooner",
       wantsLowerPayment: goal === "lower_payment",
@@ -111,6 +130,7 @@ export function OpportunityWorkspace({ precision }: { precision: OpportunityPrec
     extraPayment,
     familyIncome,
     goal,
+    initialModality,
     materialEconomicChange,
     paymentState,
     precision,
@@ -134,6 +154,15 @@ export function OpportunityWorkspace({ precision }: { precision: OpportunityPrec
         </div>
         <span className="status-chip">{precision} · evidencia actual</span>
       </div>
+
+      {sourceLabel ? (
+        <div className="result-callout" style={{ marginTop: 20 }} role="status">
+          <strong>Partimos de tu Mortgage Twin</strong>
+          <p className="section-copy">
+            {sourceLabel} · producto: {productLabels[productType]} · modalidad: {modalityLabels[initialModality]}. Puedes corregir la clasificación del producto abajo si fuera necesario.
+          </p>
+        </div>
+      ) : null}
 
       <div className="privacy-panel" style={{ marginTop: 20 }}>
         <strong>Cómo leer este resultado</strong>
