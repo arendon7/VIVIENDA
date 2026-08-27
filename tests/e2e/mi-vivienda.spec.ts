@@ -7,7 +7,7 @@ test.describe("Mi Vivienda + Loan Health product integration", () => {
     await expect(page.getByRole("heading", { name: "Tu crédito, tus decisiones y lo que falta verificar." })).toBeVisible();
     await expect(page.getByText("Preview de producto · sin cuenta ni persistencia activa")).toBeVisible();
     await expect(page.getByText("C2 · Simulación modelada").first()).toBeVisible();
-    await expect(page.getByText("Loan Health V1 · cualitativo")).toBeVisible();
+    await expect(page.getByText("Loan Health · estado de decisión")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Existe al menos una acción concreta que puedes comparar con los datos actuales." })).toBeVisible();
     await expect(page.getByText("No es un score crediticio ni de riesgo.", { exact: false })).toBeVisible();
 
