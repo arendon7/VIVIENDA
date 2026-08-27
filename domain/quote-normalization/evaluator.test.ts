@@ -61,6 +61,15 @@ function leasingQuote(overrides: Partial<FinancingQuoteInput> = {}): FinancingQu
   };
 }
 
+function withoutFields(
+  quote: FinancingQuoteInput,
+  ...fields: Array<keyof FinancingQuoteInput>
+): FinancingQuoteInput {
+  const copy: Record<string, unknown> = { ...quote };
+  for (const field of fields) delete copy[field];
+  return copy as unknown as FinancingQuoteInput;
+}
+
 describe("Quote Normalization v0.18", () => {
   it("treats missing material fields as readiness state instead of throwing", () => {
     const result = normalizeFinancingQuote({ quoteId: "partial", source: "user_declared" });
@@ -109,11 +118,12 @@ describe("Quote Normalization v0.18", () => {
 
   it("requires leasing purchase-option economics for comparison-input readiness", () => {
     const result = normalizeFinancingQuote(
-      leasingQuote({
-        leasingPurchaseOptionPercentage: undefined,
-        leasingPurchaseOptionValue: undefined,
-        leasingPurchaseOptionTiming: undefined,
-      }),
+      withoutFields(
+        leasingQuote(),
+        "leasingPurchaseOptionPercentage",
+        "leasingPurchaseOptionValue",
+        "leasingPurchaseOptionTiming",
+      ),
     );
 
     expect(result.readiness).toBe("structurally_ready");
@@ -123,10 +133,7 @@ describe("Quote Normalization v0.18", () => {
 
   it("accepts a leasing quote with purchase-option value instead of percentage", () => {
     const result = normalizeFinancingQuote(
-      leasingQuote({
-        leasingPurchaseOptionPercentage: undefined,
-        leasingPurchaseOptionValue: 35_000_000,
-      }),
+      withoutFields(leasingQuote({ leasingPurchaseOptionValue: 35_000_000 }), "leasingPurchaseOptionPercentage"),
     );
 
     expect(result.readiness).toBe("comparison_input_ready");
@@ -182,7 +189,7 @@ describe("Quote Normalization v0.18", () => {
   });
 
   it("treats a missing validity date as warning rather than structural blocker", () => {
-    const result = normalizeFinancingQuote(mortgageQuote({ validUntil: undefined }));
+    const result = normalizeFinancingQuote(withoutFields(mortgageQuote(), "validUntil"));
 
     expect(result.readiness).toBe("comparison_input_ready");
     expect(result.warnings.map((warning) => warning.code)).toContain("validity_date_missing");
@@ -218,21 +225,21 @@ describe("Quote Normalization v0.18", () => {
   });
 
   it("requires monthly insurance amount when insurance is not fully included", () => {
-    const result = normalizeFinancingQuote(mortgageQuote({ monthlyInsuranceAmount: undefined }));
+    const result = normalizeFinancingQuote(withoutFields(mortgageQuote(), "monthlyInsuranceAmount"));
 
     expect(result.readiness).toBe("structurally_ready");
     expect(result.missingComparisonFields).toContain("monthly_insurance_amount");
   });
 
   it("requires one-time cost total when one-time costs are declared as itemized or total-only", () => {
-    const result = normalizeFinancingQuote(mortgageQuote({ oneTimeCostsTotal: undefined }));
+    const result = normalizeFinancingQuote(withoutFields(mortgageQuote(), "oneTimeCostsTotal"));
 
     expect(result.missingComparisonFields).toContain("one_time_costs_total");
   });
 
   it("does not require a cost total when the quote explicitly states no one-time costs", () => {
     const result = normalizeFinancingQuote(
-      mortgageQuote({ oneTimeCostsTreatment: "stated_none", oneTimeCostsTotal: undefined }),
+      withoutFields(mortgageQuote({ oneTimeCostsTreatment: "stated_none" }), "oneTimeCostsTotal"),
     );
 
     expect(result.readiness).toBe("comparison_input_ready");
@@ -241,7 +248,7 @@ describe("Quote Normalization v0.18", () => {
 
   it("requires rule text when prepayment information says rules were supplied", () => {
     const result = normalizeFinancingQuote(
-      mortgageQuote({ prepaymentInformation: "rules_supplied", prepaymentRulesText: undefined }),
+      withoutFields(mortgageQuote({ prepaymentInformation: "rules_supplied" }), "prepaymentRulesText"),
     );
 
     expect(result.missingComparisonFields).toContain("prepayment_rules_text");
@@ -257,7 +264,7 @@ describe("Quote Normalization v0.18", () => {
   });
 
   it("flags when financing percentage cannot be derived from a partial basis", () => {
-    const result = normalizeFinancingQuote(mortgageQuote({ propertyValue: undefined }));
+    const result = normalizeFinancingQuote(withoutFields(mortgageQuote(), "propertyValue"));
 
     expect(result.derived.financingPercentage).toBeNull();
     expect(result.warnings.map((warning) => warning.code)).toContain("financing_percentage_not_derivable");
@@ -274,8 +281,8 @@ describe("Quote Normalization v0.18", () => {
   });
 
   it("allows structural comparison when both quotes are structurally ready but not comparison-input ready", () => {
-    const partialA = mortgageQuote({ providerName: undefined });
-    const partialB = mortgageQuote({ quoteId: "b", providerName: undefined });
+    const partialA = withoutFields(mortgageQuote(), "providerName");
+    const partialB = withoutFields(mortgageQuote({ quoteId: "b" }), "providerName");
     const pair = normalizeFinancingQuotePair(partialA, partialB);
 
     expect(pair.readiness).toBe("ready_for_structural_comparison");
