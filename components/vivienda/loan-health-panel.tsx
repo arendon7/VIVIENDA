@@ -28,7 +28,7 @@ export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
     <section className={`surface ${styles.panel}`} aria-labelledby="loan-health-title">
       <div className={styles.header}>
         <div>
-          <p className="eyebrow">Loan Health V1 · cualitativo</p>
+          <p className="eyebrow">Loan Health · estado de decisión</p>
           <h2 id="loan-health-title">{result.headline}</h2>
           <p className="section-copy">
             No es un score crediticio ni de riesgo. Resume qué entendemos, qué merece atención y qué acción puede compararse con la evidencia disponible.
@@ -39,7 +39,7 @@ export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
 
       <div className={styles.list}>
         {result.dimensions.map((dimension) => (
-          <article className={styles.dimension} key={dimension.code}>
+          <article className={styles.dimension} key={dimension.code} data-loan-health-dimension={dimension.code}>
             <div className={styles.dimensionHeader}>
               <h3>{dimension.label}</h3>
               <span className={`${styles.status} ${statusClass(dimension.status)}`}>
