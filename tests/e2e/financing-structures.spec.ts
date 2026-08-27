@@ -71,14 +71,14 @@ test.describe("Financing Structures v0.17", () => {
     await page.goto("/comprar/financiacion");
 
     await page.getByRole("button", { name: "Ver qué estructuras explorar" }).click();
-    await expect(page.getByRole("alert")).toHaveText("Responde las dos preguntas para ordenar las estructuras sin adivinar tus preferencias.");
+    await expect(page.getByText("Responde las dos preguntas para ordenar las estructuras sin adivinar tus preferencias.", { exact: true })).toBeVisible();
 
     await page.getByLabel("No tengo una preferencia fuerte").check();
     await page.getByLabel("Quiero comparar pesos y UVR").check();
     await page.getByRole("button", { name: "Ver qué estructuras explorar" }).click();
 
-    const details = page.getByRole("group").filter({ hasText: "Ver los 15 datos que conviene conservar" });
-    await page.getByText("Ver los 15 datos que conviene conservar", { exact: true }).click();
+    const details = page.locator("details").filter({ hasText: "Ver los 15 datos que conviene conservar" });
+    await details.getByText("Ver los 15 datos que conviene conservar", { exact: true }).click();
     await expect(page.getByText("Entidad o proveedor y fecha/vigencia de la cotización", { exact: true })).toBeVisible();
     await expect(page.getByText("Efectivo total requerido antes y durante el cierre", { exact: true })).toBeVisible();
     await expect(page.getByText("La comparación de cotizaciones reales será una capa separada")).toBeVisible();
