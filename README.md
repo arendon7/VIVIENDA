@@ -6,36 +6,36 @@ Tesis de producto:
 
 **Prepare → Buy → Finance → Manage → Optimize → Protect**
 
-La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y quiere entender si está pagando de la mejor manera disponible. Las rutas públicas ya cubren comprador potencial, preparación para compra, presión de pago e inconsistencias sin desplazar esa cuña.
+La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y quiere entender si está pagando de la mejor manera disponible. Las rutas públicas ya cubren comprador potencial, preparación para compra, exploración de estructuras de financiación, presión de pago e inconsistencias sin desplazar esa cuña.
 
 ## Estado actual
 
-Los slices v0.10–v0.16 están desarrollados sobre una cadena versionada y reversible.
+Los slices v0.10–v0.17 están desarrollados sobre una cadena versionada y reversible.
 
 Último baseline de producto validado:
 
-**v0.16 — Home Readiness / Índice de Preparación Hipotecaria**
+**v0.17 — Financing Structures Explorer**
 
-Base v0.15:
+Base v0.16:
 
-`2bf50dcb99313e6d4ce2ea675c350f60315800a4`
+`50cc7b5f2141e110e1701b3a5901fd78cb0bcd7f`
 
-Green code/test head v0.16:
+Green code/test head v0.17:
 
-`50de28509bbbb9a733382861231ef5981d2db487`
+`5a750651f80de5b9bb738af792693c7369fc3eeb`
 
 Rama:
 
-`product/home-readiness-v0.16`
+`product/financing-structures-v0.17`
 
-Gate del código v0.16:
+Gate del código v0.17:
 
 - TypeScript: PASS;
-- dominio: **266/266 PASS**;
+- dominio: **284/284 PASS**;
 - build: PASS;
-- Playwright: **126/126 PASS** desktop + mobile 390 px.
+- Playwright: **134/134 PASS** desktop + mobile 390 px.
 
-v0.15 — Inconsistency Reconciler — también quedó congelado y documentado antes de iniciar v0.16.
+v0.16 — Home Readiness — también quedó congelado y documentado antes de iniciar v0.17.
 
 ## Superficies ejecutables
 
@@ -46,6 +46,7 @@ v0.15 — Inconsistency Reconciler — también quedó congelado y documentado a
 - `/auditoria-hipotecaria` — preview de la primera ruta asistida R7, sin contratación ni representación activa.
 - `/comprar/cuanto-puedo-comprar` — Journey 2 C1→C2 para comprador potencial, sin identidad antes del primer valor.
 - `/comprar/preparacion` — Home Readiness: perfil parcial → cinco dimensiones → índice completo cuando hay información suficiente.
+- `/comprar/financiacion` — explorador anónimo de estructura contractual y denominación antes de comparar entidades u ofertas reales.
 - `/ayuda` — Journey 3 C0 para presión de pago, mora, cobranza y proceso judicial reportado.
 - `/revisar-diferencia` — Journey 4 C0 para aislar y reconciliar una diferencia declarada sin presumir error o ilegalidad.
 
@@ -57,6 +58,49 @@ v0.15 — Inconsistency Reconciler — también quedó congelado y documentado a
 - **C3** — verificado documentalmente.
 
 C3 requiere evidencia realmente derivada de documento y reconciliación completa de campos materiales. Una confirmación manual o evidencia simulada no concede C3.
+
+## Financing Structures Explorer v0.17
+
+Journey 2 Step 7 separa dos ejes que no deben confundirse:
+
+### Estructura contractual
+
+- crédito hipotecario;
+- leasing habitacional.
+
+### Denominación / comportamiento
+
+- pesos;
+- UVR.
+
+El explorador usa dos preferencias declaradas para ordenar alternativas como:
+
+- **Explorar primero**;
+- **Mantener para comparar**;
+- **Comparar después**;
+- **Falta definir preferencia**.
+
+Ese orden expresa alineación con la preferencia del usuario. No es:
+
+- elegibilidad;
+- preaprobación;
+- aprobación;
+- probabilidad de aprobación;
+- matching bancario;
+- ranking de entidades;
+- cotización de mercado;
+- ranking de costo.
+
+Reglas importantes:
+
+- aceptar leasing no convierte leasing automáticamente en ganador;
+- aceptar variación UVR no convierte UVR automáticamente en ganador;
+- una preferencia desconocida no fabrica un ganador;
+- no se insertan bancos ni tasas actuales;
+- no se supone que leasing financia un porcentaje mayor;
+- el usuario obtiene orientación y checklist de cotización sin entregar identidad ni consultar centrales.
+
+La ruta `/comprar/preparacion` expone navegación a `/comprar/financiacion` sin serializar montos financieros en la URL. El componente de financiación admite un `initialConstraintContext` derivado para una futura continuidad in-memory, pero v0.17 no finge persistencia ni transfiere ese contexto entre rutas autónomas.
 
 ## Home Readiness v0.16
 
@@ -190,7 +234,7 @@ Aceptar el servicio no concede facultad extrajudicial, poder judicial ni crea un
 
 La cadena separa:
 
-`Buyer Affordability / Home Readiness / Mortgage Twin / Payment Pressure / Inconsistency Reconciliation → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
+`Buyer Affordability / Home Readiness / Financing Structures / Mortgage Twin / Payment Pressure / Inconsistency Reconciliation → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
 
 Incluye:
 
@@ -199,6 +243,7 @@ Incluye:
 - Payment Pressure v0.14;
 - Inconsistency Reconciler v0.15;
 - Home Readiness v0.16;
+- Financing Structures Explorer v0.17;
 - provenance/trust contracts;
 - Opportunity Router;
 - Loan Health evaluator;
@@ -223,6 +268,8 @@ Todavía no existe:
 - bank adapters/matching;
 - Open Finance;
 - tasas de mercado automáticas;
+- live lender offers;
+- real-quote ingestion/comparison;
 - subsidy eligibility live;
 - application/approval flows;
 - pagos/contratación productiva.
@@ -268,13 +315,16 @@ Leer antes de cambios sustanciales:
 - `knowledge/00_PRODUCT/STATUS-V0.14.md`
 - `knowledge/00_PRODUCT/STATUS-V0.15.md`
 - `knowledge/00_PRODUCT/STATUS-V0.16.md`
+- `knowledge/00_PRODUCT/STATUS-V0.17.md`
 - `knowledge/20_DESIGN/BUYER-AFFORDABILITY-UX-SPEC-V0.13.md`
 - `knowledge/20_DESIGN/PAYMENT-PRESSURE-UX-SPEC-V0.14.md`
 - `knowledge/20_DESIGN/HOME-READINESS-UX-SPEC-V0.16.md`
+- `knowledge/20_DESIGN/FINANCING-STRUCTURES-UX-SPEC-V0.17.md`
 - `knowledge/40_DOMAIN/LOAN-HEALTH-CONTRACT-V0.11.md`
 - `knowledge/40_DOMAIN/BUYER-AFFORDABILITY-CONTRACT-V0.13.md`
 - `knowledge/40_DOMAIN/PAYMENT-PRESSURE-CONTRACT-V0.14.md`
 - `knowledge/40_DOMAIN/HOME-READINESS-CONTRACT-V0.16.md`
+- `knowledge/40_DOMAIN/FINANCING-STRUCTURES-CONTRACT-V0.17.md`
 - `skills/housing-finance-design-orchestrator/SKILL.md`
 
 La precedencia es: verdad jurídica/financiera → privacidad/seguridad → contratos de dominio → journey/UX → conversión → diseño → skills externas.
