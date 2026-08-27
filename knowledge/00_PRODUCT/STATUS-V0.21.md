@@ -2,7 +2,7 @@
 
 ## Estado
 
-**FROZEN CANDIDATE / FUNCTIONAL FULL GREEN**
+**FROZEN / FULL GREEN**
 
 Rama:
 
@@ -20,7 +20,11 @@ Head funcional verde v0.21:
 
 `02b58824ccd99cafc149a3f8c35222414416abb5`
 
-> Este archivo se crea después de verificar el head funcional. El estado definitivo **FROZEN / FULL GREEN** requiere revalidar también el SHA documental que incorpore este status y la actualización del README.
+README v0.21 actualizado en:
+
+`66b462098d14c3bddfa2398fdc585d92142b3493`
+
+El freeze definitivo corresponde al commit que contiene este STATUS junto con el README v0.21. Ese SHA debe conservar **verify + e2e FULL GREEN**; si cualquiera de esos gates falla, el freeze deja de ser válido y no se autoriza PR de cierre.
 
 ## Gate funcional
 
@@ -35,6 +39,8 @@ Sobre `02b58824ccd99cafc149a3f8c35222414416abb5`:
 - viewport E2E: Chromium desktop + mobile 390 px.
 
 La matriz crece desde 380→391 pruebas de dominio y 166→168 E2E respecto de v0.20.
+
+El mismo gate se exige nuevamente sobre el SHA documental final antes de abrir el draft PR.
 
 ## Pregunta de producto
 
@@ -276,6 +282,6 @@ v0.21 no activa:
 
 ## Siguiente paso permitido
 
-Después de actualizar documentación y obtener **FULL GREEN sobre el SHA documental final**, v0.21 puede abrirse como **draft PR apilado sobre v0.20**.
+Con **FULL GREEN sobre el SHA documental final**, v0.21 puede abrirse como **draft PR apilado sobre v0.20**.
 
-No autoriza merge ni despliegue.
+El freeze no autoriza merge ni despliegue.
