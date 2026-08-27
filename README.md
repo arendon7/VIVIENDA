@@ -10,39 +10,40 @@ La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y 
 
 ## Estado actual
 
-Los slices v0.10–v0.20 están desarrollados sobre una cadena versionada y reversible.
+Los slices v0.10–v0.21 están desarrollados sobre una cadena versionada y reversible.
 
 Último baseline funcional validado:
 
-**v0.20 — Statement-Guided Mortgage Twin**
+**v0.21 — Loan Health Integration**
 
-Base funcional heredada v0.19:
+Freeze base heredado v0.20:
 
-`b6fbe6312e1596291a07c6ba563877165a0d9d4c`
+`4a9ff2416c6968b49366ce616d87ace02d9e5354`
 
-Green code/test head v0.20:
+Green code/test head v0.21:
 
-`81d34b496f285a59dd5ba4dad833082642bf82d3`
+`02b58824ccd99cafc149a3f8c35222414416abb5`
 
 Rama:
 
-`product/statement-guided-mortgage-twin-v0.20`
+`product/loan-health-integration-v0.21`
 
-Gate del código v0.20:
+Gate del código v0.21:
 
 - TypeScript: PASS;
-- dominio: **380/380 PASS**;
-- Statement-Guided Intake: **24 invariantes nuevos PASS**;
+- dominio: **391/391 PASS** en 29 archivos;
+- Loan Health evaluator: **11 PASS**;
+- Loan Health integration layer: **8 PASS**;
 - build: PASS;
-- Playwright: **166/166 PASS** desktop + mobile 390 px.
+- Playwright: **168/168 PASS** desktop + mobile 390 px.
 
-v0.19 — Scenario-Based Economic Quote Comparison — permanece congelado como baseline heredado. v0.20 cambia el journey de existing borrower sin alterar los contratos de modelación económica de comprador.
+v0.20 — Statement-Guided Mortgage Twin — permanece congelado como baseline heredado. v0.21 integra Loan Health dentro del journey real del existing borrower y hace explícita la precisión por decisión sin elevar artificialmente el Mortgage Twin completo.
 
 ## Superficies ejecutables
 
 - `/` — Home Warm Path; existing borrower continúa como CTA primario.
 - `/revisar` — Quick Check anónimo para crédito existente.
-- `/verificar` — Statement-Guided Mortgage Twin: el usuario usa un extracto local como referencia y transcribe campos; el archivo no se sube, no se lee y no concede C3.
+- `/verificar` — Statement-Guided Mortgage Twin: el usuario usa un extracto local como referencia, transcribe campos, puede construir un modelo C2 compatible y continuar a Loan Health + rutas sin que el archivo se suba, lea o conceda C3.
 - `/mi-vivienda` — Mortgage Twin + Loan Health V1 + precisión + siguientes acciones.
 - `/auditoria-hipotecaria` — preview de la primera ruta asistida R7, sin contratación ni representación activa.
 - `/comprar/cuanto-puedo-comprar` — Journey 2 C1→C2 para comprador potencial, sin identidad antes del primer valor.
@@ -60,6 +61,38 @@ v0.19 — Scenario-Based Economic Quote Comparison — permanece congelado como 
 - **C3** — verificado documentalmente.
 
 C3 requiere evidencia realmente derivada de documento y reconciliación completa de campos materiales. Una confirmación manual, transcripción desde un archivo local o evidencia simulada no concede C3.
+
+## Loan Health Integration v0.21
+
+v0.21 coloca Loan Health dentro del journey real del existing borrower: después de construir la fotografía del crédito y antes de pedir al usuario que seleccione una ruta de ejecución.
+
+Pregunta de producto:
+
+> **¿Cuál es el estado actual de decisión de este Mortgage Twin real aportado por el usuario, y qué ruta específica sí alcanzó una precisión superior mediante un modelo realmente construido?**
+
+Secuencia:
+
+`Quick Check C1 → Statement-Guided Mortgage Twin C1 → modelo compatible C2 → Opportunity Workspace → Loan Health → selección de ruta → Case Plan`
+
+Regla central:
+
+> **La precisión pertenece a la decisión que la ganó: una ruta C2 no convierte el Mortgage Twin completo ni las demás rutas en C2/C3.**
+
+En el slice actual:
+
+- la fuente base del Mortgage Twin permanece C1;
+- Loan Health conserva C1 como evaluación de esa fuente base;
+- `R1_PREPAGO_PLAZO` puede alcanzar C2 solo cuando existe un escenario compatible realmente modelado y todavía vinculado a los mismos inputs;
+- R2/R3/R5/R7/R10 permanecen C1 salvo que cada una gane por separado una precisión superior en un slice futuro;
+- ninguna ruta recibe C3.
+
+El escenario R1 C2 se invalida fail-closed cuando cambian inputs materiales. Al invalidarse, desaparece `R1 · C2 modelado`, R1 vuelve a C1 y Loan Health deja de tratar Prepago como una decisión ya modelada.
+
+Loan Health sigue siendo cualitativo: no es score bancario, score crediticio, porcentaje de salud ni probabilidad de aprobación. La precedencia de decisión mantiene revisión profesional y alertas materiales por encima de optimizaciones ordinarias.
+
+El CTA actual desde Mortgage Twin es `Ver mi Loan Health y rutas`. El workspace reutiliza producto, modalidad y monto de prepago ya conocidos para no repetir preguntas ni degradar contexto confiable a `unknown`.
+
+v0.21 no activa C3 documental, OCR, persistencia productiva, autenticación productiva, tasas de mercado automáticas, centrales, Open Finance, conectividad bancaria, matching real, ofertas live, aprobación, probabilidad de aprobación, ahorro garantizado ni conclusión jurídica automática.
 
 ## Statement-Guided Mortgage Twin v0.20
 
@@ -516,9 +549,11 @@ Incluye:
 - Quote Normalization v0.18;
 - Scenario-Based Economic Quote Comparison v0.19;
 - Statement-Guided Mortgage Twin v0.20;
+- Loan Health Integration v0.21;
 - provenance/trust contracts;
 - Opportunity Router;
 - Loan Health evaluator;
+- Loan Health integration layer;
 - Mortgage Audit R7 blueprint;
 - Case Plan;
 - Case State Machine append-only;
@@ -596,6 +631,7 @@ Leer antes de cambios sustanciales:
 - `knowledge/00_PRODUCT/STATUS-V0.18.md`
 - `knowledge/00_PRODUCT/STATUS-V0.19.md`
 - `knowledge/00_PRODUCT/STATUS-V0.20.md`
+- `knowledge/00_PRODUCT/STATUS-V0.21.md`
 - `knowledge/20_DESIGN/BUYER-AFFORDABILITY-UX-SPEC-V0.13.md`
 - `knowledge/20_DESIGN/PAYMENT-PRESSURE-UX-SPEC-V0.14.md`
 - `knowledge/20_DESIGN/HOME-READINESS-UX-SPEC-V0.16.md`
@@ -603,6 +639,7 @@ Leer antes de cambios sustanciales:
 - `knowledge/20_DESIGN/QUOTE-NORMALIZATION-UX-SPEC-V0.18.md`
 - `knowledge/20_UX/ECONOMIC-QUOTE-COMPARISON-UX-SPEC-V0.19.md`
 - `knowledge/20_UX/STATEMENT-GUIDED-MORTGAGE-TWIN-UX-SPEC-V0.20.md`
+- `knowledge/20_UX/LOAN-HEALTH-INTEGRATION-UX-SPEC-V0.21.md`
 - `knowledge/40_DOMAIN/LOAN-HEALTH-CONTRACT-V0.11.md`
 - `knowledge/40_DOMAIN/BUYER-AFFORDABILITY-CONTRACT-V0.13.md`
 - `knowledge/40_DOMAIN/PAYMENT-PRESSURE-CONTRACT-V0.14.md`
@@ -611,6 +648,7 @@ Leer antes de cambios sustanciales:
 - `knowledge/40_DOMAIN/QUOTE-NORMALIZATION-CONTRACT-V0.18.md`
 - `knowledge/40_DOMAIN/ECONOMIC-QUOTE-COMPARISON-CONTRACT-V0.19.md`
 - `knowledge/40_DOMAIN/STATEMENT-GUIDED-MORTGAGE-TWIN-CONTRACT-V0.20.md`
+- `knowledge/40_DOMAIN/LOAN-HEALTH-INTEGRATION-CONTRACT-V0.21.md`
 - `skills/housing-finance-design-orchestrator/SKILL.md`
 
 La precedencia es: verdad jurídica/financiera → privacidad/seguridad → contratos de dominio → journey/UX → conversión → diseño → skills externas.
