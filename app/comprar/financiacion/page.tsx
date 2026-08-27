@@ -8,6 +8,7 @@ export default function FinancingStructuresPage() {
         <nav aria-label="Financiación para comprar vivienda">
           <a className="nav-link" href="/comprar/cuanto-puedo-comprar">Cuánto puedo comprar</a>
           <a className="nav-link" href="/comprar/preparacion">Mi preparación</a>
+          <a className="nav-link" href="/comprar/comparar-cotizaciones">Cotizaciones</a>
           <a className="nav-link" href="/revisar">Revisar mi crédito</a>
         </nav>
       </header>
