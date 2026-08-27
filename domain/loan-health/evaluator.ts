@@ -46,6 +46,7 @@ export type LoanHealthInput = {
   productType: ProductType;
   paymentState: PaymentState;
   routerResult: OpportunityRouterResult;
+  modeledRouteCodes?: OpportunityRouteCode[];
 };
 
 export type LoanHealthResult = {
@@ -60,7 +61,10 @@ function findRoute(result: OpportunityRouterResult, code: OpportunityRouteCode):
   return result.routes.find((route) => route.routeCode === code);
 }
 
-function structureDimension(precision: OpportunityPrecision): LoanHealthDimension {
+function structureDimension(
+  precision: OpportunityPrecision,
+  modeledRouteCodes: OpportunityRouteCode[],
+): LoanHealthDimension {
   if (precision === "C0") {
     return {
       code: "structure_understanding",
@@ -69,6 +73,17 @@ function structureDimension(precision: OpportunityPrecision): LoanHealthDimensio
       explanation: "Todavía estamos en orientación: faltan datos materiales para construir una lectura del crédito.",
       nextAction: "Completar un Quick Check con los datos mínimos del crédito.",
       sourceRouteCodes: [],
+    };
+  }
+
+  if (precision === "C1" && modeledRouteCodes.length > 0) {
+    return {
+      code: "structure_understanding",
+      label: "Estructura del crédito",
+      status: "explore",
+      explanation: "La fotografía de origen sigue siendo C1 porque los datos fueron declarados. Ya existe un modelo C2 para una ruta específica, sin elevar las demás decisiones ni verificar el documento.",
+      nextAction: "Usar el resultado C2 solo en la ruta que lo generó y conservar C1 para las demás decisiones hasta obtener soporte adicional.",
+      sourceRouteCodes: modeledRouteCodes,
     };
   }
 
@@ -333,8 +348,9 @@ function overallDecisionState(
 }
 
 export function evaluateLoanHealth(input: LoanHealthInput): LoanHealthResult {
+  const modeledRouteCodes = input.modeledRouteCodes ?? [];
   const dimensions = [
-    structureDimension(input.precision),
+    structureDimension(input.precision, modeledRouteCodes),
     prepaymentDimension(input),
     transferDimension(input),
     restructuringDimension(input),
@@ -343,6 +359,9 @@ export function evaluateLoanHealth(input: LoanHealthInput): LoanHealthResult {
   ];
 
   const overall = overallDecisionState(input.precision, dimensions);
+  const partialPrecisionNotice = input.precision === "C1" && modeledRouteCodes.length > 0
+    ? "La fuente del Mortgage Twin sigue en C1. Las rutas listadas como C2 alcanzaron ese nivel únicamente por un modelo determinístico específico; C2 no significa verificación documental."
+    : null;
 
   return {
     precision: input.precision,
@@ -350,8 +369,9 @@ export function evaluateLoanHealth(input: LoanHealthInput): LoanHealthResult {
     headline: overall.headline,
     dimensions,
     notices: [
-      "Loan Health v0.11 es una evaluación cualitativa de decisiones, no un score crediticio ni de riesgo.",
+      "Loan Health v0.21 es una evaluación cualitativa de decisiones, no un score crediticio ni de riesgo.",
       "Las rutas conservan la precisión y el fundamento del Opportunity Router; esta capa no crea nuevas conclusiones jurídicas.",
+      ...(partialPrecisionNotice ? [partialPrecisionNotice] : []),
     ],
   };
 }
