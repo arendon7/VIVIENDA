@@ -6,21 +6,36 @@ Tesis de producto:
 
 **Prepare → Buy → Finance → Manage → Optimize → Protect**
 
-La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y quiere entender si está pagando de la mejor manera disponible. Las rutas públicas ya cubren comprador potencial y presión de pago sin desplazar esa cuña.
+La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y quiere entender si está pagando de la mejor manera disponible. Las rutas públicas ya cubren comprador potencial, preparación para compra, presión de pago e inconsistencias sin desplazar esa cuña.
 
 ## Estado actual
 
-Los slices v0.10–v0.13 quedaron verdes. El slice activo es:
+Los slices v0.10–v0.16 están desarrollados sobre una cadena versionada y reversible.
 
-**v0.14 — Journey 3 / Payment Pressure**
+Último baseline de producto validado:
 
-Base v0.13:
+**v0.16 — Home Readiness / Índice de Preparación Hipotecaria**
 
-`1dd5ab2dba7d57911f3aee4f3f6fd11dcc401b64`
+Base v0.15:
 
-Rama activa:
+`2bf50dcb99313e6d4ce2ea675c350f60315800a4`
 
-`product/payment-pressure-v0.14`
+Green code/test head v0.16:
+
+`50de28509bbbb9a733382861231ef5981d2db487`
+
+Rama:
+
+`product/home-readiness-v0.16`
+
+Gate del código v0.16:
+
+- TypeScript: PASS;
+- dominio: **266/266 PASS**;
+- build: PASS;
+- Playwright: **126/126 PASS** desktop + mobile 390 px.
+
+v0.15 — Inconsistency Reconciler — también quedó congelado y documentado antes de iniciar v0.16.
 
 ## Superficies ejecutables
 
@@ -30,7 +45,9 @@ Rama activa:
 - `/mi-vivienda` — Mortgage Twin + Loan Health V1 + precisión + siguientes acciones.
 - `/auditoria-hipotecaria` — preview de la primera ruta asistida R7, sin contratación ni representación activa.
 - `/comprar/cuanto-puedo-comprar` — Journey 2 C1→C2 para comprador potencial, sin identidad antes del primer valor.
+- `/comprar/preparacion` — Home Readiness: perfil parcial → cinco dimensiones → índice completo cuando hay información suficiente.
 - `/ayuda` — Journey 3 C0 para presión de pago, mora, cobranza y proceso judicial reportado.
+- `/revisar-diferencia` — Journey 4 C0 para aislar y reconciliar una diferencia declarada sin presumir error o ilegalidad.
 
 ## Contrato de precisión
 
@@ -40,6 +57,50 @@ Rama activa:
 - **C3** — verificado documentalmente.
 
 C3 requiere evidencia realmente derivada de documento y reconciliación completa de campos materiales. Una confirmación manual o evidencia simulada no concede C3.
+
+## Home Readiness v0.16
+
+El **Índice de Preparación Hipotecaria** es una herramienta explicable de planificación, no un score bancario.
+
+Cinco dimensiones de hasta 20 puntos:
+
+1. carga actual de obligaciones;
+2. preparación de cuota inicial;
+3. continuidad de ingresos;
+4. preparación documental;
+5. encaje del objetivo.
+
+Principios:
+
+- no es DataCrédito, bureau score, bank score, preaprobación, aprobación ni probabilidad de aprobación;
+- no inserta una tasa de mercado;
+- para modelar `target_fit`, tasa y plazo deben ser suministrados por el usuario;
+- empleo independiente/empleado no se puntúa por sí mismo; se evalúa continuidad/historia;
+- si falta una dimensión, no se normalizan las demás para fabricar un 0–100;
+- el usuario puede obtener el resultado sustantivo sin nombre, correo, teléfono, cédula ni cuenta.
+
+Home Readiness reutiliza Buyer Affordability en vez de duplicar sus fórmulas. Desde `/comprar/cuanto-puedo-comprar`, `Conocer mi preparación` conserva en memoria ingreso, deudas, inicial, categoría y, si existe, el escenario C2 suministrado por el usuario. No serializa datos financieros en la URL y no finge persistencia.
+
+## Inconsistency Reconciler v0.15
+
+`/revisar-diferencia` ayuda a separar:
+
+- qué esperaba/comunicaba una fuente;
+- qué aparece aplicado/observado en otra;
+- qué evidencia falta para comparar;
+- cuándo solo hace falta educación/clasificación;
+- cuándo existe una diferencia compatible con R7;
+- cuándo un proceso judicial reportado hace prioritario R10.
+
+Dos fuentes declaradas siguen siendo C0 hasta que exista procesamiento y reconciliación documental real.
+
+El flujo no concluye automáticamente:
+
+- error bancario;
+- ilegalidad;
+- fraude;
+- derecho a devolución;
+- estrategia procesal.
 
 ## Payment Pressure v0.14
 
@@ -73,16 +134,6 @@ El triage no replica Ley 546. Reutiliza el `Opportunity Router` existente:
 - R10 domina cuando hay proceso judicial/embargo reportado;
 - leasing no hereda automáticamente rutas hipotecarias.
 
-### Conversión contextual
-
-- prevención → sin CTA a abogado;
-- mora/cobranza/prelegal → sin CTA a abogado;
-- R7 → `/auditoria-hipotecaria`;
-- R10 → `/verificar` primero;
-- etapa desconocida → clasificar con extracto/comunicación.
-
-El primer resultado no pide nombre, correo, teléfono, cédula ni documento.
-
 ## Buyer Affordability v0.13
 
 C1 usa:
@@ -97,8 +148,8 @@ No pide nombre, correo, teléfono, cédula, score ni documentos.
 v0.13 mantiene separados:
 
 - **30%** — benchmark educativo de planificación sobre endeudamiento recurrente total e ingreso neto declarado;
-- **40%** — techo regulatorio vigente de primera cuota sobre ingreso familiar acreditable;
-- **70% no VIS / 80% VIS** — referencias máximas regulatorias de financiación/LTV.
+- **40%** — techo regulatorio de primera cuota según la referencia congelada del slice;
+- **70% no VIS / 80% VIS** — referencias regulatorias de financiación/LTV congeladas en la metodología del slice.
 
 C2 solo usa una tasa EA y plazo suministrados por el usuario; no existe tasa de mercado automática.
 
@@ -123,7 +174,7 @@ Dimensiones:
 5. consistencia / cobros;
 6. mora / estado procesal.
 
-No publica `76/100`, probabilidades de aprobación ni matching bancario porcentual.
+No publica probabilidades de aprobación ni matching bancario porcentual.
 
 ## Auditoría Hipotecaria v0.12
 
@@ -139,13 +190,15 @@ Aceptar el servicio no concede facultad extrajudicial, poder judicial ni crea un
 
 La cadena separa:
 
-`Buyer Affordability / Mortgage Twin / Payment Pressure → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
+`Buyer Affordability / Home Readiness / Mortgage Twin / Payment Pressure / Inconsistency Reconciliation → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
 
 Incluye:
 
 - motores financieros con golden vectors;
-- buyer affordability v0.13;
-- payment pressure triage v0.14;
+- Buyer Affordability v0.13;
+- Payment Pressure v0.14;
+- Inconsistency Reconciler v0.15;
+- Home Readiness v0.16;
 - provenance/trust contracts;
 - Opportunity Router;
 - Loan Health evaluator;
@@ -166,9 +219,12 @@ Todavía no existe:
 - persistencia real de perfiles/casos/documentos;
 - Storage/OCR live;
 - proyecto/deployment Vercel de VIVIENDA;
-- bank adapters;
+- bureau integrations;
+- bank adapters/matching;
 - Open Finance;
 - tasas de mercado automáticas;
+- subsidy eligibility live;
+- application/approval flows;
 - pagos/contratación productiva.
 
 ## Journeys canónicos
@@ -210,11 +266,15 @@ Leer antes de cambios sustanciales:
 - `knowledge/00_PRODUCT/STATUS-V0.12.md`
 - `knowledge/00_PRODUCT/STATUS-V0.13.md`
 - `knowledge/00_PRODUCT/STATUS-V0.14.md`
+- `knowledge/00_PRODUCT/STATUS-V0.15.md`
+- `knowledge/00_PRODUCT/STATUS-V0.16.md`
 - `knowledge/20_DESIGN/BUYER-AFFORDABILITY-UX-SPEC-V0.13.md`
 - `knowledge/20_DESIGN/PAYMENT-PRESSURE-UX-SPEC-V0.14.md`
+- `knowledge/20_DESIGN/HOME-READINESS-UX-SPEC-V0.16.md`
 - `knowledge/40_DOMAIN/LOAN-HEALTH-CONTRACT-V0.11.md`
 - `knowledge/40_DOMAIN/BUYER-AFFORDABILITY-CONTRACT-V0.13.md`
 - `knowledge/40_DOMAIN/PAYMENT-PRESSURE-CONTRACT-V0.14.md`
+- `knowledge/40_DOMAIN/HOME-READINESS-CONTRACT-V0.16.md`
 - `skills/housing-finance-design-orchestrator/SKILL.md`
 
 La precedencia es: verdad jurídica/financiera → privacidad/seguridad → contratos de dominio → journey/UX → conversión → diseño → skills externas.
