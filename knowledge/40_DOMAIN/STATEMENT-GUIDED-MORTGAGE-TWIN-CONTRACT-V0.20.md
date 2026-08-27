@@ -65,6 +65,8 @@ Accepted local reference types:
 
 Maximum client-side reference size: 15 MiB.
 
+A non-finite or non-positive byte size is an invalid local descriptor and is distinct from a valid file that exceeds 15 MiB.
+
 The UI must state that these checks are convenience checks only and are not equivalent to server-side content validation.
 
 The local filename is display-only and must not enter generic analytics or domain results.
@@ -102,11 +104,13 @@ The first compatible system is:
 
 ### Context fields
 
-Useful but not sufficient to alter precision:
+Useful but not sufficient to alter precision or model readiness:
 
 - `institution_name`;
 - `current_total_payment`;
 - `monthly_insurance_or_costs`.
+
+If a numeric context field is supplied but invalid, the evaluator records a context issue and omits that value from the normalized snapshot. It must not block a valid snapshot or an otherwise valid decision-model input.
 
 ## 6. Canonical provenance per field
 
@@ -169,9 +173,10 @@ UVR does not inherit the pesos model automatically.
 
 When supplied:
 
-- finite;
-- non-negative;
-- total payment must be greater than zero.
+- current total payment must be finite and greater than zero;
+- monthly insurance/costs must be finite and non-negative.
+
+Invalid context values are omitted and surfaced as `context` issues; they do not alter snapshot/model readiness.
 
 ### Annual effective rate
 
@@ -203,6 +208,7 @@ Issue codes are deterministic and user-actionable:
 
 - `local_statement_required`
 - `unsupported_local_file_type`
+- `local_file_invalid_size`
 - `local_file_too_large`
 - `product_type_missing`
 - `cutoff_date_missing`
@@ -211,6 +217,8 @@ Issue codes are deterministic and user-actionable:
 - `modality_missing`
 - `principal_balance_missing`
 - `principal_balance_invalid`
+- `current_total_payment_invalid`
+- `monthly_insurance_or_costs_invalid`
 - `annual_effective_rate_missing`
 - `annual_effective_rate_invalid`
 - `remaining_installments_missing`
@@ -219,6 +227,13 @@ Issue codes are deterministic and user-actionable:
 - `mortgage_model_not_applicable_to_leasing`
 - `pesos_model_not_applicable_to_uvr`
 - `unsupported_amortization_system`
+
+Issue blocking classes are:
+
+- `local_reference` — prevents the local file from being treated as the active guided reference;
+- `snapshot` — prevents a complete C1 Mortgage Twin snapshot;
+- `model` — prevents the compatible C2 model handoff;
+- `context` — indicates an optional/context field should be corrected or omitted but does not change snapshot/model readiness.
 
 A missing model field must not block creation of a valid snapshot if snapshot-material fields are complete.
 
