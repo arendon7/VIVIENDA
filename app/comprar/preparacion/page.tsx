@@ -7,6 +7,7 @@ export default function HomeReadinessPage() {
         <a className="brand" href="/">VIVIENDA</a>
         <nav aria-label="Preparación para comprar vivienda">
           <a className="nav-link" href="/comprar/cuanto-puedo-comprar">Cuánto puedo comprar</a>
+          <a className="nav-link" href="/comprar/financiacion">Explorar financiación</a>
           <a className="nav-link" href="/revisar">Revisar mi crédito</a>
         </nav>
       </header>
