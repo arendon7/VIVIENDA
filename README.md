@@ -10,39 +10,39 @@ La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y 
 
 ## Estado actual
 
-Los slices v0.10–v0.19 están desarrollados sobre una cadena versionada y reversible.
+Los slices v0.10–v0.20 están desarrollados sobre una cadena versionada y reversible.
 
 Último baseline funcional validado:
 
-**v0.19 — Scenario-Based Economic Quote Comparison**
+**v0.20 — Statement-Guided Mortgage Twin**
 
-Base v0.18 final:
+Base funcional heredada v0.19:
 
-`7f94eaea829dcfb38077f3f30229f0121921e243`
+`b6fbe6312e1596291a07c6ba563877165a0d9d4c`
 
-Green code/test head v0.19:
+Green code/test head v0.20:
 
-`810a87492e271ce2be2c07463467a15797aba7e5`
+`81d34b496f285a59dd5ba4dad833082642bf82d3`
 
 Rama:
 
-`product/economic-quote-comparison-v0.19`
+`product/statement-guided-mortgage-twin-v0.20`
 
-Gate del código v0.19:
+Gate del código v0.20:
 
 - TypeScript: PASS;
-- dominio: **356/356 PASS**;
-- Economic Quote Comparison: **35 invariantes nuevos PASS**;
+- dominio: **380/380 PASS**;
+- Statement-Guided Intake: **24 invariantes nuevos PASS**;
 - build: PASS;
-- Playwright: **148/148 PASS** desktop + mobile 390 px.
+- Playwright: **166/166 PASS** desktop + mobile 390 px.
 
-v0.18 — Quote Normalization — permanece congelado como capa C1 previa y alimenta v0.19 únicamente cuando el par está materialmente listo.
+v0.19 — Scenario-Based Economic Quote Comparison — permanece congelado como baseline heredado. v0.20 cambia el journey de existing borrower sin alterar los contratos de modelación económica de comprador.
 
 ## Superficies ejecutables
 
 - `/` — Home Warm Path; existing borrower continúa como CTA primario.
 - `/revisar` — Quick Check anónimo para crédito existente.
-- `/verificar` — flujo de demostración para revisión/reconciliación documental.
+- `/verificar` — Statement-Guided Mortgage Twin: el usuario usa un extracto local como referencia y transcribe campos; el archivo no se sube, no se lee y no concede C3.
 - `/mi-vivienda` — Mortgage Twin + Loan Health V1 + precisión + siguientes acciones.
 - `/auditoria-hipotecaria` — preview de la primera ruta asistida R7, sin contratación ni representación activa.
 - `/comprar/cuanto-puedo-comprar` — Journey 2 C1→C2 para comprador potencial, sin identidad antes del primer valor.
@@ -59,7 +59,99 @@ v0.18 — Quote Normalization — permanece congelado como capa C1 previa y alim
 - **C2** — simulación modelada con supuestos suficientes.
 - **C3** — verificado documentalmente.
 
-C3 requiere evidencia realmente derivada de documento y reconciliación completa de campos materiales. Una confirmación manual o evidencia simulada no concede C3.
+C3 requiere evidencia realmente derivada de documento y reconciliación completa de campos materiales. Una confirmación manual, transcripción desde un archivo local o evidencia simulada no concede C3.
+
+## Statement-Guided Mortgage Twin v0.20
+
+v0.20 reemplaza la antigua demo documental de `/verificar` por un journey de valor real que preserva la frontera de evidencia.
+
+Pregunta de producto:
+
+> **¿Puede una persona usar un extracto reciente como referencia local para construir una fotografía materialmente mejor de su crédito sin que VIVIENDA finja haber subido, leído, extraído o verificado ese documento?**
+
+Secuencia:
+
+`Quick Check C1 → extracto local como referencia → Mortgage Twin C1 → modelo C2 compatible → Opportunity Router / Case Plan`
+
+C3 queda reservado para evidencia realmente derivada del documento y reconciliada.
+
+### Archivo local y provenance
+
+El usuario puede seleccionar localmente PDF/JPG/PNG de hasta 15 MiB como referencia de conveniencia y mirar el documento mientras transcribe campos.
+
+v0.20 no envía el archivo al servidor, no llama OCR y no simula upload exitoso.
+
+Los campos transcritos conservan:
+
+- `sourceType = user_declared`;
+- `acquisitionMethod = user_transcribed_from_local_statement`;
+- `documentReadByPlatform = false`;
+- `userConfirmed = true`.
+
+El filename es UI efímera: no entra al snapshot canónico, URL ni analytics genéricos.
+
+### Snapshot C1
+
+Para `snapshot_ready` se requieren:
+
+- tipo de producto;
+- fecha de corte;
+- modalidad pesos / UVR;
+- saldo de capital válido.
+
+Campos de contexto como entidad, pago reciente y seguros/costos pueden enriquecer el snapshot, pero un contexto opcional inválido no bloquea una base materialmente válida.
+
+### Modelo C2 compatible
+
+El primer handoff modelable exige:
+
+- crédito hipotecario de vivienda;
+- pesos;
+- saldo válido;
+- tasa EA explícita válida;
+- cuotas restantes positivas;
+- `constant_payment_pesos`.
+
+Reglas congeladas:
+
+- UVR no hereda el modelo de pesos;
+- leasing habitacional no hereda el modelo de prepago hipotecario;
+- una tasa ambigua no se convierte silenciosamente a EA;
+- un bloqueo de modelo no degrada un snapshot C1 válido.
+
+### Mortgage Twin y decisiones downstream
+
+Mortgage Twin distingue explícitamente:
+
+- `declared` → C1;
+- `preview` → C2;
+- `verified` → C3.
+
+Después del snapshot C1, `Explorar mis próximas decisiones` conserva producto/modalidad conocidos al entrar al Opportunity Router. La sustitución de la demo no elimina Case Plan ni obliga a repetir información ya capturada.
+
+### Fronteras
+
+v0.20 no hace:
+
+- server upload;
+- persistencia productiva;
+- OCR/extracción;
+- documento → C3;
+- autenticación productiva;
+- provider activation;
+- conectividad bancaria;
+- Open Finance;
+- consulta de centrales;
+- matching de compra de cartera;
+- recomendación de banco/producto;
+- elegibilidad, preaprobación o aprobación;
+- probabilidad de aprobación;
+- ahorro garantizado;
+- conclusión legal automática.
+
+Regla central:
+
+> **Un documento local puede guiar al usuario sin convertirse en evidencia que VIVIENDA afirme haber leído.**
 
 ## Scenario-Based Economic Quote Comparison v0.19
 
@@ -411,7 +503,7 @@ Aceptar el servicio no concede facultad extrajudicial, poder judicial ni crea un
 
 La cadena separa:
 
-`Buyer Affordability / Home Readiness / Financing Structures / Quote Normalization / Economic Quote Comparison / Mortgage Twin / Payment Pressure / Inconsistency Reconciliation → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
+`Buyer Affordability / Home Readiness / Financing Structures / Quote Normalization / Economic Quote Comparison / Statement-Guided Intake / Mortgage Twin / Payment Pressure / Inconsistency Reconciliation → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
 
 Incluye:
 
@@ -423,6 +515,7 @@ Incluye:
 - Financing Structures Explorer v0.17;
 - Quote Normalization v0.18;
 - Scenario-Based Economic Quote Comparison v0.19;
+- Statement-Guided Mortgage Twin v0.20;
 - provenance/trust contracts;
 - Opportunity Router;
 - Loan Health evaluator;
@@ -455,6 +548,8 @@ Todavía no existe:
 - subsidy eligibility live;
 - application/approval flows;
 - pagos/contratación productiva.
+
+El selector local de extracto de v0.20 no contradice esta lista: funciona únicamente como referencia cliente para transcripción manual y no constituye Storage/OCR live.
 
 ## Journeys canónicos
 
@@ -500,12 +595,14 @@ Leer antes de cambios sustanciales:
 - `knowledge/00_PRODUCT/STATUS-V0.17.md`
 - `knowledge/00_PRODUCT/STATUS-V0.18.md`
 - `knowledge/00_PRODUCT/STATUS-V0.19.md`
+- `knowledge/00_PRODUCT/STATUS-V0.20.md`
 - `knowledge/20_DESIGN/BUYER-AFFORDABILITY-UX-SPEC-V0.13.md`
 - `knowledge/20_DESIGN/PAYMENT-PRESSURE-UX-SPEC-V0.14.md`
 - `knowledge/20_DESIGN/HOME-READINESS-UX-SPEC-V0.16.md`
 - `knowledge/20_DESIGN/FINANCING-STRUCTURES-UX-SPEC-V0.17.md`
 - `knowledge/20_DESIGN/QUOTE-NORMALIZATION-UX-SPEC-V0.18.md`
 - `knowledge/20_UX/ECONOMIC-QUOTE-COMPARISON-UX-SPEC-V0.19.md`
+- `knowledge/20_UX/STATEMENT-GUIDED-MORTGAGE-TWIN-UX-SPEC-V0.20.md`
 - `knowledge/40_DOMAIN/LOAN-HEALTH-CONTRACT-V0.11.md`
 - `knowledge/40_DOMAIN/BUYER-AFFORDABILITY-CONTRACT-V0.13.md`
 - `knowledge/40_DOMAIN/PAYMENT-PRESSURE-CONTRACT-V0.14.md`
@@ -513,6 +610,7 @@ Leer antes de cambios sustanciales:
 - `knowledge/40_DOMAIN/FINANCING-STRUCTURES-CONTRACT-V0.17.md`
 - `knowledge/40_DOMAIN/QUOTE-NORMALIZATION-CONTRACT-V0.18.md`
 - `knowledge/40_DOMAIN/ECONOMIC-QUOTE-COMPARISON-CONTRACT-V0.19.md`
+- `knowledge/40_DOMAIN/STATEMENT-GUIDED-MORTGAGE-TWIN-CONTRACT-V0.20.md`
 - `skills/housing-finance-design-orchestrator/SKILL.md`
 
 La precedencia es: verdad jurídica/financiera → privacidad/seguridad → contratos de dominio → journey/UX → conversión → diseño → skills externas.
