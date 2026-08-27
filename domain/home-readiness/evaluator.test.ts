@@ -22,8 +22,21 @@ const baseInput: HomeReadinessInput = {
   },
 };
 
-function evaluate(overrides: Partial<HomeReadinessInput> = {}) {
-  return evaluateHomeReadiness({ ...baseInput, ...overrides });
+type HomeReadinessOverrides = Omit<Partial<HomeReadinessInput>, "planningFinancing"> & {
+  planningFinancing?: NonNullable<HomeReadinessInput["planningFinancing"]> | null;
+};
+
+function evaluate(overrides: HomeReadinessOverrides = {}) {
+  const { planningFinancing: basePlanningFinancing, ...baseRest } = baseInput;
+  const { planningFinancing, ...rest } = overrides;
+
+  return evaluateHomeReadiness({
+    ...baseRest,
+    ...rest,
+    ...(planningFinancing === null
+      ? {}
+      : { planningFinancing: planningFinancing ?? basePlanningFinancing! }),
+  });
 }
 
 function dimension(result: ReturnType<typeof evaluateHomeReadiness>, code: HomeReadinessDimensionCode) {
@@ -65,7 +78,7 @@ describe("Home Readiness v0.16", () => {
   });
 
   it("does not normalize a partial profile to 100", () => {
-    const result = evaluate({ planningFinancing: undefined });
+    const result = evaluate({ planningFinancing: null });
 
     expect(result.indexStatus).toBe("incomplete");
     expect(result.totalScore).toBeNull();
@@ -106,6 +119,7 @@ describe("Home Readiness v0.16", () => {
 
   it("delegates the modeled property ceiling to Buyer Affordability", () => {
     const result = evaluate();
+    const monthlyNonCreditHousingCosts = baseInput.planningFinancing!.monthlyNonCreditHousingCosts;
     const affordability = calculateBuyerAffordability({
       netHouseholdIncomeMonthly: baseInput.netHouseholdIncomeMonthly,
       currentMonthlyDebtPayments: baseInput.currentMonthlyDebtPayments,
@@ -115,7 +129,7 @@ describe("Home Readiness v0.16", () => {
         mode: "pesos_fixed_constant",
         annualEffectiveRate: baseInput.planningFinancing!.annualEffectiveRate,
         termMonths: baseInput.planningFinancing!.termMonths,
-        monthlyNonCreditHousingCosts: baseInput.planningFinancing!.monthlyNonCreditHousingCosts,
+        ...(monthlyNonCreditHousingCosts === undefined ? {} : { monthlyNonCreditHousingCosts }),
       },
     });
     const scenario = affordability.scenarios.find((item) => item.housingCategory === "non_vis");
@@ -126,7 +140,7 @@ describe("Home Readiness v0.16", () => {
   });
 
   it("does not silently insert a market rate or term", () => {
-    const result = evaluate({ planningFinancing: undefined });
+    const result = evaluate({ planningFinancing: null });
     const item = dimension(result, "target_fit");
 
     expect(result.underlyingAffordabilityPrecision).toBe("C1");
@@ -229,7 +243,7 @@ describe("Home Readiness v0.16", () => {
       housingCategory: "unknown",
       incomeContinuity: "unknown",
       documentationReadiness: "unknown",
-      planningFinancing: undefined,
+      planningFinancing: null,
     });
 
     expect(result.totalScore).toBeNull();
