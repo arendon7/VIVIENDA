@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { MortgageTwin } from "@/components/vivienda/mortgage-twin";
+import { OpportunityWorkspace } from "@/components/vivienda/opportunity-workspace";
 import { PrecisionBadge } from "@/components/vivienda/signature-components";
 import { compareConstantPaymentPrepayment } from "@/domain/finance/prepayment";
 import {
@@ -158,7 +159,9 @@ export function StatementGuidedMortgageTwin() {
   const [monthlyExtra, setMonthlyExtra] = useState("");
   const [modelResult, setModelResult] = useState<ReturnType<typeof compareConstantPaymentPrepayment> | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
+  const [showOpportunities, setShowOpportunities] = useState(false);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+  const opportunityRef = useRef<HTMLDivElement>(null);
   const asOfDate = bogotaToday();
 
   const assessment = useMemo(
@@ -175,6 +178,7 @@ export function StatementGuidedMortgageTwin() {
     setSubmitted(false);
     setModelResult(null);
     setModelError(null);
+    setShowOpportunities(false);
   }
 
   function selectFile(file: File | undefined) {
@@ -182,6 +186,7 @@ export function StatementGuidedMortgageTwin() {
     setSubmitted(false);
     setModelResult(null);
     setModelError(null);
+    setShowOpportunities(false);
 
     if (!file) {
       setLocalFile(null);
@@ -223,6 +228,7 @@ export function StatementGuidedMortgageTwin() {
     setSubmitted(true);
     setModelResult(null);
     setModelError(null);
+    setShowOpportunities(false);
     queueMicrotask(() => resultHeadingRef.current?.focus());
   }
 
@@ -249,6 +255,11 @@ export function StatementGuidedMortgageTwin() {
     } catch {
       setModelError("No pudimos construir este escenario con los datos actuales. Revisa los campos del modelo.");
     }
+  }
+
+  function openOpportunities() {
+    setShowOpportunities(true);
+    queueMicrotask(() => opportunityRef.current?.focus());
   }
 
   const snapshotIssues = assessment.issues.filter((item) => item.blocks === "snapshot");
@@ -487,6 +498,26 @@ export function StatementGuidedMortgageTwin() {
                         <div><dt>Interés nominal futuro evitado por el modelo</dt><dd>{cop.format(modelResult.interestAvoided)}</dd></div>
                       </dl>
                     </section>
+                  ) : null}
+
+                  <section className="surface guided-next-decisions" aria-labelledby="guided-next-decisions-title">
+                    <p className="eyebrow">Siguiente decisión</p>
+                    <h2 id="guided-next-decisions-title">Ahora puedes ordenar las rutas que realmente aplican a tu situación.</h2>
+                    <p className="section-copy">Usaremos la clasificación de producto y modalidad de este Mortgage Twin como punto de partida. El Router conserva C1 y te pedirá solo los hechos adicionales necesarios para priorizar prepago, reestructuración, traslado, reclamación o revisión jurídica.</p>
+                    <button className="button button-primary" type="button" onClick={openOpportunities} aria-expanded={showOpportunities} aria-controls="guided-opportunity-router">
+                      Explorar mis próximas decisiones
+                    </button>
+                  </section>
+
+                  {showOpportunities ? (
+                    <div id="guided-opportunity-router" ref={opportunityRef} tabIndex={-1}>
+                      <OpportunityWorkspace
+                        precision="C1"
+                        initialProductType={snapshot.productType}
+                        initialModality={snapshot.modality}
+                        sourceLabel={`Mortgage Twin C1 · corte ${snapshot.cutoffDate}`}
+                      />
+                    </div>
                   ) : null}
 
                   <div className="guided-actions guided-result-actions">
