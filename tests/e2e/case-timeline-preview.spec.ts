@@ -2,26 +2,27 @@ import { expect, test } from "@playwright/test";
 
 async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
   await page.goto("/verificar");
-  await page.getByLabel("Selecciona un extracto para probar la experiencia").setInputFiles({
-    name: "extracto-demo.pdf",
+  await page.getByLabel("Seleccionar extracto local").setInputFiles({
+    name: "extracto-local.pdf",
     mimeType: "application/pdf",
-    buffer: Buffer.from("%PDF-1.4 demo"),
+    buffer: Buffer.from("%PDF-1.4 local-reference"),
   });
 
-  const confirmationBoxes = page.locator('input[type="checkbox"]:not(:disabled)');
-  await expect(confirmationBoxes).toHaveCount(6);
-  for (let index = 0; index < 6; index += 1) {
-    await confirmationBoxes.nth(index).check();
-  }
+  await page.getByLabel("Fecha de corte del extracto").fill("2026-08-15");
+  await page.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).first().check();
+  await page.getByRole("radio", { name: "Pesos", exact: true }).first().check();
+  await page.getByLabel("Saldo de capital (COP)").fill("180000000");
+  await page.getByRole("button", { name: "Construir mi Mortgage Twin" }).click();
+  await page.getByRole("button", { name: "Explorar mis próximas decisiones" }).click();
 
-  await page.getByRole("button", { name: "Previsualizar Mortgage Twin" }).click();
   await expect(page.getByRole("heading", { name: "Convierte el Mortgage Twin en próximas decisiones posibles." })).toBeVisible();
-  return page.locator('section[aria-labelledby="opportunity-workspace-title"]');
+  const workspace = page.locator('section[aria-labelledby="opportunity-workspace-title"]');
+  await expect(workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" })).toBeChecked();
+  return workspace;
 }
 
 async function openTermPrepaymentTimeline(page: import("@playwright/test").Page) {
   const workspace = await openOpportunityWorkspace(page);
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByRole("radio", { name: "Terminar antes" }).check();
   await workspace.getByLabel("3. ¿Cuánto capital adicional podrías aportar?").fill("300000");
 
@@ -51,7 +52,7 @@ test("starts the local Case Log at version one without claiming persistence or e
   await expect(timeline.getByText("SIMULADO", { exact: true })).toBeVisible();
   await expect(timeline.getByText("R1_PREPAGO_PLAZO", { exact: true })).toBeVisible();
   await expect(timeline.getByText("eligible_now", { exact: true })).toBeVisible();
-  await expect(timeline.getByText("C2", { exact: true })).toBeVisible();
+  await expect(timeline.getByText("C1", { exact: true })).toBeVisible();
   await expect(timeline.getByText("self_service", { exact: true })).toBeVisible();
   await expect(timeline.getByText(/no crean un expediente productivo/i)).toBeVisible();
 
@@ -93,7 +94,6 @@ test("attaching evidence derives collecting-evidence state without inventing ver
 
 test("a legal route can request professional review but cannot auto-complete lawyer work", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("embargo_or_auction");
 
   const primary = workspace.getByRole("article", {
