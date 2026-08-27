@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PrecisionBadge } from "@/components/vivienda/signature-components";
 import {
   compareEconomicQuotePair,
@@ -86,11 +86,9 @@ function structureLabel(input: FinancingQuoteInput): string {
 }
 
 function leasingNeedsPercentageBase(input: FinancingQuoteInput): boolean {
-  return (
-    input.contractStructure === "housing_leasing" &&
+  return input.contractStructure === "housing_leasing" &&
     input.leasingPurchaseOptionValue === undefined &&
-    input.leasingPurchaseOptionPercentage !== undefined
-  );
+    input.leasingPurchaseOptionPercentage !== undefined;
 }
 
 function buildLeasingOption(
@@ -101,31 +99,24 @@ function buildLeasingOption(
   if (input.contractStructure !== "housing_leasing") return null;
   if (!choice) throw new Error(`Define si ejercerás la opción de compra de ${quoteLabel(input, input.quoteId)}.`);
   if (choice === "no_exercise") return { exercise: false };
-
   if (leasingNeedsPercentageBase(input) && !base) {
     throw new Error(`Define la base porcentual de la opción de compra de ${quoteLabel(input, input.quoteId)}.`);
   }
 
-  const result: LeasingOptionScenario = {
-    exercise: true,
-    timing: "contract_end",
-  };
-  if (base) result.percentageBase = base;
-  return result;
+  const option: LeasingOptionScenario = { exercise: true, timing: "contract_end" };
+  if (base) option.percentageBase = base;
+  return option;
 }
 
 function ModelCard({ model, input, fallback }: { model: EconomicQuoteModel; input: FinancingQuoteInput; fallback: string }) {
   const label = quoteLabel(input, fallback);
-
   if (!model.cashFlow) {
     return (
       <article className={styles.quoteCard}>
         <p className="eyebrow">{label}</p>
         <h3>No pudimos modelar este flujo</h3>
         <p>{structureLabel(input)}</p>
-        <ul className={styles.issueList}>
-          {model.issues.map((issue) => <li key={issue.code}>{issue.message}</li>)}
-        </ul>
+        <ul className={styles.issueList}>{model.issues.map((issue) => <li key={issue.code}>{issue.message}</li>)}</ul>
       </article>
     );
   }
@@ -154,37 +145,77 @@ function ModelCard({ model, input, fallback }: { model: EconomicQuoteModel; inpu
 
 function MetricComparison({
   title,
-  result,
+  metric,
   gateIssues,
   quoteA,
   quoteB,
-  emptyCopy,
+  blockedTitle,
 }: {
   title: string;
-  result: EconomicQuotePairComparison["nominal"];
+  metric: EconomicQuotePairComparison["nominal"];
   gateIssues: EconomicPairGateCode[];
   quoteA: FinancingQuoteInput;
   quoteB: FinancingQuoteInput;
-  emptyCopy?: string;
+  blockedTitle: string;
 }) {
   return (
     <section className={styles.metricSection}>
-      <h3>{result.isComparable ? title : emptyCopy ?? `No rankeamos ${title.toLowerCase()}`}</h3>
-      {result.isComparable ? (
-        result.tie ? (
+      <h3>{metric.isComparable ? title : blockedTitle}</h3>
+      {metric.isComparable ? (
+        metric.tie ? (
           <p>La diferencia está dentro de COP 1; tratamos el resultado como empate técnico.</p>
         ) : (
           <div className={styles.metricResult}>
-            <strong>{result.lowerQuoteId === quoteA.quoteId ? quoteLabel(quoteA, "Cotización A") : quoteLabel(quoteB, "Cotización B")}</strong>
-            <span>Diferencia modelada: {money(result.absoluteDifference ?? 0)}</span>
+            <strong>{metric.lowerQuoteId === quoteA.quoteId ? quoteLabel(quoteA, "Cotización A") : quoteLabel(quoteB, "Cotización B")}</strong>
+            <span>Diferencia modelada: {money(metric.absoluteDifference ?? 0)}</span>
           </div>
         )
       ) : (
-        <ul className={styles.issueList}>
-          {gateIssues.map((issue) => <li key={issue}>{gateCopy[issue]}</li>)}
-        </ul>
+        <ul className={styles.issueList}>{gateIssues.map((issue) => <li key={issue}>{gateCopy[issue]}</li>)}</ul>
       )}
     </section>
+  );
+}
+
+function LeasingScenarioBlock({
+  input,
+  slot,
+  choice,
+  base,
+  onChoice,
+  onBase,
+}: {
+  input: FinancingQuoteInput;
+  slot: "A" | "B";
+  choice: LeasingChoice;
+  base: PercentageBase;
+  onChoice: (value: LeasingChoice) => void;
+  onBase: (value: PercentageBase) => void;
+}) {
+  if (input.contractStructure !== "housing_leasing") return null;
+
+  return (
+    <fieldset className={styles.choiceBlock}>
+      <legend>¿Cómo quieres tratar la opción de compra de {quoteLabel(input, `Cotización ${slot}`)}?</legend>
+      <label>
+        <input type="radio" name={`leasing-${slot}`} checked={choice === "exercise"} onChange={() => onChoice("exercise")} />
+        <span><strong>Sí, incluir la opción de compra al final</strong><small>Modela un camino de adquisición completa.</small></span>
+      </label>
+      <label>
+        <input type="radio" name={`leasing-${slot}`} checked={choice === "no_exercise"} onChange={() => onChoice("no_exercise")} />
+        <span><strong>No, modelar solo los cánones</strong><small>El resultado no será equivalente a adquirir el inmueble.</small></span>
+      </label>
+      {choice === "exercise" && leasingNeedsPercentageBase(input) ? (
+        <div className={styles.nestedField}>
+          <label htmlFor={`leasing-base-${slot}`}>¿Sobre qué base está expresado el porcentaje?</label>
+          <select id={`leasing-base-${slot}`} value={base} onChange={(event) => onBase(event.target.value as PercentageBase)}>
+            <option value="">Selecciona la base declarada</option>
+            <option value="property_value">Valor del inmueble</option>
+            <option value="financed_amount">Monto financiado</option>
+          </select>
+        </div>
+      ) : null}
+    </fieldset>
   );
 }
 
@@ -202,14 +233,6 @@ export function EconomicComparisonPanel({ quoteA, quoteB, onBack, onEditA, onEdi
     if (result) resultHeadingRef.current?.focus();
   }, [result]);
 
-  const scenarioSummary = useMemo(() => {
-    if (!result) return null;
-    return {
-      uvr: result.quoteA.cashFlow?.assumptions.uvrAnnualGrowthRate ?? result.quoteB.cashFlow?.assumptions.uvrAnnualGrowthRate ?? null,
-      discount: result.quoteA.cashFlow?.assumptions.annualDiscountRate ?? result.quoteB.cashFlow?.assumptions.annualDiscountRate ?? null,
-    };
-  }, [result]);
-
   function update<K extends keyof ScenarioFormState>(key: K, value: ScenarioFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     setError(null);
@@ -218,14 +241,12 @@ export function EconomicComparisonPanel({ quoteA, quoteB, onBack, onEditA, onEdi
   function runScenario() {
     try {
       const scenario: EconomicComparisonScenario = { scenarioId: "interactive-v0.19" };
-
       if (needsUvrScenario) {
         scenario.uvrScenario = {
           kind: "constant_annual_growth",
           annualGrowthRate: parsePercent(form.uvrAnnualGrowthPercent, "la variación anual de UVR"),
         };
       }
-
       if (form.usePresentValue) {
         scenario.annualDiscountRate = parsePercent(form.annualDiscountPercent, "la tasa anual de comparación");
       }
@@ -245,6 +266,8 @@ export function EconomicComparisonPanel({ quoteA, quoteB, onBack, onEditA, onEdi
   }
 
   if (result) {
+    const uvrSummary = result.quoteA.cashFlow?.assumptions.uvrAnnualGrowthRate ?? result.quoteB.cashFlow?.assumptions.uvrAnnualGrowthRate ?? null;
+    const discountSummary = result.quoteA.cashFlow?.assumptions.annualDiscountRate ?? result.quoteB.cashFlow?.assumptions.annualDiscountRate ?? null;
     const title = result.status === "blocked"
       ? "Todavía falta una condición para modelar ambos flujos"
       : result.status === "modeled_not_rankable"
@@ -270,10 +293,10 @@ export function EconomicComparisonPanel({ quoteA, quoteB, onBack, onEditA, onEdi
           <ModelCard model={result.quoteB} input={quoteB} fallback="Cotización B" />
         </div>
 
-        {scenarioSummary?.uvr !== null ? (
+        {uvrSummary !== null ? (
           <section className={`surface ${styles.assumptionPanel}`} aria-labelledby="uvr-scenario-heading">
             <p className="eyebrow">Sensibilidad UVR</p>
-            <h2 id="uvr-scenario-heading">UVR usada en este escenario: {percent(scenarioSummary.uvr)}</h2>
+            <h2 id="uvr-scenario-heading">UVR usada en este escenario: {percent(uvrSummary)}</h2>
             <p>Es un supuesto elegido para esta simulación, no una proyección oficial. <strong>Si la UVR cambia, este resultado cambia.</strong></p>
           </section>
         ) : null}
@@ -283,20 +306,20 @@ export function EconomicComparisonPanel({ quoteA, quoteB, onBack, onEditA, onEdi
           <h2 id="comparison-metrics-heading">Qué métrica podemos comparar responsablemente</h2>
           <MetricComparison
             title="Menor desembolso nominal modelado bajo este escenario"
-            result={result.nominal}
+            metric={result.nominal}
             gateIssues={result.nominalGateIssues}
             quoteA={quoteA}
             quoteB={quoteB}
-            emptyCopy="No rankeamos el desembolso nominal"
+            blockedTitle="No rankeamos el desembolso nominal"
           />
-          {scenarioSummary?.discount !== null ? (
+          {discountSummary !== null ? (
             <MetricComparison
               title="Menor valor presente de desembolsos bajo tu tasa de comparación"
-              result={result.presentValue}
+              metric={result.presentValue}
               gateIssues={result.presentValueGateIssues}
               quoteA={quoteA}
               quoteB={quoteB}
-              emptyCopy="No rankeamos el valor presente"
+              blockedTitle="No rankeamos el valor presente"
             />
           ) : (
             <section className={styles.metricSection}>
@@ -306,9 +329,9 @@ export function EconomicComparisonPanel({ quoteA, quoteB, onBack, onEditA, onEdi
           )}
         </section>
 
-        {scenarioSummary?.discount !== null ? (
+        {discountSummary !== null ? (
           <section className={styles.inlineAssumption}>
-            <strong>Tasa anual de comparación: {percent(scenarioSummary.discount)}</strong>
+            <strong>Tasa anual de comparación: {percent(discountSummary)}</strong>
             <p>Es un supuesto para valorar el dinero en el tiempo; no es la tasa del banco ni una recomendación de mercado.</p>
           </section>
         ) : null}
@@ -350,38 +373,6 @@ export function EconomicComparisonPanel({ quoteA, quoteB, onBack, onEditA, onEdi
     );
   }
 
-  function LeasingScenarioBlock({ input, slot }: { input: FinancingQuoteInput; slot: "A" | "B" }) {
-    if (input.contractStructure !== "housing_leasing") return null;
-    const choiceKey = slot === "A" ? "leasingChoiceA" : "leasingChoiceB";
-    const baseKey = slot === "A" ? "leasingBaseA" : "leasingBaseB";
-    const choice = form[choiceKey];
-    const base = form[baseKey];
-
-    return (
-      <fieldset className={styles.choiceBlock}>
-        <legend>¿Cómo quieres tratar la opción de compra de {quoteLabel(input, `Cotización ${slot}`)}?</legend>
-        <label>
-          <input type="radio" name={`leasing-${slot}`} checked={choice === "exercise"} onChange={() => update(choiceKey, "exercise")} />
-          <span><strong>Sí, incluir la opción de compra al final</strong><small>Modela un camino de adquisición completa.</small></span>
-        </label>
-        <label>
-          <input type="radio" name={`leasing-${slot}`} checked={choice === "no_exercise"} onChange={() => update(choiceKey, "no_exercise")} />
-          <span><strong>No, modelar solo los cánones</strong><small>El resultado no será equivalente a adquirir el inmueble.</small></span>
-        </label>
-        {choice === "exercise" && leasingNeedsPercentageBase(input) ? (
-          <div className={styles.nestedField}>
-            <label htmlFor={`leasing-base-${slot}`}>¿Sobre qué base está expresado el porcentaje?</label>
-            <select id={`leasing-base-${slot}`} value={base} onChange={(event) => update(baseKey, event.target.value as PercentageBase)}>
-              <option value="">Selecciona la base declarada</option>
-              <option value="property_value">Valor del inmueble</option>
-              <option value="financed_amount">Monto financiado</option>
-            </select>
-          </div>
-        ) : null}
-      </fieldset>
-    );
-  }
-
   return (
     <div className={styles.panel}>
       <section className={`surface ${styles.formHero}`}>
@@ -410,8 +401,22 @@ export function EconomicComparisonPanel({ quoteA, quoteB, onBack, onEditA, onEdi
 
         {hasLeasing ? (
           <div className={styles.leasingGrid}>
-            <LeasingScenarioBlock input={quoteA} slot="A" />
-            <LeasingScenarioBlock input={quoteB} slot="B" />
+            <LeasingScenarioBlock
+              input={quoteA}
+              slot="A"
+              choice={form.leasingChoiceA}
+              base={form.leasingBaseA}
+              onChoice={(value) => update("leasingChoiceA", value)}
+              onBase={(value) => update("leasingBaseA", value)}
+            />
+            <LeasingScenarioBlock
+              input={quoteB}
+              slot="B"
+              choice={form.leasingChoiceB}
+              base={form.leasingBaseB}
+              onChoice={(value) => update("leasingChoiceB", value)}
+              onBase={(value) => update("leasingBaseB", value)}
+            />
           </div>
         ) : null}
 
