@@ -482,7 +482,7 @@ export function StatementGuidedMortgageTwin() {
                   ) : assessment.modelReadiness === "not_applicable" ? (
                     <section className="surface-warning" role="status">
                       <strong>{snapshot.productType === "housing_leasing" ? "Este snapshot corresponde a leasing habitacional." : "No vamos a aplicar una fórmula de cuota constante en pesos a este crédito UVR."}</strong>
-                      <p>{snapshot.productType === "housing_leasing" ? "No aplicamos automáticamente el modelo de prepago de crédito hipotecario. La estructura contractual y la opción de compra deben conservarse separadas." : "El Mortgage Twin C1 sí es útil. Un escenario UVR exige una trayectoria explícita y un modelo compatible; v0.20 no lo inventa desde este extracto."}</p>
+                      <p>{snapshot.productType === "housing_leasing" ? "No aplicamos automáticamente el modelo de prepago de crédito hipotecario. La estructura contractual y la opción de compra deben conservarse separadas." : "El Mortgage Twin C1 sí es útil. Un escenario UVR exige una trayectoria explícita y un modelo compatible; esta versión no lo inventa desde el extracto."}</p>
                     </section>
                   ) : (
                     <section className="surface guided-model-missing" aria-labelledby="guided-model-missing-title">
@@ -518,7 +518,7 @@ export function StatementGuidedMortgageTwin() {
                     <p className="eyebrow">Siguiente decisión</p>
                     <h2 id="guided-next-decisions-title">Entiende primero qué merece atención y después compara la ruta adecuada.</h2>
                     <p className="section-copy">
-                      Loan Health usará este Mortgage Twin como fuente C1. Si ya construiste el escenario de reducción de plazo, solo esa ruta podrá conservar C2; las demás decisiones seguirán en C1 hasta que tengan soporte propio.
+                      Loan Health usará este Mortgage Twin como fuente C1. El escenario mensual heredado puede conservar C2 solo en reducción de plazo. Si construyes la comparación con un mismo abono único, reducción de plazo y reducción de cuota podrán ganar C2 por separado; las demás rutas seguirán en C1 hasta que tengan soporte propio.
                     </p>
                     <button className="button button-primary" type="button" onClick={openOpportunities} aria-expanded={showOpportunities} aria-controls="guided-opportunity-router">
                       Ver mi Loan Health y rutas
@@ -534,6 +534,9 @@ export function StatementGuidedMortgageTwin() {
                         sourceLabel={`Mortgage Twin C1 · corte ${snapshot.cutoffDate}`}
                         {...(modelResult
                           ? { initialTermPrepaymentModel: { recurringExtraPrincipal: Number(monthlyExtra) } }
+                          : {})}
+                        {...(assessment.constantPaymentPesosModelInput
+                          ? { prepaymentChoiceModelInput: assessment.constantPaymentPesosModelInput }
                           : {})}
                       />
                     </div>
