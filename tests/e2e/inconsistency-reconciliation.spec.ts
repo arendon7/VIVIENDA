@@ -16,7 +16,7 @@ async function completeReconciliation(page: Page, answers: ReconciliationAnswers
   await page.getByLabel(answers.specificity ?? "Sí, puedo señalar la diferencia concreta", { exact: true }).check();
   await page.getByRole("button", { name: "Continuar" }).click();
 
-  await page.getByLabel(answers.evidence ?? "Tengo dos fuentes para contrastar", { exact: true }).check();
+  await page.getByRole("radio", { name: answers.evidence ?? "Tengo dos fuentes para contrastar" }).check();
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await page.getByLabel(answers.product ?? "Crédito hipotecario de vivienda", { exact: true }).check();
