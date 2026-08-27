@@ -69,9 +69,10 @@ export default function HomePage() {
           <div className="surface choice-card">
             <p className="eyebrow">Todavía no tengo crédito</p>
             <h2 id="buyer-path-heading">¿Estás planeando comprar vivienda?</h2>
-            <p className="section-copy">Calcula una referencia de cuota e inicial antes de comparar financiación. El primer resultado no pide nombre, teléfono, correo ni score.</p>
+            <p className="section-copy">Calcula una referencia de cuota e inicial antes de comparar financiación. Si ya tienes un precio en mente, también puedes construir tu preparación en cinco dimensiones. Ninguna ruta pide identidad para el primer resultado.</p>
             <div className="actions">
               <a className="button button-secondary" href="/comprar/cuanto-puedo-comprar">Calcular cuánto puedo planear</a>
+              <a className="button button-quiet" href="/comprar/preparacion">Conocer mi preparación</a>
             </div>
           </div>
         </section>
