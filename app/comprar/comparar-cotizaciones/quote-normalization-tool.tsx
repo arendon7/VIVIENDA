@@ -20,6 +20,7 @@ import {
   type QuoteRateConvention,
   type QuoteReadiness,
 } from "@/domain/quote-normalization/evaluator";
+import { EconomicComparisonPanel } from "./economic-comparison-panel";
 import styles from "./quote-normalization.module.css";
 
 type QuoteSlot = "a" | "b";
@@ -645,10 +646,12 @@ function PairResult({
   pair,
   onEditA,
   onEditB,
+  onModelEconomic,
 }: {
   pair: NormalizedQuotePair;
   onEditA: () => void;
   onEditB: () => void;
+  onModelEconomic?: () => void;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -660,7 +663,7 @@ function PairResult({
     ? "Al menos una cotización todavía no tiene datos estructurales suficientes."
     : pair.readiness === "ready_for_structural_comparison"
       ? "Ya podemos identificar diferencias de estructura, pero todavía faltan datos materiales antes de cualquier modelación económica."
-      : "Las dos cotizaciones tienen una base material suficiente para pasar, en una capa posterior, a una modelación económica normalizada.";
+      : "Las dos cotizaciones tienen una base material suficiente para pasar a un escenario económico con supuestos explícitos.";
 
   return (
     <div className={styles.results}>
@@ -672,7 +675,7 @@ function PairResult({
         <p className="eyebrow">Base de comparación</p>
         <h2 ref={headingRef} tabIndex={-1}>Ahora sabemos qué no es directamente comparable</h2>
         <p className="section-copy">{pairMessage}</p>
-        <p className={styles.boundaryLine}>Todavía no calculamos cuál es más barata, cuál gana, cuánto ahorrarías ni cuánto costará cada alternativa en el tiempo.</p>
+        <p className={styles.boundaryLine}>En esta vista todavía no elegimos cuál es más barata ni concluimos cuál conviene. El escenario económico, cuando está habilitado, usa supuestos visibles y mantiene esos límites.</p>
       </section>
 
       <div className={styles.statusGrid}>
@@ -684,7 +687,7 @@ function PairResult({
         <div className={styles.pairHeading}>
           <div>
             <p className="eyebrow">Diferencias de base</p>
-            <h2 id="basis-differences-heading">Antes de mirar un número ganador, alinea estas diferencias</h2>
+            <h2 id="basis-differences-heading">Antes de mirar una diferencia económica, alinea estas bases</h2>
           </div>
           <p>Una diferencia aquí puede explicar por qué dos cuotas o tasas no significan lo mismo.</p>
         </div>
@@ -707,22 +710,23 @@ function PairResult({
 
       <section className={`surface ${styles.requirementsPanel}`} aria-labelledby="modeling-requirements-heading">
         <p className="eyebrow">Siguiente capa</p>
-        <h2 id="modeling-requirements-heading">Qué deberá normalizar un futuro modelo económico</h2>
+        <h2 id="modeling-requirements-heading">Qué debe declarar el escenario económico</h2>
         {pair.modelingRequirements.length > 0 ? (
           <ul>{pair.modelingRequirements.map((requirement) => <li key={requirement}>{requirementLabel[requirement]}</li>)}</ul>
         ) : (
-          <p>Con las bases declaradas no aparecen requisitos adicionales de normalización estructural. Aun así, falta un modelo de flujos y costo total antes de concluir cuál conviene.</p>
+          <p>No aparecen requisitos adicionales de normalización estructural. El escenario seguirá mostrando sus supuestos y gates antes de cualquier diferencia monetaria.</p>
         )}
       </section>
 
       <section className={styles.truthBoundary} aria-label="Límites de la comparación de cotizaciones">
-        <strong>Qué sí compara v0.18</strong>
+        <strong>Qué sí compara esta base</strong>
         <p>Completitud material, consistencia básica y diferencias de base declaradas.</p>
-        <strong>Qué no compara todavía</strong>
-        <p>Costo total, valor presente, ahorro, riesgo económico, conveniencia individual, aprobación o ranking de entidades.</p>
+        <strong>Qué no concluye por sí sola</strong>
+        <p>Conveniencia individual, aprobación, ranking de entidades ni ahorro garantizado.</p>
       </section>
 
       <div className={styles.actions}>
+        {onModelEconomic ? <button className="button button-primary" type="button" onClick={onModelEconomic}>Modelar escenario económico</button> : null}
         <button className="button button-secondary" type="button" onClick={onEditA}>Editar cotización A</button>
         <button className="button button-secondary" type="button" onClick={onEditB}>Editar cotización B</button>
         <a className="button button-secondary" href="/comprar/financiacion">Volver al explorador de financiación</a>
@@ -739,6 +743,7 @@ export function QuoteNormalizationTool() {
   const [quoteAResult, setQuoteAResult] = useState<NormalizedQuote | null>(null);
   const [quoteBResult, setQuoteBResult] = useState<NormalizedQuote | null>(null);
   const [activeSlot, setActiveSlot] = useState<QuoteSlot>("a");
+  const [showEconomic, setShowEconomic] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   function submit(slot: QuoteSlot) {
@@ -753,6 +758,7 @@ export function QuoteNormalizationTool() {
         setQuoteBInput(input);
         setQuoteBResult(result);
       }
+      setShowEconomic(false);
       setFormError(null);
       setActiveSlot(null as never);
     } catch (error) {
@@ -761,6 +767,7 @@ export function QuoteNormalizationTool() {
   }
 
   function edit(slot: QuoteSlot) {
+    setShowEconomic(false);
     setFormError(null);
     setActiveSlot(slot);
   }
@@ -788,7 +795,15 @@ export function QuoteNormalizationTool() {
         </div>
       ) : null}
 
-      {activeSlot === "a" ? (
+      {showEconomic && quoteAInput && quoteBInput ? (
+        <EconomicComparisonPanel
+          quoteA={quoteAInput}
+          quoteB={quoteBInput}
+          onBack={() => setShowEconomic(false)}
+          onEditA={() => edit("a")}
+          onEditB={() => edit("b")}
+        />
+      ) : activeSlot === "a" ? (
         <QuoteForm
           slot="a"
           state={quoteAForm}
@@ -815,7 +830,14 @@ export function QuoteNormalizationTool() {
           {...(quoteBResult ? { onCancel: cancelEdit } : {})}
         />
       ) : pair ? (
-        <PairResult pair={pair} onEditA={() => edit("a")} onEditB={() => edit("b")} />
+        <PairResult
+          pair={pair}
+          onEditA={() => edit("a")}
+          onEditB={() => edit("b")}
+          {...(pair.readiness === "ready_for_future_economic_model"
+            ? { onModelEconomic: () => setShowEconomic(true) }
+            : {})}
+        />
       ) : quoteAResult ? (
         <SingleQuoteResult
           label="Cotización A"
@@ -828,10 +850,12 @@ export function QuoteNormalizationTool() {
         />
       ) : null}
 
-      <section className={styles.preResultBoundary}>
-        <strong>Importante</strong>
-        <p>Que una cotización tenga todos los datos materiales no significa que sea más conveniente. Solo significa que deja de faltar información básica para una modelación posterior.</p>
-      </section>
+      {!showEconomic ? (
+        <section className={styles.preResultBoundary}>
+          <strong>Importante</strong>
+          <p>Que una cotización tenga todos los datos materiales no significa que sea más conveniente. Solo significa que deja de faltar información básica para una modelación posterior.</p>
+        </section>
+      ) : null}
     </div>
   );
 }
