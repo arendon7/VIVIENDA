@@ -235,6 +235,7 @@ export function StatementGuidedMortgageTwin() {
   function modelPrepayment() {
     setModelResult(null);
     setModelError(null);
+    setShowOpportunities(false);
     const extra = Number(monthlyExtra);
     if (!Number.isFinite(extra) || extra <= 0) {
       setModelError("Define un abono adicional mensual mayor que cero.");
@@ -460,7 +461,20 @@ export function StatementGuidedMortgageTwin() {
                       <h2 id="guided-model-title">También tenemos los datos para probar un escenario de prepago.</h2>
                       <p className="section-copy">El snapshot sigue siendo C1. Si defines un abono adicional, el resultado matemático será C2 y conservará que los datos base fueron transcritos por ti.</p>
                       <Field label="Abono adicional mensual que quieres probar (COP)" hint="Es dinero que aportarías tú; no es una recomendación ni valor generado por VIVIENDA.">
-                        <input className="field-control" type="number" min="1" step="10000" inputMode="numeric" value={monthlyExtra} onChange={(event) => { setMonthlyExtra(event.target.value); setModelResult(null); setModelError(null); }} />
+                        <input
+                          className="field-control"
+                          type="number"
+                          min="1"
+                          step="10000"
+                          inputMode="numeric"
+                          value={monthlyExtra}
+                          onChange={(event) => {
+                            setMonthlyExtra(event.target.value);
+                            setModelResult(null);
+                            setModelError(null);
+                            setShowOpportunities(false);
+                          }}
+                        />
                       </Field>
                       {modelError ? <p className="field-error" role="alert">{modelError}</p> : null}
                       <button className="button button-primary" type="button" onClick={modelPrepayment}>Modelar este abono</button>
@@ -502,10 +516,12 @@ export function StatementGuidedMortgageTwin() {
 
                   <section className="surface guided-next-decisions" aria-labelledby="guided-next-decisions-title">
                     <p className="eyebrow">Siguiente decisión</p>
-                    <h2 id="guided-next-decisions-title">Ahora puedes ordenar las rutas que realmente aplican a tu situación.</h2>
-                    <p className="section-copy">Usaremos la clasificación de producto y modalidad de este Mortgage Twin como punto de partida. El Router conserva C1 y te pedirá solo los hechos adicionales necesarios para priorizar prepago, reestructuración, traslado, reclamación o revisión jurídica.</p>
+                    <h2 id="guided-next-decisions-title">Entiende primero qué merece atención y después compara la ruta adecuada.</h2>
+                    <p className="section-copy">
+                      Loan Health usará este Mortgage Twin como fuente C1. Si ya construiste el escenario de reducción de plazo, solo esa ruta podrá conservar C2; las demás decisiones seguirán en C1 hasta que tengan soporte propio.
+                    </p>
                     <button className="button button-primary" type="button" onClick={openOpportunities} aria-expanded={showOpportunities} aria-controls="guided-opportunity-router">
-                      Explorar mis próximas decisiones
+                      Ver mi Loan Health y rutas
                     </button>
                   </section>
 
@@ -516,6 +532,9 @@ export function StatementGuidedMortgageTwin() {
                         initialProductType={snapshot.productType}
                         initialModality={snapshot.modality}
                         sourceLabel={`Mortgage Twin C1 · corte ${snapshot.cutoffDate}`}
+                        {...(modelResult
+                          ? { initialTermPrepaymentModel: { recurringExtraPrincipal: Number(monthlyExtra) } }
+                          : {})}
                       />
                     </div>
                   ) : null}
