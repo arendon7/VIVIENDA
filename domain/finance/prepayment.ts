@@ -39,6 +39,31 @@ export type PrepaymentComparison = {
   userExtraPrincipal: number;
 };
 
+export type ImmediatePrepaymentChoiceInput = {
+  principal: number;
+  annualEffectiveRate: number;
+  remainingMonths: number;
+  lumpSumAmount: number;
+};
+
+export type ImmediatePrepaymentChoiceScenario = {
+  scheduledPayment: number;
+  payoffMonth: number;
+  totalInterest: number;
+  interestAvoided: number;
+  termReductionMonths: number;
+  paymentReduction: number;
+  paymentReductionPercent: number;
+};
+
+export type ImmediatePrepaymentChoiceComparison = {
+  baseline: ConstantPaymentResult;
+  lumpSumAmount: number;
+  principalAfterPrepayment: number;
+  reduceTerm: ImmediatePrepaymentChoiceScenario;
+  reducePayment: ImmediatePrepaymentChoiceScenario;
+};
+
 export class InvalidFinanceInputError extends Error {
   constructor(message: string) {
     super(message);
@@ -92,6 +117,68 @@ export function constantPayment(
     (principal * monthlyRate) /
     (1 - Math.pow(1 + monthlyRate, -months))
   );
+}
+
+function simulateFixedScheduledPaymentPesoLoan(input: {
+  principal: number;
+  annualEffectiveRate: number;
+  scheduledPayment: number;
+}): ConstantPaymentResult {
+  requirePositive("principal", input.principal);
+  requireNonNegative("annualEffectiveRate", input.annualEffectiveRate);
+  requirePositive("scheduledPayment", input.scheduledPayment);
+
+  const monthlyEffectiveRate = annualEffectiveToMonthly(input.annualEffectiveRate);
+  let balance = input.principal;
+  let totalInterest = 0;
+  const periods: AmortizationPeriod[] = [];
+
+  for (let month = 1; balance > EPSILON; month += 1) {
+    if (month > MAX_PERIODS) {
+      throw new NonAmortizingInputError(
+        "Simulation exceeded maximum supported periods.",
+      );
+    }
+
+    const openingBalance = balance;
+    const interest = openingBalance * monthlyEffectiveRate;
+
+    if (input.scheduledPayment + EPSILON < interest) {
+      throw new NonAmortizingInputError(
+        "Scheduled payment is lower than accrued interest.",
+      );
+    }
+
+    const plannedScheduledPrincipal = input.scheduledPayment - interest;
+    const scheduledPrincipal = Math.min(
+      openingBalance,
+      Math.max(0, plannedScheduledPrincipal),
+    );
+    const scheduledPayment = interest + scheduledPrincipal;
+
+    balance = Math.max(0, openingBalance - scheduledPrincipal);
+    totalInterest += interest;
+
+    periods.push({
+      month,
+      openingBalance,
+      interest,
+      scheduledPrincipal,
+      scheduledPayment,
+      extraPrincipal: 0,
+      endingBalance: Math.max(0, balance),
+    });
+  }
+
+  return {
+    monthlyEffectiveRate,
+    contractualPayment: input.scheduledPayment,
+    payoffMonth: periods.length,
+    totalInterest,
+    userExtraPrincipal: 0,
+    endingPrincipal: Math.max(0, balance),
+    periods,
+  };
 }
 
 export function simulateConstantPaymentPesoLoan(
@@ -211,5 +298,63 @@ export function compareConstantPaymentPrepayment(
     interestAvoided: baseline.totalInterest - scenario.totalInterest,
     termReductionMonths: baseline.payoffMonth - scenario.payoffMonth,
     userExtraPrincipal: scenario.userExtraPrincipal,
+  };
+}
+
+export function compareImmediatePartialPrepaymentChoices(
+  input: ImmediatePrepaymentChoiceInput,
+): ImmediatePrepaymentChoiceComparison {
+  requirePositive("lumpSumAmount", input.lumpSumAmount);
+  requirePositive("principal", input.principal);
+
+  if (input.lumpSumAmount >= input.principal) {
+    throw new InvalidFinanceInputError(
+      "lumpSumAmount must be lower than principal for a partial-prepayment choice comparison.",
+    );
+  }
+
+  const baseline = simulateConstantPaymentPesoLoan({
+    principal: input.principal,
+    annualEffectiveRate: input.annualEffectiveRate,
+    remainingMonths: input.remainingMonths,
+  });
+  const principalAfterPrepayment = input.principal - input.lumpSumAmount;
+
+  const reduceTermResult = simulateFixedScheduledPaymentPesoLoan({
+    principal: principalAfterPrepayment,
+    annualEffectiveRate: input.annualEffectiveRate,
+    scheduledPayment: baseline.contractualPayment,
+  });
+
+  const reducePaymentResult = simulateConstantPaymentPesoLoan({
+    principal: principalAfterPrepayment,
+    annualEffectiveRate: input.annualEffectiveRate,
+    remainingMonths: input.remainingMonths,
+  });
+
+  const reducePaymentAmount = baseline.contractualPayment - reducePaymentResult.contractualPayment;
+
+  return {
+    baseline,
+    lumpSumAmount: input.lumpSumAmount,
+    principalAfterPrepayment,
+    reduceTerm: {
+      scheduledPayment: baseline.contractualPayment,
+      payoffMonth: reduceTermResult.payoffMonth,
+      totalInterest: reduceTermResult.totalInterest,
+      interestAvoided: baseline.totalInterest - reduceTermResult.totalInterest,
+      termReductionMonths: baseline.payoffMonth - reduceTermResult.payoffMonth,
+      paymentReduction: 0,
+      paymentReductionPercent: 0,
+    },
+    reducePayment: {
+      scheduledPayment: reducePaymentResult.contractualPayment,
+      payoffMonth: reducePaymentResult.payoffMonth,
+      totalInterest: reducePaymentResult.totalInterest,
+      interestAvoided: baseline.totalInterest - reducePaymentResult.totalInterest,
+      termReductionMonths: baseline.payoffMonth - reducePaymentResult.payoffMonth,
+      paymentReduction: reducePaymentAmount,
+      paymentReductionPercent: reducePaymentAmount / baseline.contractualPayment,
+    },
   };
 }
