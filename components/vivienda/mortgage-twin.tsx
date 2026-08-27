@@ -68,11 +68,14 @@ export function MortgageTwin({
         {!verified ? (
           <div className="surface-warning" role="status">
             <strong>{declared ? "Datos declarados, no C3." : "Preview, no C3."}</strong>
-            <p>
-              {declared
-                ? "Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo. C3 requiere evidencia realmente derivada del documento y reconciliación completa."
-                : "El archivo seleccionado no fue leído por este prototipo. C3 requiere valores realmente derivados del documento, sin conflictos materiales y confirmados después de la extracción."}
-            </p>
+            {declared ? (
+              <>
+                <p>Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.</p>
+                <p>C3 requiere evidencia realmente derivada del documento y reconciliación completa.</p>
+              </>
+            ) : (
+              <p>El archivo seleccionado no fue leído por este prototipo. C3 requiere valores realmente derivados del documento, sin conflictos materiales y confirmados después de la extracción.</p>
+            )}
           </div>
         ) : null}
 
