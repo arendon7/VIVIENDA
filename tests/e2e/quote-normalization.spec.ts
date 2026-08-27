@@ -70,13 +70,14 @@ test.describe("Quote Normalization v0.18", () => {
     await expect(page.getByRole("heading", { name: "La cotización ya tiene los datos materiales para la siguiente etapa" })).toBeFocused();
     await expect(page.getByText("70.0%", { exact: true })).toBeVisible();
     await expect(page.getByText("información declarada y no verificada", { exact: false })).toBeVisible();
+    await expect(page.getByText("no significa que sea mejor, más barata, aprobada ni verificada", { exact: false })).toBeVisible();
     await expect(page.getByRole("button", { name: "Añadir otra cotización" })).toBeVisible();
 
     const body = (await page.locator("body").innerText()).toLowerCase();
     expect(body).not.toContain("mejor opción");
-    expect(body).not.toContain("más barata");
     expect(body).not.toContain("te ahorrarías");
     expect(body).not.toContain("probabilidad de aprobación");
+    expect(body).not.toContain("recomendamos entidad");
   });
 
   test("keeps a UVR quote structurally ready until its quoted reference basis is supplied", async ({ page }) => {
