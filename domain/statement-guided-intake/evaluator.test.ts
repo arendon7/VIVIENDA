@@ -83,6 +83,20 @@ describe("Statement-Guided Mortgage Twin v0.20", () => {
     expect(result.issues.some((item) => item.code === "unsupported_local_file_type")).toBe(true);
   });
 
+  it("distinguishes an invalid non-positive local size from a file that is too large", () => {
+    const result = evaluateStatementGuidedIntake(
+      completeInput({ localStatement: { mimeType: "application/pdf", byteSize: 0 } }),
+    );
+
+    expect(result.localReferenceReadiness).toBe("local_statement_rejected");
+    expect(result.issues).toContainEqual({
+      code: "local_file_invalid_size",
+      field: "localStatement",
+      blocks: "local_reference",
+    });
+    expect(result.issues.some((item) => item.code === "local_file_too_large")).toBe(false);
+  });
+
   it("rejects a local reference larger than 15 MiB", () => {
     const result = evaluateStatementGuidedIntake(
       completeInput({
@@ -173,6 +187,36 @@ describe("Statement-Guided Mortgage Twin v0.20", () => {
       annualEffectiveRate: 0.12,
       remainingMonths: 204,
       source: "statement_guided_user_declared",
+    });
+  });
+
+  it("keeps an invalid current total payment as a context issue without blocking the model", () => {
+    const input = completeInput();
+    input.fields.currentTotalPayment = 0;
+    const result = evaluateStatementGuidedIntake(input);
+
+    expect(result.snapshotReadiness).toBe("snapshot_ready");
+    expect(result.modelReadiness).toBe("ready_for_constant_payment_pesos_model");
+    expect(result.snapshot?.currentTotalPayment).toBeUndefined();
+    expect(result.issues).toContainEqual({
+      code: "current_total_payment_invalid",
+      field: "currentTotalPayment",
+      blocks: "context",
+    });
+  });
+
+  it("keeps invalid insurance or monthly costs as a context issue without blocking the model", () => {
+    const input = completeInput();
+    input.fields.monthlyInsuranceOrCosts = -1;
+    const result = evaluateStatementGuidedIntake(input);
+
+    expect(result.snapshotReadiness).toBe("snapshot_ready");
+    expect(result.modelReadiness).toBe("ready_for_constant_payment_pesos_model");
+    expect(result.snapshot?.monthlyInsuranceOrCosts).toBeUndefined();
+    expect(result.issues).toContainEqual({
+      code: "monthly_insurance_or_costs_invalid",
+      field: "monthlyInsuranceOrCosts",
+      blocks: "context",
     });
   });
 
