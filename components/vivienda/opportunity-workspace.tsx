@@ -3,6 +3,10 @@
 import { useMemo, useState } from "react";
 import { CasePlanWorkspace } from "@/components/vivienda/case-plan-workspace";
 import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
+import {
+  PrepaymentChoiceComparison,
+  type PrepaymentChoiceModelInput,
+} from "@/components/vivienda/prepayment-choice-comparison";
 import { evaluateLoanHealth } from "@/domain/loan-health/evaluator";
 import { evaluateIntegratedOpportunityRoutes } from "@/domain/loan-health/integration";
 import type {
@@ -24,6 +28,7 @@ type OpportunityWorkspaceProps = {
   initialTermPrepaymentModel?: {
     recurringExtraPrincipal: number;
   };
+  prepaymentChoiceModelInput?: PrepaymentChoiceModelInput;
 };
 
 const cop = new Intl.NumberFormat("es-CO", {
@@ -103,12 +108,14 @@ export function OpportunityWorkspace({
   initialModality = "unknown",
   sourceLabel,
   initialTermPrepaymentModel,
+  prepaymentChoiceModelInput,
 }: OpportunityWorkspaceProps) {
   const [productType, setProductType] = useState<ProductType>(initialProductType);
   const [goal, setGoal] = useState<Goal>(initialTermPrepaymentModel ? "finish_sooner" : "explore");
   const [extraPayment, setExtraPayment] = useState(
     initialTermPrepaymentModel ? String(initialTermPrepaymentModel.recurringExtraPrincipal) : "",
   );
+  const [choiceModeledAmount, setChoiceModeledAmount] = useState<number | null>(null);
   const [materialEconomicChange, setMaterialEconomicChange] = useState(false);
   const [familyIncome, setFamilyIncome] = useState("");
   const [proposedInstallment, setProposedInstallment] = useState("");
@@ -128,6 +135,17 @@ export function OpportunityWorkspace({
       && extraPaymentCapacity === initialTermPrepaymentModel.recurringExtraPrincipal,
   );
 
+  const choiceModelStillBound = Boolean(
+    precision === "C1"
+      && prepaymentChoiceModelInput
+      && choiceModeledAmount !== null
+      && initialProductType === "mortgage_housing"
+      && initialModality === "pesos"
+      && productType === initialProductType,
+  );
+
+  const routeExtraPaymentCapacity = extraPaymentCapacity ?? choiceModeledAmount ?? undefined;
+
   const result = useMemo(() => {
     const currentAccreditedFamilyIncome = optionalPositive(familyIncome);
     const proposedRestructuredFirstInstallment = optionalPositive(proposedInstallment);
@@ -143,19 +161,20 @@ export function OpportunityWorkspace({
       materialEconomicChange,
       hasBindingTransferOffer: bindingOffer,
       unexplainedChargeOrAllocationIssue: auditIssue,
-      ...(extraPaymentCapacity !== undefined ? { extraPaymentCapacity } : {}),
+      ...(routeExtraPaymentCapacity !== undefined ? { extraPaymentCapacity: routeExtraPaymentCapacity } : {}),
       ...(currentAccreditedFamilyIncome !== undefined ? { currentAccreditedFamilyIncome } : {}),
       ...(proposedRestructuredFirstInstallment !== undefined ? { proposedRestructuredFirstInstallment } : {}),
     };
 
     return evaluateIntegratedOpportunityRoutes(routerInput, {
-      prepaymentTermScenario: termModelStillBound ? "modeled_c2" : "not_modeled",
+      prepaymentTermScenario: termModelStillBound || choiceModelStillBound ? "modeled_c2" : "not_modeled",
+      prepaymentPaymentScenario: choiceModelStillBound ? "modeled_c2" : "not_modeled",
     });
   }, [
     asOfDate,
     auditIssue,
     bindingOffer,
-    extraPaymentCapacity,
+    choiceModelStillBound,
     familyIncome,
     goal,
     initialModality,
@@ -164,6 +183,7 @@ export function OpportunityWorkspace({
     precision,
     productType,
     proposedInstallment,
+    routeExtraPaymentCapacity,
     termModelStillBound,
   ]);
 
@@ -185,15 +205,16 @@ export function OpportunityWorkspace({
     <section className="surface form-card" style={{ marginTop: 20 }} aria-labelledby="opportunity-workspace-title">
       <div className="section-header">
         <div>
-          <p className="eyebrow">Opportunity Router · v0.21</p>
-          <h2 id="opportunity-workspace-title">Entiende primero el estado de decisión; después elige una ruta.</h2>
+          <p className="eyebrow">Opportunity Router · v0.22</p>
+          <h2 id="opportunity-workspace-title">Entiende primero el estado de decisión; después compara y elige una ruta.</h2>
           <p className="section-copy">
-            Loan Health resume qué sabemos, qué merece atención y qué ya puede compararse. Después el Router ordena rutas concretas sin convertirlas en aprobación, oferta o conclusión jurídica.
+            Loan Health resume qué sabemos, qué merece atención y qué ya puede compararse. El Router conserva precisión por decisión y el comparador de prepago usa el mismo capital para no favorecer artificialmente una alternativa.
           </p>
         </div>
         <div className="actions" aria-label="Precisión de esta evaluación">
           <span className="status-chip">{precision} · fuente base</span>
-          {termModelStillBound ? <span className="material-chip">R1 · C2 modelado</span> : null}
+          {termModelStillBound || choiceModelStillBound ? <span className="material-chip">R1 · C2 modelado</span> : null}
+          {choiceModelStillBound ? <span className="material-chip">R2 · C2 modelado</span> : null}
         </div>
       </div>
 
@@ -208,9 +229,9 @@ export function OpportunityWorkspace({
 
       {initialTermPrepaymentModel ? (
         <div className="result-callout" style={{ marginTop: 16 }} role="status">
-          <strong>Traemos tu escenario de reducción de plazo</strong>
+          <strong>Conservamos tu escenario mensual de reducción de plazo</strong>
           <p className="section-copy">
-            Ya modelaste {cop.format(initialTermPrepaymentModel.recurringExtraPrincipal)} adicionales al mes. Mientras mantengas ese monto y la misma clasificación hipotecaria en pesos, solo R1 puede conservar precisión C2. Si cambias esos datos, la ruta vuelve automáticamente a C1.
+            Ya modelaste {cop.format(initialTermPrepaymentModel.recurringExtraPrincipal)} adicionales al mes. Ese escenario sigue siendo distinto del comparador de abono único: mientras mantengas el mismo monto y la misma clasificación hipotecaria en pesos, puede conservar C2 solo en R1.
           </p>
         </div>
       ) : null}
@@ -220,6 +241,7 @@ export function OpportunityWorkspace({
         <ul>
           <li><strong>C1</strong> conserva que los hechos base fueron declarados por ti, aunque los hayas transcrito mirando un extracto local.</li>
           <li><strong>C2 en una ruta</strong> significa que existe un modelo determinístico compatible para esa decisión específica; no verifica el documento ni eleva las demás rutas.</li>
+          <li><strong>R1 y R2 pueden compartir C2</strong> únicamente cuando la comparación realmente modeló ambas instrucciones con el mismo abono parcial.</li>
           <li><strong>Revisión jurídica necesaria</strong> tiene prioridad sobre optimizaciones ordinarias cuando los hechos reportados lo exigen.</li>
         </ul>
       </div>
@@ -233,7 +255,11 @@ export function OpportunityWorkspace({
                 type="radio"
                 name="router-product"
                 checked={productType === value}
-                onChange={() => setProductType(value)}
+                onChange={() => {
+                  setProductType(value);
+                  setChoiceModeledAmount(null);
+                  setSelectedRouteCode(null);
+                }}
               />
               <span>{productLabels[value]}</span>
             </label>
@@ -260,10 +286,10 @@ export function OpportunityWorkspace({
       </div>
 
       <div className="field-group">
-        <label className="field-label" htmlFor="router-extra-payment">3. ¿Cuánto capital adicional quieres comparar?</label>
+        <label className="field-label" htmlFor="router-extra-payment">3. ¿Cuánto capital adicional podrías destinar a prepago?</label>
         <span className="field-hint" id="router-extra-payment-hint">
-          Déjalo vacío si no planeas hacer abonos adicionales. El capital que aportes nunca se presenta como ahorro creado por VIVIENDA.
-          {initialTermPrepaymentModel ? " El monto modelado previamente ya aparece aquí para evitar pedirte el mismo dato otra vez." : ""}
+          Déjalo vacío si todavía no tienes un monto. Este dato activa la exploración de prepago; el capital que aportes nunca se presenta como ahorro creado por VIVIENDA.
+          {initialTermPrepaymentModel ? " El monto mensual que modelaste previamente ya aparece aquí para preservar ese escenario R1 sin pedirte el mismo dato otra vez." : ""}
         </span>
         <input
           className="field-control"
@@ -277,9 +303,24 @@ export function OpportunityWorkspace({
           onChange={(event) => setExtraPayment(event.target.value)}
         />
         {initialTermPrepaymentModel && !termModelStillBound ? (
-          <p className="field-hint" role="status">El escenario C2 anterior ya no coincide con estos datos. R1 se evalúa nuevamente como C1 hasta construir otro modelo compatible.</p>
+          <p className="field-hint" role="status">El escenario mensual C2 anterior ya no coincide con estos datos. Ese R1 vuelve a C1 hasta construir otro modelo compatible; una comparación de abono único construida aparte conserva su propia precisión.</p>
         ) : null}
       </div>
+
+      {prepaymentChoiceModelInput
+        && initialProductType === "mortgage_housing"
+        && initialModality === "pesos"
+        && productType === initialProductType ? (
+          <PrepaymentChoiceComparison
+            modelInput={prepaymentChoiceModelInput}
+            onModeledAmountChange={setChoiceModeledAmount}
+          />
+        ) : productType === "mortgage_housing" && initialModality === "pesos" ? (
+          <div className="surface-warning" style={{ marginTop: 20 }} role="status">
+            <strong>Para comparar cuota vs. plazo en C2 faltan los datos matemáticos base.</strong>
+            <p>Confirma saldo, tasa EA, cuotas restantes y sistema compatible en el Mortgage Twin. El Router puede seguir orientando en C1 sin inventar esa matemática.</p>
+          </div>
+        ) : null}
 
       <fieldset className="field-group">
         <legend className="field-label">4. ¿Tu capacidad real de pago cambió materialmente?</legend>
