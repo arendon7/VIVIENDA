@@ -117,4 +117,12 @@ test.describe("Home Readiness v0.16", () => {
     await expect(page.getByLabel("Cuota inicial disponible")).toHaveValue("120000000");
     await expect(page.getByLabel("No VIS")).toBeChecked();
   });
+
+  test("Home exposes readiness as a secondary buyer path without replacing borrower primary CTA", async ({ page }) => {
+    await page.goto("/");
+
+    await expect(page.getByRole("link", { name: "Revisar mi crédito" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Calcular cuánto puedo planear" })).toHaveAttribute("href", "/comprar/cuanto-puedo-comprar");
+    await expect(page.getByRole("link", { name: "Conocer mi preparación" })).toHaveAttribute("href", "/comprar/preparacion");
+  });
 });
