@@ -7,6 +7,7 @@ import {
 
 export type DecisionModelContext = {
   prepaymentTermScenario: "not_modeled" | "modeled_c2";
+  prepaymentPaymentScenario: "not_modeled" | "modeled_c2";
 };
 
 function routeByCode(result: OpportunityRouterResult, code: OpportunityRoute["routeCode"]): OpportunityRoute | undefined {
@@ -19,24 +20,36 @@ export function evaluateIntegratedOpportunityRoutes(
 ): OpportunityRouterResult {
   const baseResult = evaluateOpportunityRoutes(input);
 
-  if (modelContext.prepaymentTermScenario !== "modeled_c2" || input.precision !== "C1") {
+  if (input.precision !== "C1") {
     return baseResult;
   }
 
-  const baseTermRoute = routeByCode(baseResult, "R1_PREPAGO_PLAZO");
-  if (!baseTermRoute) return baseResult;
+  const modeledCodes: OpportunityRoute["routeCode"][] = [
+    ...(modelContext.prepaymentTermScenario === "modeled_c2" ? ["R1_PREPAGO_PLAZO" as const] : []),
+    ...(modelContext.prepaymentPaymentScenario === "modeled_c2" ? ["R2_PREPAGO_CUOTA" as const] : []),
+  ];
+
+  if (modeledCodes.length === 0) {
+    return baseResult;
+  }
 
   const modeledResult = evaluateOpportunityRoutes({ ...input, precision: "C2" });
-  const modeledTermRoute = routeByCode(modeledResult, "R1_PREPAGO_PLAZO");
-  if (!modeledTermRoute) return baseResult;
+  const replacements = new Map<OpportunityRoute["routeCode"], OpportunityRoute>();
 
-  const routes = baseResult.routes.map((route) =>
-    route.routeCode === "R1_PREPAGO_PLAZO" ? modeledTermRoute : route,
-  );
+  for (const code of modeledCodes) {
+    const baseRoute = routeByCode(baseResult, code);
+    const modeledRoute = routeByCode(modeledResult, code);
+    if (baseRoute && modeledRoute) replacements.set(code, modeledRoute);
+  }
 
-  const primaryRoute = baseResult.primaryRoute?.routeCode === "R1_PREPAGO_PLAZO"
-    ? modeledTermRoute
-    : baseResult.primaryRoute;
+  if (replacements.size === 0) {
+    return baseResult;
+  }
+
+  const routes = baseResult.routes.map((route) => replacements.get(route.routeCode) ?? route);
+  const primaryRoute = baseResult.primaryRoute
+    ? replacements.get(baseResult.primaryRoute.routeCode) ?? baseResult.primaryRoute
+    : null;
 
   return {
     ...baseResult,
