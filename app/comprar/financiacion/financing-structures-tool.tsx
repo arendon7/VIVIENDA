@@ -20,11 +20,7 @@ type Props = {
   onBack?: () => void;
 };
 
-type Choice<T extends string> = {
-  value: T;
-  label: string;
-  detail?: string;
-};
+type Choice<T extends string> = { value: T; label: string; detail: string };
 
 const ownershipChoices: Array<Choice<OwnershipTimingPreference>> = [
   {
@@ -103,7 +99,7 @@ function RadioChoices<T extends string>({
           />
           <span>
             <strong>{choice.label}</strong>
-            {choice.detail ? <small>{choice.detail}</small> : null}
+            <small>{choice.detail}</small>
           </span>
         </label>
       ))}
@@ -119,17 +115,13 @@ function OptionCard({
   kind: "structure" | "denomination";
 }) {
   return (
-    <article
-      className={`surface ${styles.optionCard} ${option.priority === "explore_first" ? styles.optionCardPrimary : ""}`}
-    >
+    <article className={`surface ${styles.optionCard} ${option.priority === "explore_first" ? styles.optionCardPrimary : ""}`}>
       <div className={styles.optionHeader}>
         <div>
           <p className={styles.optionKind}>{kind === "structure" ? "Estructura contractual" : "Denominación"}</p>
           <h3>{option.title}</h3>
         </div>
-        <span className={`${styles.priority} ${styles[`priority_${option.priority}`]}`}>
-          {priorityLabel[option.priority]}
-        </span>
+        <span className={`${styles.priority} ${styles[`priority_${option.priority}`]}`}>{priorityLabel[option.priority]}</span>
       </div>
 
       <div className={styles.explanationBlock}>
@@ -144,9 +136,7 @@ function OptionCard({
 
       <div className={styles.verifyBlock}>
         <strong>Qué debes verificar en una cotización real</strong>
-        <ul>
-          {option.factsToVerify.map((fact) => <li key={fact}>{fact}</li>)}
-        </ul>
+        <ul>{option.factsToVerify.map((fact) => <li key={fact}>{fact}</li>)}</ul>
       </div>
     </article>
   );
@@ -161,12 +151,12 @@ function ResultView({
   result: FinancingStructuresResult;
   onEdit: () => void;
   embedded: boolean;
-  onBack?: () => void;
+  onBack: (() => void) | undefined;
 }) {
-  const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    resultHeadingRef.current?.focus();
+    headingRef.current?.focus();
   }, []);
 
   return (
@@ -177,7 +167,7 @@ function ResultView({
           <span>Orientación por preferencias declaradas</span>
         </div>
         <p className="eyebrow">Estructuras para explorar</p>
-        <h2 ref={resultHeadingRef} tabIndex={-1}>Tu siguiente comparación ya puede ser más precisa</h2>
+        <h2 ref={headingRef} tabIndex={-1}>Tu siguiente comparación ya puede ser más precisa</h2>
         <p className="section-copy">
           Separamos la forma contractual de la financiación y el comportamiento de la obligación para que sepas qué preguntar y qué alternativas vale la pena mantener abiertas.
         </p>
@@ -210,9 +200,7 @@ function ResultView({
           <p>No son dos niveles de aprobación. Son formas distintas de estructurar la relación sobre el inmueble.</p>
         </div>
         <div className={styles.optionGrid}>
-          {result.structureOptions.map((option) => (
-            <OptionCard option={option} kind="structure" key={option.code} />
-          ))}
+          {result.structureOptions.map((option) => <OptionCard option={option} kind="structure" key={option.code} />)}
         </div>
       </section>
 
@@ -225,9 +213,7 @@ function ResultView({
           <p>Pesos y UVR necesitan condiciones reales comparables antes de concluir cuál resulta más conveniente para ti.</p>
         </div>
         <div className={styles.optionGrid}>
-          {result.denominationOptions.map((option) => (
-            <OptionCard option={option} kind="denomination" key={option.code} />
-          ))}
+          {result.denominationOptions.map((option) => <OptionCard option={option} kind="denomination" key={option.code} />)}
         </div>
       </section>
 
@@ -241,9 +227,7 @@ function ResultView({
         </div>
         <details className={styles.checklist}>
           <summary>Ver los {result.quoteChecklist.length} datos que conviene conservar</summary>
-          <ol>
-            {result.quoteChecklist.map((item) => <li key={item}>{item}</li>)}
-          </ol>
+          <ol>{result.quoteChecklist.map((item) => <li key={item}>{item}</li>)}</ol>
         </details>
         <p className={styles.futureBoundary}>
           La comparación de cotizaciones reales será una capa separada para no mezclar preferencias con precios, costos o decisiones de una entidad.
@@ -269,11 +253,7 @@ function ResultView({
   );
 }
 
-export function FinancingStructuresTool({
-  initialConstraintContext,
-  embedded = false,
-  onBack,
-}: Props) {
+export function FinancingStructuresTool({ initialConstraintContext, embedded = false, onBack }: Props) {
   const [ownershipPreference, setOwnershipPreference] = useState<OwnershipTimingPreference | null>(null);
   const [paymentPreference, setPaymentPreference] = useState<PaymentBehaviorPreference | null>(null);
   const [result, setResult] = useState<FinancingStructuresResult | null>(null);
@@ -308,9 +288,7 @@ export function FinancingStructuresTool({
         <section className={styles.intro}>
           <p className="eyebrow">Financiación para comprar</p>
           <h1>Entiende qué estructuras vale la pena comparar</h1>
-          <p className="lede">
-            Dos decisiones simples te ayudan a ordenar crédito hipotecario, leasing, pesos y UVR antes de mirar entidades o cotizaciones.
-          </p>
+          <p className="lede">Dos decisiones simples te ayudan a ordenar crédito hipotecario, leasing, pesos y UVR antes de mirar entidades o cotizaciones.</p>
           <p className="trust-line">No necesitas nombre, cédula, correo, teléfono ni consulta a centrales para usar este explorador.</p>
         </section>
       ) : null}
