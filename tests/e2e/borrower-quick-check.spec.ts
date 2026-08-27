@@ -22,24 +22,33 @@ async function completeQuickCheck(
   await page.getByRole("button", { name: "Ver mi primera lectura" }).click();
 }
 
-async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
+async function buildGuidedMortgageTwin(page: import("@playwright/test").Page) {
   await page.goto("/verificar");
-  await page.getByLabel("Selecciona un extracto para probar la experiencia").setInputFiles({
-    name: "extracto-demo.pdf",
+  await page.getByLabel("Seleccionar extracto local").setInputFiles({
+    name: "extracto-local.pdf",
     mimeType: "application/pdf",
-    buffer: Buffer.from("%PDF-1.4 demo"),
+    buffer: Buffer.from("%PDF-1.4 local-reference"),
   });
 
-  const confirmationBoxes = page.locator('input[type="checkbox"]:not(:disabled)');
-  await expect(confirmationBoxes).toHaveCount(6);
-  for (let index = 0; index < 6; index += 1) {
-    await confirmationBoxes.nth(index).check();
-  }
+  await page.getByLabel("Fecha de corte del extracto").fill("2026-08-15");
+  await page.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).first().check();
+  await page.getByRole("radio", { name: "Pesos", exact: true }).first().check();
+  await page.getByLabel("Saldo de capital (COP)").fill("180000000");
+  await page.getByRole("button", { name: "Construir mi Mortgage Twin" }).click();
 
-  await page.getByRole("button", { name: "Previsualizar Mortgage Twin" }).click();
+  await expect(page.getByRole("heading", { name: "Tu fotografía declarada ya tiene la base material del snapshot." })).toBeVisible();
+  await expect(page.getByText("Mortgage Twin guiado · C1", { exact: true })).toBeVisible();
+}
+
+async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
+  await buildGuidedMortgageTwin(page);
+  await page.getByRole("button", { name: "Explorar mis próximas decisiones" }).click();
   await expect(page.getByRole("heading", { name: "Convierte el Mortgage Twin en próximas decisiones posibles." })).toBeVisible();
 
-  return page.locator('section[aria-labelledby="opportunity-workspace-title"]');
+  const workspace = page.locator('section[aria-labelledby="opportunity-workspace-title"]');
+  await expect(workspace.getByText(/Partimos de tu Mortgage Twin/)).toBeVisible();
+  await expect(workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" })).toBeChecked();
+  return workspace;
 }
 
 test("keeps the home conceptual Mortgage Twin outside verified C3 and exposes only real routes", async ({ page }) => {
@@ -152,30 +161,31 @@ test("refuses to apply the peso annuity model to UVR", async ({ page }) => {
   await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toHaveCount(0);
 });
 
-test("rejects unsupported document types before the verification review", async ({ page }) => {
+test("rejects unsupported document types before guided transcription", async ({ page }) => {
   await page.goto("/verificar");
 
-  await page.getByLabel("Selecciona un extracto para probar la experiencia").setInputFiles({
+  await page.getByLabel("Seleccionar extracto local").setInputFiles({
     name: "notas.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("demo"),
   });
 
   await expect(page.locator("#statement-file-error")).toHaveText("Usa un archivo PDF, JPG o PNG.");
-  await expect(page.getByRole("heading", { name: "Revisa campo por campo antes de usarlo." })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Mira tu extracto y completa solo lo que puedas identificar con seguridad." })).toHaveCount(0);
 });
 
-test("never grants C3 from simulated document values, even after all material fields are confirmed", async ({ page }) => {
-  await openOpportunityWorkspace(page);
+test("keeps locally transcribed statement data at C1 and never grants C3", async ({ page }) => {
+  await buildGuidedMortgageTwin(page);
 
-  await expect(page.getByText("6 de 6 campos materiales confirmados")).toBeVisible();
-  await expect(page.getByText("La reconciliación de la demostración está completa, pero sigue siendo C2.")).toBeVisible();
-  await expect(page.getByText("Preview, no C3.")).toBeVisible();
+  await expect(page.getByText("Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
+  await expect(page.getByText("C1 · Estimación", { exact: true })).toBeVisible();
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/extracción simulada/i)).toHaveCount(0);
 });
 
 test("keeps unknown product as classification work instead of automatic legal escalation", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
+  await workspace.getByRole("radio", { name: "No estoy seguro" }).check();
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Primero necesitamos clasificar el producto/ });
   await expect(primary).toBeVisible();
@@ -187,7 +197,6 @@ test("keeps unknown product as classification work instead of automatic legal es
 test("prioritizes term prepayment when a covered mortgage user wants to finish sooner", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByRole("radio", { name: "Terminar antes" }).check();
   await workspace.getByLabel("3. ¿Cuánto capital adicional podrías aportar?").fill("300000");
 
@@ -200,7 +209,6 @@ test("prioritizes term prepayment when a covered mortgage user wants to finish s
 test("elevates Article 24 assignment only after the user declares a binding offer", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByLabel("Sí, ya existe una oferta vinculante real.").check();
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Activar la cesión con oferta vinculante/ });
@@ -213,7 +221,6 @@ test("elevates Article 24 assignment only after the user declares a binding offe
 test("makes judicial distress primary instead of hiding it behind optimization", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("embargo_or_auction");
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Revisión jurídica prioritaria del proceso/ });
@@ -225,7 +232,6 @@ test("makes judicial distress primary instead of hiding it behind optimization",
 test("explains the 40 percent rule without turning current payment burden into automatic illegality", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByLabel("Sí, quiero que el router evalúe la ruta de reestructuración.").check();
   await workspace.getByLabel("Ingreso familiar actualmente acreditable").fill("5000000");
   await workspace.getByLabel("Primera cuota que propondrías después de reestructurar").fill("2100000");
@@ -239,6 +245,7 @@ test("explains the 40 percent rule without turning current payment burden into a
 
 test("builds an unknown-product Case Plan without pretending to save or open a matter", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
+  await workspace.getByRole("radio", { name: "No estoy seguro" }).check();
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Primero necesitamos clasificar el producto/ });
   await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
@@ -255,7 +262,6 @@ test("builds an unknown-product Case Plan without pretending to save or open a m
 test("keeps the Article 24 clock relative until real delivery evidence exists", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByLabel("Sí, ya existe una oferta vinculante real.").check();
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Activar la cesión con oferta vinculante/ });
@@ -272,7 +278,6 @@ test("keeps the Article 24 clock relative until real delivery evidence exists", 
 test("keeps executive-defense Case Plan behind professional review and contains no automated defense recipe", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("embargo_or_auction");
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Revisión jurídica prioritaria del proceso/ });
@@ -290,7 +295,6 @@ test("keeps executive-defense Case Plan behind professional review and contains 
 test("builds an Article 20 seasonal plan for the next window instead of saying file now", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).check();
   await workspace.getByLabel("Sí, quiero que el router evalúe la ruta de reestructuración.").check();
 
   const article20 = workspace.getByRole("article", { name: /Ruta alternativa: Preparar la próxima ventana del artículo 20/ });
