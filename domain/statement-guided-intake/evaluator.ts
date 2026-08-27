@@ -57,6 +57,7 @@ export type StatementGuidedFieldProvenance = {
 export type StatementGuidedIssueCode =
   | "local_statement_required"
   | "unsupported_local_file_type"
+  | "local_file_invalid_size"
   | "local_file_too_large"
   | "product_type_missing"
   | "cutoff_date_missing"
@@ -65,6 +66,8 @@ export type StatementGuidedIssueCode =
   | "modality_missing"
   | "principal_balance_missing"
   | "principal_balance_invalid"
+  | "current_total_payment_invalid"
+  | "monthly_insurance_or_costs_invalid"
   | "annual_effective_rate_missing"
   | "annual_effective_rate_invalid"
   | "remaining_installments_missing"
@@ -77,7 +80,7 @@ export type StatementGuidedIssueCode =
 export type StatementGuidedIssue = {
   code: StatementGuidedIssueCode;
   field: StatementGuidedFieldKey | "localStatement";
-  blocks: "local_reference" | "snapshot" | "model";
+  blocks: "local_reference" | "snapshot" | "model" | "context";
 };
 
 export type LocalReferenceReadiness =
@@ -200,11 +203,10 @@ export function evaluateStatementGuidedIntake(input: StatementGuidedInput): Stat
   } else if (!ACCEPTED_MIME_TYPES.has(input.localStatement.mimeType)) {
     localReferenceReadiness = "local_statement_rejected";
     issues.push(issue("unsupported_local_file_type", "localStatement", "local_reference"));
-  } else if (
-    !Number.isFinite(input.localStatement.byteSize) ||
-    input.localStatement.byteSize <= 0 ||
-    input.localStatement.byteSize > STATEMENT_GUIDED_MAX_FILE_BYTES
-  ) {
+  } else if (!Number.isFinite(input.localStatement.byteSize) || input.localStatement.byteSize <= 0) {
+    localReferenceReadiness = "local_statement_rejected";
+    issues.push(issue("local_file_invalid_size", "localStatement", "local_reference"));
+  } else if (input.localStatement.byteSize > STATEMENT_GUIDED_MAX_FILE_BYTES) {
     localReferenceReadiness = "local_statement_rejected";
     issues.push(issue("local_file_too_large", "localStatement", "local_reference"));
   } else {
@@ -246,11 +248,11 @@ export function evaluateStatementGuidedIntake(input: StatementGuidedInput): Stat
   }
 
   if (fields.currentTotalPayment !== undefined && !validPositiveNumber(fields.currentTotalPayment)) {
-    issues.push(issue("principal_balance_invalid", "currentTotalPayment", "model"));
+    issues.push(issue("current_total_payment_invalid", "currentTotalPayment", "context"));
   }
 
   if (fields.monthlyInsuranceOrCosts !== undefined && !validNonNegativeNumber(fields.monthlyInsuranceOrCosts)) {
-    issues.push(issue("principal_balance_invalid", "monthlyInsuranceOrCosts", "model"));
+    issues.push(issue("monthly_insurance_or_costs_invalid", "monthlyInsuranceOrCosts", "context"));
   }
 
   const localReferenceUsable = localReferenceReadiness === "local_statement_selected";
