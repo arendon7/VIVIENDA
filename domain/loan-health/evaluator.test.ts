@@ -3,6 +3,7 @@ import {
   evaluateOpportunityRoutes,
   type OpportunityRouterInput,
 } from "@/domain/opportunity/router";
+import { evaluateIntegratedOpportunityRoutes } from "./integration";
 import { evaluateLoanHealth } from "./evaluator";
 
 const baseInput: OpportunityRouterInput = {
@@ -31,7 +32,7 @@ function dimension(result: ReturnType<typeof health>, code: string) {
   return match;
 }
 
-describe("Loan Health v0.11", () => {
+describe("Loan Health v0.21", () => {
   it("uses improve_precision at C1 instead of inventing a health score", () => {
     const result = health({ precision: "C1" });
 
@@ -58,6 +59,57 @@ describe("Loan Health v0.11", () => {
     expect(declared.decisionState).toBe("improve_precision");
   });
 
+  it("keeps the Mortgage Twin at C1 while recognizing a route-specific C2 model", () => {
+    const routerInput: OpportunityRouterInput = {
+      ...baseInput,
+      precision: "C1",
+      extraPaymentCapacity: 500_000,
+      wantsFinishSooner: true,
+    };
+    const routerResult = evaluateIntegratedOpportunityRoutes(routerInput, {
+      prepaymentTermScenario: "modeled_c2",
+    });
+
+    const result = evaluateLoanHealth({
+      precision: routerInput.precision,
+      productType: routerInput.productType,
+      paymentState: routerInput.paymentState,
+      routerResult,
+    });
+
+    expect(result.precision).toBe("C1");
+    expect(dimension(result, "structure_understanding").status).toBe("explore");
+    expect(dimension(result, "structure_understanding").sourceRouteCodes).toEqual(["R1_PREPAGO_PLAZO"]);
+    expect(dimension(result, "prepayment").status).toBe("ready");
+    expect(result.decisionState).toBe("actionable_opportunity");
+    expect(result.notices.join(" ")).toMatch(/R1_PREPAGO_PLAZO C2/);
+    expect(result.notices.join(" ")).toMatch(/fuente base permanece en C1/i);
+  });
+
+  it("does not manufacture route-specific precision when the model is absent", () => {
+    const routerInput: OpportunityRouterInput = {
+      ...baseInput,
+      precision: "C1",
+      extraPaymentCapacity: 500_000,
+      wantsFinishSooner: true,
+    };
+    const routerResult = evaluateIntegratedOpportunityRoutes(routerInput, {
+      prepaymentTermScenario: "not_modeled",
+    });
+
+    const result = evaluateLoanHealth({
+      precision: routerInput.precision,
+      productType: routerInput.productType,
+      paymentState: routerInput.paymentState,
+      routerResult,
+    });
+
+    expect(dimension(result, "structure_understanding").status).toBe("needs_data");
+    expect(dimension(result, "prepayment").status).toBe("explore");
+    expect(result.decisionState).toBe("improve_precision");
+    expect(result.notices.join(" ")).not.toMatch(/R1_PREPAGO_PLAZO C2/);
+  });
+
   it("prioritizes executive or embargo state over ordinary optimization", () => {
     const result = health({
       paymentState: "embargo_or_auction",
@@ -68,6 +120,30 @@ describe("Loan Health v0.11", () => {
     expect(dimension(result, "procedural_state").status).toBe("professional_review");
     expect(result.decisionState).toBe("professional_review_priority");
     expect(result.headline).toContain("revisarse profesionalmente");
+  });
+
+  it("keeps professional review dominant even when R1 has a route-specific C2 model", () => {
+    const routerInput: OpportunityRouterInput = {
+      ...baseInput,
+      precision: "C1",
+      paymentState: "executive",
+      extraPaymentCapacity: 500_000,
+      wantsFinishSooner: true,
+    };
+    const routerResult = evaluateIntegratedOpportunityRoutes(routerInput, {
+      prepaymentTermScenario: "modeled_c2",
+    });
+
+    const result = evaluateLoanHealth({
+      precision: routerInput.precision,
+      productType: routerInput.productType,
+      paymentState: routerInput.paymentState,
+      routerResult,
+    });
+
+    expect(dimension(result, "prepayment").status).toBe("ready");
+    expect(dimension(result, "procedural_state").status).toBe("professional_review");
+    expect(result.decisionState).toBe("professional_review_priority");
   });
 
   it("treats collections as attention even without a judicial proceeding", () => {
