@@ -9,6 +9,10 @@ import {
   type BuyerHousingScenario,
   type HousingCategory,
 } from "@/domain/buyer-affordability/calculator";
+import {
+  HomeReadinessTool,
+  type HomeReadinessInitialFacts,
+} from "../preparacion/home-readiness-tool";
 import styles from "./affordability.module.css";
 
 const cop = new Intl.NumberFormat("es-CO", {
@@ -54,13 +58,14 @@ export function AffordabilityTool() {
   const [termYears, setTermYears] = useState("20");
   const [otherHousingCosts, setOtherHousingCosts] = useState("");
   const [c2, setC2] = useState<BuyerAffordabilityResult | null>(null);
+  const [showReadiness, setShowReadiness] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
   const activeResult = c2 ?? c1;
 
   useEffect(() => {
-    if (activeResult) resultHeadingRef.current?.focus();
-  }, [activeResult]);
+    if (activeResult && !showReadiness) resultHeadingRef.current?.focus();
+  }, [activeResult, showReadiness]);
 
   const baseInput = useMemo(() => ({
     netHouseholdIncomeMonthly: parseMoney(income),
@@ -69,10 +74,29 @@ export function AffordabilityTool() {
     housingCategory: category,
   }), [category, debts, downPayment, income]);
 
+  const readinessFacts = useMemo<HomeReadinessInitialFacts | null>(() => {
+    if (!c1) return null;
+
+    const monthlyCosts = otherHousingCosts.trim() === "" ? undefined : Number(otherHousingCosts);
+    const planningFinancing = c2
+      ? {
+          annualEffectiveRate: Number(ratePercent) / 100,
+          termMonths: Number(termYears) * 12,
+          ...(monthlyCosts === undefined ? {} : { monthlyNonCreditHousingCosts: monthlyCosts }),
+        }
+      : undefined;
+
+    return {
+      ...baseInput,
+      ...(planningFinancing === undefined ? {} : { planningFinancing }),
+    };
+  }, [baseInput, c1, c2, otherHousingCosts, ratePercent, termYears]);
+
   function calculateC1() {
     setError(null);
     setC2(null);
     setShowModel(false);
+    setShowReadiness(false);
     try {
       const result = calculateBuyerAffordability(baseInput);
       setC1(result);
@@ -90,6 +114,7 @@ export function AffordabilityTool() {
 
   function calculateC2() {
     setError(null);
+    setShowReadiness(false);
     const rate = Number(ratePercent);
     const years = Number(termYears);
     const monthlyCosts = otherHousingCosts.trim() === "" ? undefined : Number(otherHousingCosts);
@@ -128,7 +153,29 @@ export function AffordabilityTool() {
     setC1(null);
     setC2(null);
     setShowModel(false);
+    setShowReadiness(false);
     setError(null);
+  }
+
+  function beginReadiness() {
+    setError(null);
+    setShowReadiness(true);
+  }
+
+  if (showReadiness && readinessFacts) {
+    return (
+      <div className={`shell ${styles.page}`}>
+        <section className={styles.intro}>
+          <p className="eyebrow">Tu preparación para comprar</p>
+          <h1>Convierte tu rango en un plan de compra.</h1>
+          <p className="lede">
+            Ya reutilizamos los datos que acabas de validar. Completa el precio objetivo, la continuidad de ingresos y tus soportes para ver qué conviene fortalecer primero.
+          </p>
+          <p className="trust-line">Tus valores permanecen en este flujo del navegador: no los enviamos por la URL ni te pedimos una cuenta para ver el resultado.</p>
+        </section>
+        <HomeReadinessTool initialFacts={readinessFacts} embedded onEditBase={editBase} />
+      </div>
+    );
   }
 
   return (
@@ -302,6 +349,7 @@ export function AffordabilityTool() {
               </div>
               <div className={styles.inlineActions}>
                 <button className="button button-primary" type="button" onClick={() => setShowModel(true)}>Modelar con tasa y plazo</button>
+                <button className="button button-secondary" type="button" onClick={beginReadiness}>Conocer mi preparación</button>
                 <button className="button button-secondary" type="button" onClick={editBase}>Editar mis datos</button>
               </div>
             </section>
@@ -343,11 +391,12 @@ export function AffordabilityTool() {
             <section className={styles.nextStep} aria-labelledby="c2-next-heading">
               <div>
                 <p className="eyebrow">Siguiente decisión</p>
-                <h2 id="c2-next-heading">Usa el límite dominante para decidir qué probar después.</h2>
-                <p className="section-copy">Si limita la cuota, revisa obligaciones o prueba otro precio/escenario confirmado. Si limita la inicial, prueba más ahorro o un precio objetivo distinto. No recomendamos automáticamente alargar el plazo.</p>
+                <h2 id="c2-next-heading">Ya tienes un rango modelado. Ahora mira qué tan preparado está el plan.</h2>
+                <p className="section-copy">Reutilizamos ingreso, deudas, inicial, categoría, tasa y plazo. Solo tendrás que completar tu precio objetivo, continuidad de ingresos y preparación documental.</p>
               </div>
               <div className={styles.inlineActions}>
-                <button className="button button-primary" type="button" onClick={() => { setC2(null); setShowModel(true); }}>Probar otro escenario</button>
+                <button className="button button-primary" type="button" onClick={beginReadiness}>Conocer mi preparación</button>
+                <button className="button button-secondary" type="button" onClick={() => { setC2(null); setShowModel(true); }}>Probar otro escenario</button>
                 <button className="button button-secondary" type="button" onClick={editBase}>Editar datos base</button>
               </div>
             </section>
@@ -356,7 +405,7 @@ export function AffordabilityTool() {
           <section className={styles.disclaimer} aria-label="Lo que este resultado no significa">
             <strong>Lo que este resultado no significa</strong>
             <p>No es aprobación bancaria, oferta, probabilidad de aprobación ni recomendación de compra. No consulta score, centrales de riesgo ni productos de una entidad.</p>
-            <p>Más adelante podrás guardar este análisis en Mi Vivienda y completar tu perfil progresivamente; v0.13 todavía no activa cuenta ni persistencia.</p>
+            <p>Más adelante podrás guardar este análisis en Mi Vivienda y completar tu perfil progresivamente; v0.16 todavía no activa cuenta ni persistencia.</p>
           </section>
         </div>
       ) : null}
