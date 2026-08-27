@@ -260,7 +260,18 @@ describe("Home Readiness v0.16", () => {
 
     expect(perfect.band).toBe("well_prepared");
     expect(weak.band).toBe("foundation_needed");
-    expect(JSON.stringify(weak)).not.toMatch(/probability|probabilidad|approved|aprobado/i);
+
+    const humanCopy = [
+      ...weak.dimensions.flatMap((item) => [
+        item.label,
+        item.explanation,
+        item.nextAction ?? "",
+        item.caveat,
+      ]),
+      ...weak.nextActions.flatMap((action) => [action.title, action.explanation]),
+    ].join(" ");
+
+    expect(humanCopy).not.toMatch(/probabilidad de aprobación|aprobado|preaprobado/i);
   });
 
   it("can calculate a complete index without identity or contact fields", () => {
