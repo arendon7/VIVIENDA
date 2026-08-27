@@ -2,13 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { CasePlanWorkspace } from "@/components/vivienda/case-plan-workspace";
-import {
-  evaluateOpportunityRoutes,
-  type Modality,
-  type OpportunityPrecision,
-  type OpportunityRouteCode,
-  type PaymentState,
-  type ProductType,
+import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
+import { evaluateLoanHealth } from "@/domain/loan-health/evaluator";
+import { evaluateIntegratedOpportunityRoutes } from "@/domain/loan-health/integration";
+import type {
+  Modality,
+  OpportunityPrecision,
+  OpportunityRouteCode,
+  OpportunityRouterInput,
+  PaymentState,
+  ProductType,
 } from "@/domain/opportunity/router";
 
 type Goal = "finish_sooner" | "lower_payment" | "explore";
@@ -18,7 +21,16 @@ type OpportunityWorkspaceProps = {
   initialProductType?: ProductType;
   initialModality?: Modality;
   sourceLabel?: string;
+  initialTermPrepaymentModel?: {
+    recurringExtraPrincipal: number;
+  };
 };
+
+const cop = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "COP",
+  maximumFractionDigits: 0,
+});
 
 const productLabels: Record<ProductType, string> = {
   mortgage_housing: "Crédito hipotecario de vivienda",
@@ -90,10 +102,13 @@ export function OpportunityWorkspace({
   initialProductType = "unknown",
   initialModality = "unknown",
   sourceLabel,
+  initialTermPrepaymentModel,
 }: OpportunityWorkspaceProps) {
   const [productType, setProductType] = useState<ProductType>(initialProductType);
-  const [goal, setGoal] = useState<Goal>("explore");
-  const [extraPayment, setExtraPayment] = useState("");
+  const [goal, setGoal] = useState<Goal>(initialTermPrepaymentModel ? "finish_sooner" : "explore");
+  const [extraPayment, setExtraPayment] = useState(
+    initialTermPrepaymentModel ? String(initialTermPrepaymentModel.recurringExtraPrincipal) : "",
+  );
   const [materialEconomicChange, setMaterialEconomicChange] = useState(false);
   const [familyIncome, setFamilyIncome] = useState("");
   const [proposedInstallment, setProposedInstallment] = useState("");
@@ -102,13 +117,22 @@ export function OpportunityWorkspace({
   const [auditIssue, setAuditIssue] = useState(false);
   const [selectedRouteCode, setSelectedRouteCode] = useState<OpportunityRouteCode | null>(null);
   const asOfDate = bogotaToday();
+  const extraPaymentCapacity = optionalPositive(extraPayment);
+
+  const termModelStillBound = Boolean(
+    precision === "C1"
+      && initialTermPrepaymentModel
+      && initialProductType === "mortgage_housing"
+      && initialModality === "pesos"
+      && productType === initialProductType
+      && extraPaymentCapacity === initialTermPrepaymentModel.recurringExtraPrincipal,
+  );
 
   const result = useMemo(() => {
-    const extraPaymentCapacity = optionalPositive(extraPayment);
     const currentAccreditedFamilyIncome = optionalPositive(familyIncome);
     const proposedRestructuredFirstInstallment = optionalPositive(proposedInstallment);
 
-    return evaluateOpportunityRoutes({
+    const routerInput: OpportunityRouterInput = {
       asOfDate,
       precision,
       productType,
@@ -122,12 +146,16 @@ export function OpportunityWorkspace({
       ...(extraPaymentCapacity !== undefined ? { extraPaymentCapacity } : {}),
       ...(currentAccreditedFamilyIncome !== undefined ? { currentAccreditedFamilyIncome } : {}),
       ...(proposedRestructuredFirstInstallment !== undefined ? { proposedRestructuredFirstInstallment } : {}),
+    };
+
+    return evaluateIntegratedOpportunityRoutes(routerInput, {
+      prepaymentTermScenario: termModelStillBound ? "modeled_c2" : "not_modeled",
     });
   }, [
     asOfDate,
     auditIssue,
     bindingOffer,
-    extraPayment,
+    extraPaymentCapacity,
     familyIncome,
     goal,
     initialModality,
@@ -136,7 +164,25 @@ export function OpportunityWorkspace({
     precision,
     productType,
     proposedInstallment,
+    termModelStillBound,
   ]);
+
+  const modeledRouteCodes = useMemo<OpportunityRouteCode[]>(() => {
+    if (!termModelStillBound) return [];
+    const termRoute = result.routes.find((route) => route.routeCode === "R1_PREPAGO_PLAZO");
+    return termRoute?.precision === "C2" ? ["R1_PREPAGO_PLAZO"] : [];
+  }, [result.routes, termModelStillBound]);
+
+  const loanHealth = useMemo(
+    () => evaluateLoanHealth({
+      precision,
+      productType,
+      paymentState,
+      routerResult: result,
+      modeledRouteCodes,
+    }),
+    [modeledRouteCodes, paymentState, precision, productType, result],
+  );
 
   const selectedRoute = selectedRouteCode
     ? result.routes.find((route) => route.routeCode === selectedRouteCode) ?? null
@@ -146,13 +192,16 @@ export function OpportunityWorkspace({
     <section className="surface form-card" style={{ marginTop: 20 }} aria-labelledby="opportunity-workspace-title">
       <div className="section-header">
         <div>
-          <p className="eyebrow">Opportunity Router · v0.3</p>
-          <h2 id="opportunity-workspace-title">Convierte el Mortgage Twin en próximas decisiones posibles.</h2>
+          <p className="eyebrow">Opportunity Router · v0.21</p>
+          <h2 id="opportunity-workspace-title">Entiende primero el estado de decisión; después elige una ruta.</h2>
           <p className="section-copy">
-            Esta capa ordena rutas, no aprueba solicitudes. La prioridad depende de tus hechos y objetivos; no de qué servicio genere más honorarios.
+            Loan Health resume qué sabemos, qué merece atención y qué ya puede compararse. Después el Router ordena rutas concretas sin convertirlas en aprobación, oferta o conclusión jurídica.
           </p>
         </div>
-        <span className="status-chip">{precision} · evidencia actual</span>
+        <div className="actions" aria-label="Precisión de esta evaluación">
+          <span className="status-chip">{precision} · fuente base</span>
+          {termModelStillBound ? <span className="material-chip">R1 · C2 modelado</span> : null}
+        </div>
       </div>
 
       {sourceLabel ? (
@@ -164,12 +213,21 @@ export function OpportunityWorkspace({
         </div>
       ) : null}
 
+      {initialTermPrepaymentModel ? (
+        <div className="result-callout" style={{ marginTop: 16 }} role="status">
+          <strong>Traemos tu escenario de reducción de plazo</strong>
+          <p className="section-copy">
+            Ya modelaste {cop.format(initialTermPrepaymentModel.recurringExtraPrincipal)} adicionales al mes. Mientras mantengas ese monto y la misma clasificación hipotecaria en pesos, solo R1 puede conservar precisión C2. Si cambias esos datos, la ruta vuelve automáticamente a C1.
+          </p>
+        </div>
+      ) : null}
+
       <div className="privacy-panel" style={{ marginTop: 20 }}>
-        <strong>Cómo leer este resultado</strong>
+        <strong>Cómo leer esta evaluación</strong>
         <ul>
-          <li><strong>Se puede activar ahora</strong> significa que el siguiente paso procedimental está disponible con los datos declarados; no significa aprobación bancaria.</li>
-          <li><strong>Vale la pena evaluar</strong> significa que falta evidencia o una condición externa.</li>
-          <li><strong>Revisión jurídica necesaria</strong> bloquea conclusiones automáticas y prioriza revisión humana.</li>
+          <li><strong>C1</strong> conserva que los hechos base fueron declarados por ti, aunque los hayas transcrito mirando un extracto local.</li>
+          <li><strong>C2 en una ruta</strong> significa que existe un modelo determinístico compatible para esa decisión específica; no verifica el documento ni eleva las demás rutas.</li>
+          <li><strong>Revisión jurídica necesaria</strong> tiene prioridad sobre optimizaciones ordinarias cuando los hechos reportados lo exigen.</li>
         </ul>
       </div>
 
@@ -209,8 +267,11 @@ export function OpportunityWorkspace({
       </div>
 
       <div className="field-group">
-        <label className="field-label" htmlFor="router-extra-payment">3. ¿Cuánto capital adicional podrías aportar?</label>
-        <span className="field-hint" id="router-extra-payment-hint">Déjalo vacío si no planeas hacer abonos adicionales. El capital que aportes nunca se presenta como ahorro creado por VIVIENDA.</span>
+        <label className="field-label" htmlFor="router-extra-payment">3. ¿Cuánto capital adicional quieres comparar?</label>
+        <span className="field-hint" id="router-extra-payment-hint">
+          Déjalo vacío si no planeas hacer abonos adicionales. El capital que aportes nunca se presenta como ahorro creado por VIVIENDA.
+          {initialTermPrepaymentModel ? " El monto modelado previamente ya aparece aquí para evitar pedirte el mismo dato otra vez." : ""}
+        </span>
         <input
           className="field-control"
           id="router-extra-payment"
@@ -222,6 +283,9 @@ export function OpportunityWorkspace({
           value={extraPayment}
           onChange={(event) => setExtraPayment(event.target.value)}
         />
+        {initialTermPrepaymentModel && !termModelStillBound ? (
+          <p className="field-hint" role="status">El escenario C2 anterior ya no coincide con estos datos. R1 se evalúa nuevamente como C1 hasta construir otro modelo compatible.</p>
+        ) : null}
       </div>
 
       <fieldset className="field-group">
@@ -273,10 +337,14 @@ export function OpportunityWorkspace({
       </fieldset>
 
       <div style={{ marginTop: 30 }} aria-live="polite">
+        <LoanHealthPanel result={loanHealth} />
+      </div>
+
+      <div style={{ marginTop: 30 }} aria-live="polite">
         <div className="section-header">
           <div>
-            <p className="eyebrow">Resultado de routing · {asOfDate}</p>
-            <h3>{result.primaryRoute ? "Tu ruta prioritaria cambió con tus respuestas." : "Todavía falta clasificar el caso."}</h3>
+            <p className="eyebrow">Rutas detalladas · {asOfDate}</p>
+            <h3>{result.primaryRoute ? "Ahora puedes revisar por qué cada ruta aparece y qué exige." : "Todavía falta clasificar el caso."}</h3>
           </div>
         </div>
 
@@ -304,7 +372,7 @@ export function OpportunityWorkspace({
                     <span className="status-chip">{statusLabels[routeItem.status]}</span>
                     {routeItem.humanReviewRequired ? <span className="material-chip">Revisión humana</span> : null}
                   </div>
-                  <p className="field-hint">{routeItem.routeCode} · precisión {routeItem.precision}</p>
+                  <p className="field-hint">{routeItem.routeCode} · precisión {routeItem.precision}{routeItem.precision === "C2" && precision === "C1" ? " solo para esta ruta" : ""}</p>
                 </div>
 
                 <div className="extraction-actions" style={{ alignItems: "stretch" }}>
