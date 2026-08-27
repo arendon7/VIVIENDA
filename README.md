@@ -18,7 +18,7 @@ Los slices v0.10–v0.21 están desarrollados sobre una cadena versionada y reve
 
 Freeze base heredado v0.20:
 
-`4a9ff2416c6968b49366ce616d87ace02d9e5354`
+`0800f7b41b8ee579375beed9c86ee97f2fd161cb`
 
 Green code/test head v0.21:
 
