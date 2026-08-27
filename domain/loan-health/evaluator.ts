@@ -46,7 +46,6 @@ export type LoanHealthInput = {
   productType: ProductType;
   paymentState: PaymentState;
   routerResult: OpportunityRouterResult;
-  modeledRouteCodes?: OpportunityRouteCode[];
 };
 
 export type LoanHealthResult = {
@@ -57,13 +56,27 @@ export type LoanHealthResult = {
   notices: string[];
 };
 
+const precisionRank: Record<OpportunityPrecision, number> = {
+  C0: 0,
+  C1: 1,
+  C2: 2,
+  C3: 3,
+};
+
 function findRoute(result: OpportunityRouterResult, code: OpportunityRouteCode): OpportunityRoute | undefined {
   return result.routes.find((route) => route.routeCode === code);
 }
 
+function higherPrecisionRoutes(
+  precision: OpportunityPrecision,
+  result: OpportunityRouterResult,
+): OpportunityRoute[] {
+  return result.routes.filter((route) => precisionRank[route.precision] > precisionRank[precision]);
+}
+
 function structureDimension(
   precision: OpportunityPrecision,
-  modeledRouteCodes: OpportunityRouteCode[],
+  routeSpecificPrecision: OpportunityRoute[],
 ): LoanHealthDimension {
   if (precision === "C0") {
     return {
@@ -76,14 +89,14 @@ function structureDimension(
     };
   }
 
-  if (precision === "C1" && modeledRouteCodes.length > 0) {
+  if (precision === "C1" && routeSpecificPrecision.length > 0) {
     return {
       code: "structure_understanding",
       label: "Estructura del crédito",
       status: "explore",
-      explanation: "La fotografía de origen sigue siendo C1 porque los datos fueron declarados. Ya existe un modelo C2 para una ruta específica, sin elevar las demás decisiones ni verificar el documento.",
-      nextAction: "Usar el resultado C2 solo en la ruta que lo generó y conservar C1 para las demás decisiones hasta obtener soporte adicional.",
-      sourceRouteCodes: modeledRouteCodes,
+      explanation: "La fotografía de origen sigue siendo C1 porque los datos fueron declarados. Una o más rutas tienen precisión superior por soporte específico de esa decisión, sin elevar las demás rutas ni verificar el documento.",
+      nextAction: "Usar la precisión superior solo en la ruta que la obtuvo y conservar C1 para las demás decisiones hasta que tengan soporte propio.",
+      sourceRouteCodes: routeSpecificPrecision.map((route) => route.routeCode),
     };
   }
 
@@ -165,10 +178,10 @@ function prepaymentDimension(input: LoanHealthInput): LoanHealthDimension {
     label: "Prepago",
     status: ready ? "ready" : "explore",
     explanation: ready
-      ? "Existe al menos una ruta de prepago accionable con los datos actuales; reducción de plazo y reducción de cuota siguen siendo decisiones distintas."
+      ? "Existe al menos una ruta de prepago accionable con los datos actuales; reducción de plazo y reducción de cuota siguen siendo decisiones distintas y pueden tener precisiones diferentes."
       : "Existe una ruta de prepago, pero todavía hay bloqueos de precisión o información antes de cuantificar correctamente el efecto.",
     nextAction: ready
-      ? "Comparar reducción de plazo y reducción de cuota antes de impartir una instrucción."
+      ? "Comparar los dos objetivos y cuantificar por separado cualquier alternativa que todavía no tenga un modelo compatible."
       : "Resolver los bloqueos del modelo antes de mostrar un beneficio monetario exacto.",
     sourceRouteCodes: routes.map((route) => route.routeCode),
   };
@@ -348,9 +361,9 @@ function overallDecisionState(
 }
 
 export function evaluateLoanHealth(input: LoanHealthInput): LoanHealthResult {
-  const modeledRouteCodes = input.modeledRouteCodes ?? [];
+  const routeSpecificPrecision = higherPrecisionRoutes(input.precision, input.routerResult);
   const dimensions = [
-    structureDimension(input.precision, modeledRouteCodes),
+    structureDimension(input.precision, routeSpecificPrecision),
     prepaymentDimension(input),
     transferDimension(input),
     restructuringDimension(input),
@@ -359,8 +372,8 @@ export function evaluateLoanHealth(input: LoanHealthInput): LoanHealthResult {
   ];
 
   const overall = overallDecisionState(input.precision, dimensions);
-  const partialPrecisionNotice = input.precision === "C1" && modeledRouteCodes.length > 0
-    ? "La fuente del Mortgage Twin sigue en C1. Las rutas listadas como C2 alcanzaron ese nivel únicamente por un modelo determinístico específico; C2 no significa verificación documental."
+  const routeSpecificNotice = routeSpecificPrecision.length > 0
+    ? `La fuente base permanece en ${input.precision}. ${routeSpecificPrecision.map((route) => `${route.routeCode} ${route.precision}`).join(" · ")} tiene precisión superior solo dentro de su propia ruta; esto no verifica el documento ni eleva las demás decisiones.`
     : null;
 
   return {
@@ -371,7 +384,7 @@ export function evaluateLoanHealth(input: LoanHealthInput): LoanHealthResult {
     notices: [
       "Loan Health v0.21 es una evaluación cualitativa de decisiones, no un score crediticio ni de riesgo.",
       "Las rutas conservan la precisión y el fundamento del Opportunity Router; esta capa no crea nuevas conclusiones jurídicas.",
-      ...(partialPrecisionNotice ? [partialPrecisionNotice] : []),
+      ...(routeSpecificNotice ? [routeSpecificNotice] : []),
     ],
   };
 }
