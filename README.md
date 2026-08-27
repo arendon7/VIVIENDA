@@ -6,37 +6,37 @@ Tesis de producto:
 
 **Prepare → Buy → Finance → Manage → Optimize → Protect**
 
-La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y quiere entender si está pagando de la mejor manera disponible. Las rutas públicas ya cubren comprador potencial, preparación para compra, exploración de estructuras de financiación, normalización de cotizaciones, presión de pago e inconsistencias sin desplazar esa cuña.
+La cuña inicial sigue siendo el usuario que ya tiene un crédito de vivienda y quiere entender si está pagando de la mejor manera disponible. Las rutas públicas ya cubren comprador potencial, preparación para compra, exploración de estructuras de financiación, normalización y modelación económica de cotizaciones, presión de pago e inconsistencias sin desplazar esa cuña.
 
 ## Estado actual
 
-Los slices v0.10–v0.18 están desarrollados sobre una cadena versionada y reversible.
+Los slices v0.10–v0.19 están desarrollados sobre una cadena versionada y reversible.
 
-Último baseline de producto validado:
+Último baseline funcional validado:
 
-**v0.18 — Quote Normalization / Base Comparable de Cotizaciones**
+**v0.19 — Scenario-Based Economic Quote Comparison**
 
-Base v0.17 final:
+Base v0.18 final:
 
-`2b824629cb0efada86d766b44110a807db415f5e`
+`7f94eaea829dcfb38077f3f30229f0121921e243`
 
-Green code/test head v0.18:
+Green code/test head v0.19:
 
-`598fad61ab3937151eedbc7edf94488fca160473`
+`810a87492e271ce2be2c07463467a15797aba7e5`
 
 Rama:
 
-`product/quote-normalization-v0.18`
+`product/economic-quote-comparison-v0.19`
 
-Gate del código v0.18:
+Gate del código v0.19:
 
 - TypeScript: PASS;
-- dominio: **321/321 PASS**;
-- Quote Normalization: **37/37 PASS**;
+- dominio: **356/356 PASS**;
+- Economic Quote Comparison: **35 invariantes nuevos PASS**;
 - build: PASS;
-- Playwright: **142/142 PASS** desktop + mobile 390 px.
+- Playwright: **148/148 PASS** desktop + mobile 390 px.
 
-v0.17 — Financing Structures Explorer — también quedó congelado y documentado antes de iniciar v0.18.
+v0.18 — Quote Normalization — permanece congelado como capa C1 previa y alimenta v0.19 únicamente cuando el par está materialmente listo.
 
 ## Superficies ejecutables
 
@@ -48,7 +48,7 @@ v0.17 — Financing Structures Explorer — también quedó congelado y document
 - `/comprar/cuanto-puedo-comprar` — Journey 2 C1→C2 para comprador potencial, sin identidad antes del primer valor.
 - `/comprar/preparacion` — Home Readiness: perfil parcial → cinco dimensiones → índice completo cuando hay información suficiente.
 - `/comprar/financiacion` — explorador anónimo de estructura contractual y denominación antes de comparar entidades u ofertas reales.
-- `/comprar/comparar-cotizaciones` — normalización manual C1 de una o dos cotizaciones para detectar faltantes, consistencia y diferencias de base antes de cualquier comparación económica.
+- `/comprar/comparar-cotizaciones` — normalización manual C1 de una o dos cotizaciones y, cuando ambas están materialmente listas, modelación económica C2 bajo supuestos explícitos; no es ranking bancario ni recomendación.
 - `/ayuda` — Journey 3 C0 para presión de pago, mora, cobranza y proceso judicial reportado.
 - `/revisar-diferencia` — Journey 4 C0 para aislar y reconciliar una diferencia declarada sin presumir error o ilegalidad.
 
@@ -61,6 +61,99 @@ v0.17 — Financing Structures Explorer — también quedó congelado y document
 
 C3 requiere evidencia realmente derivada de documento y reconciliación completa de campos materiales. Una confirmación manual o evidencia simulada no concede C3.
 
+## Scenario-Based Economic Quote Comparison v0.19
+
+v0.19 toma dos cotizaciones que ya pasaron Quote Normalization v0.18 y construye flujos C2 bajo supuestos explícitos.
+
+Pregunta de producto:
+
+> **Bajo estos datos declarados y estos supuestos explícitos, ¿cómo se ven los flujos económicos y qué métricas pueden compararse responsablemente?**
+
+La regla central es:
+
+> **diferencia modelada bajo un escenario ≠ ahorro garantizado ≠ mejor financiación**
+
+### Entrada y continuidad
+
+- las cotizaciones siguen siendo C1 `user_declared` y no verificadas;
+- el escenario resultante es C2;
+- el CTA `Modelar escenario económico` aparece solo cuando v0.18 devuelve `ready_for_future_economic_model`;
+- v0.19 reutiliza los dos `FinancingQuoteInput` en memoria;
+- no crea una ruta paralela;
+- no serializa montos o cotizaciones en URL;
+- editar una cotización invalida el escenario mostrado.
+
+### Flujos soportados
+
+Según la cotización y el escenario, el motor puede incluir:
+
+- efectivo total requerido al cierre;
+- cuotas o cánones recurrentes;
+- seguros declarados por fuera de la cuota/canon;
+- opción de compra del leasing cuando se incorpora explícitamente;
+- trayectoria UVR de sensibilidad suministrada por el usuario;
+- valor presente cuando el usuario define una tasa anual de comparación.
+
+Para pesos con `constant_nominal_payment`, la base recurrente es la cuota/canon declarada. v0.19 no reconstruye silenciosamente una cuota bancaria desde tasa, monto y plazo.
+
+Los costos de una sola vez no se vuelven a sumar sobre `totalCashRequiredAtClosing` cuando ese total ya los comprende.
+
+### UVR
+
+v0.19 no predice UVR.
+
+Una cotización UVR solo se modela en pesos cuando el usuario suministra una trayectoria explícita de sensibilidad. La UI la presenta como supuesto, no como proyección oficial, esperada o probable.
+
+### Leasing
+
+La opción de compra no se omite silenciosamente. Si el usuario quiere modelar adquisición completa, debe decidir explícitamente su ejercicio; cuando la opción es porcentual y la base no queda determinada, debe declarar la base.
+
+Crédito hipotecario y leasing no se convierten en equivalentes jurídicos porque una métrica de flujo sea menor.
+
+### Métricas y gates
+
+El motor separa:
+
+1. modelabilidad de cada cotización;
+2. modelabilidad de ambas;
+3. comparabilidad responsable de una métrica concreta.
+
+Puede mostrar:
+
+- desembolso nominal modelado;
+- menor desembolso nominal modelado, solo si pasan sus gates;
+- valor presente modelado cuando existe tasa de comparación;
+- menor valor presente modelado, solo si pasan sus gates.
+
+Puede negarse a rankear por:
+
+- cotización no modelable;
+- valor del inmueble distinto;
+- monto financiado distinto;
+- plazo distinto;
+- falta de tasa de comparación para la métrica que la exige;
+- adquisición final no equivalente.
+
+La salida permitida es una propiedad de la métrica bajo el escenario, nunca un `mejor banco`, `mejor crédito`, elegibilidad o aprobación.
+
+### Fronteras
+
+v0.19 no hace:
+
+- verificación documental;
+- OCR;
+- persistencia;
+- consulta de centrales;
+- integración bancaria;
+- Open Finance;
+- matching bancario;
+- preaprobación o aprobación;
+- probabilidad de aprobación;
+- recomendación de producto;
+- predicción UVR;
+- ahorro garantizado;
+- conclusión legal automática.
+
 ## Quote Normalization v0.18
 
 v0.18 incorpora una capa previa a cualquier comparación económica de ofertas reales.
@@ -69,13 +162,13 @@ Pregunta de producto:
 
 > **¿Estas cotizaciones contienen suficiente información y están sobre bases comparables?**
 
-No intenta responder todavía cuál cotización gana.
+No intenta responder por sí sola cuál cotización tiene menor costo.
 
 ### Estados de una cotización
 
 - `incomplete` — faltan campos estructurales;
 - `structurally_ready` — la estructura ya puede entenderse, pero faltan datos materiales;
-- `comparison_input_ready` — la entrada declarada está materialmente completa para alimentar un futuro modelo económico.
+- `comparison_input_ready` — la entrada declarada está materialmente completa para alimentar un modelo económico.
 
 `comparison_input_ready` es un estado de preparación de datos. No significa:
 
@@ -96,7 +189,7 @@ No existe porcentaje artificial de completitud.
 - `ready_for_structural_comparison`;
 - `ready_for_future_economic_model`.
 
-El último estado tampoco ejecuta una comparación económica. Solo confirma que ambas entradas tienen la materialidad declarada requerida para una capa posterior.
+El último estado no ejecuta por sí mismo una comparación económica. Solo habilita la capa v0.19.
 
 ### Qué normaliza
 
@@ -138,30 +231,6 @@ Al ingresar dos cotizaciones, v0.18 puede revelar diferencias de:
 El resultado se presenta bajo la idea:
 
 > **Ahora sabemos qué no es directamente comparable.**
-
-### Requisitos para una futura modelación
-
-El motor puede exigir, según el par:
-
-- trayectoria UVR o cronograma verificado;
-- economía de opción de compra del leasing;
-- normalización de convenciones de tasa;
-- normalización de seguros;
-- normalización de costos iniciales;
-- normalización de monto financiado/equity;
-- plazo común o varios horizontes;
-- alineación de vigencia de ofertas.
-
-v0.18 no calcula:
-
-- costo total;
-- valor presente;
-- ahorro;
-- ganador;
-- ranking de entidad;
-- matching bancario;
-- elegibilidad;
-- aprobación.
 
 La ruta es manual, anónima y C1. No requiere identidad, cuenta, consulta de centrales ni documentos; tampoco finge OCR, verificación o persistencia.
 
@@ -208,7 +277,7 @@ Reglas importantes:
 
 La ruta `/comprar/preparacion` expone navegación a `/comprar/financiacion` sin serializar montos financieros en la URL. El componente de financiación admite un `initialConstraintContext` derivado para una futura continuidad in-memory, pero v0.17 no finge persistencia ni transfiere ese contexto entre rutas autónomas.
 
-`/comprar/financiacion` enlaza ahora a `/comprar/comparar-cotizaciones` como siguiente capa cuando el usuario ya tiene ofertas para revisar. No se transfieren montos por URL.
+`/comprar/financiacion` enlaza a `/comprar/comparar-cotizaciones` como siguiente capa cuando el usuario ya tiene ofertas para revisar. No se transfieren montos por URL.
 
 ## Home Readiness v0.16
 
@@ -342,7 +411,7 @@ Aceptar el servicio no concede facultad extrajudicial, poder judicial ni crea un
 
 La cadena separa:
 
-`Buyer Affordability / Home Readiness / Financing Structures / Quote Normalization / Mortgage Twin / Payment Pressure / Inconsistency Reconciliation → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
+`Buyer Affordability / Home Readiness / Financing Structures / Quote Normalization / Economic Quote Comparison / Mortgage Twin / Payment Pressure / Inconsistency Reconciliation → Opportunity Router → Loan Health → Assisted Execution → Case Plan → Case State → Persistence/Evidence Boundary → HTTP/Auth Boundary`
 
 Incluye:
 
@@ -353,6 +422,7 @@ Incluye:
 - Home Readiness v0.16;
 - Financing Structures Explorer v0.17;
 - Quote Normalization v0.18;
+- Scenario-Based Economic Quote Comparison v0.19;
 - provenance/trust contracts;
 - Opportunity Router;
 - Loan Health evaluator;
@@ -379,8 +449,9 @@ Todavía no existe:
 - tasas de mercado automáticas;
 - live lender offers;
 - OCR/verificación de cotizaciones;
-- comparación económica de cotizaciones;
-- cálculo de ahorro/ganador;
+- comparación económica basada en ofertas verificadas o datos live de entidades;
+- ranking bancario o recomendación de entidad/producto;
+- ahorro garantizado o ganador genérico;
 - subsidy eligibility live;
 - application/approval flows;
 - pagos/contratación productiva.
@@ -428,17 +499,20 @@ Leer antes de cambios sustanciales:
 - `knowledge/00_PRODUCT/STATUS-V0.16.md`
 - `knowledge/00_PRODUCT/STATUS-V0.17.md`
 - `knowledge/00_PRODUCT/STATUS-V0.18.md`
+- `knowledge/00_PRODUCT/STATUS-V0.19.md`
 - `knowledge/20_DESIGN/BUYER-AFFORDABILITY-UX-SPEC-V0.13.md`
 - `knowledge/20_DESIGN/PAYMENT-PRESSURE-UX-SPEC-V0.14.md`
 - `knowledge/20_DESIGN/HOME-READINESS-UX-SPEC-V0.16.md`
 - `knowledge/20_DESIGN/FINANCING-STRUCTURES-UX-SPEC-V0.17.md`
 - `knowledge/20_DESIGN/QUOTE-NORMALIZATION-UX-SPEC-V0.18.md`
+- `knowledge/20_UX/ECONOMIC-QUOTE-COMPARISON-UX-SPEC-V0.19.md`
 - `knowledge/40_DOMAIN/LOAN-HEALTH-CONTRACT-V0.11.md`
 - `knowledge/40_DOMAIN/BUYER-AFFORDABILITY-CONTRACT-V0.13.md`
 - `knowledge/40_DOMAIN/PAYMENT-PRESSURE-CONTRACT-V0.14.md`
 - `knowledge/40_DOMAIN/HOME-READINESS-CONTRACT-V0.16.md`
 - `knowledge/40_DOMAIN/FINANCING-STRUCTURES-CONTRACT-V0.17.md`
 - `knowledge/40_DOMAIN/QUOTE-NORMALIZATION-CONTRACT-V0.18.md`
+- `knowledge/40_DOMAIN/ECONOMIC-QUOTE-COMPARISON-CONTRACT-V0.19.md`
 - `skills/housing-finance-design-orchestrator/SKILL.md`
 
 La precedencia es: verdad jurídica/financiera → privacidad/seguridad → contratos de dominio → journey/UX → conversión → diseño → skills externas.
