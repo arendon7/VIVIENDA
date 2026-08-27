@@ -13,9 +13,9 @@ async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
   await page.getByRole("radio", { name: "Pesos", exact: true }).first().check();
   await page.getByLabel("Saldo de capital (COP)").fill("180000000");
   await page.getByRole("button", { name: "Construir mi Mortgage Twin" }).click();
-  await page.getByRole("button", { name: "Explorar mis próximas decisiones" }).click();
+  await page.getByRole("button", { name: "Ver mi Loan Health y rutas" }).click();
 
-  await expect(page.getByRole("heading", { name: "Convierte el Mortgage Twin en próximas decisiones posibles." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Entiende primero el estado de decisión; después elige una ruta." })).toBeVisible();
   const workspace = page.locator('section[aria-labelledby="opportunity-workspace-title"]');
   await expect(workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" })).toBeChecked();
   return workspace;
@@ -24,7 +24,7 @@ async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
 async function openTermPrepaymentTimeline(page: import("@playwright/test").Page) {
   const workspace = await openOpportunityWorkspace(page);
   await workspace.getByRole("radio", { name: "Terminar antes" }).check();
-  await workspace.getByLabel("3. ¿Cuánto capital adicional podrías aportar?").fill("300000");
+  await workspace.getByLabel("3. ¿Cuánto capital adicional quieres comparar?").fill("300000");
 
   const primary = workspace.getByRole("article", {
     name: /Ruta prioritaria: Usar abonos adicionales para reducir plazo/,
