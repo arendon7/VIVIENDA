@@ -59,6 +59,15 @@ function leasing(overrides: Partial<FinancingQuoteInput> = {}): FinancingQuoteIn
   };
 }
 
+function withoutKey<K extends keyof FinancingQuoteInput>(
+  quote: FinancingQuoteInput,
+  key: K,
+): FinancingQuoteInput {
+  const copy = { ...quote };
+  delete copy[key];
+  return copy;
+}
+
 const baseScenario: EconomicComparisonScenario = {
   scenarioId: "base",
 };
@@ -70,7 +79,7 @@ function expectClose(actual: number, expected: number, tolerance = 0.01) {
 describe("Scenario-Based Economic Quote Comparison v0.19", () => {
   it("blocks a quote that is not comparison-input ready in v0.18", () => {
     const result = modelEconomicQuote(
-      mortgage({ totalCashRequiredAtClosing: undefined }),
+      withoutKey(mortgage(), "totalCashRequiredAtClosing"),
       baseScenario,
     );
 
@@ -135,10 +144,11 @@ describe("Scenario-Based Economic Quote Comparison v0.19", () => {
       },
     );
 
-    expectClose(result.cashFlow!.periods[0].baseOutflow, 3_000_000);
-    expectClose(result.cashFlow!.periods[1].baseOutflow, 3_000_000 * (1 + monthlyGrowth));
+    const periods = result.cashFlow!.periods;
+    expectClose(periods[0]!.baseOutflow, 3_000_000);
+    expectClose(periods[1]!.baseOutflow, 3_000_000 * (1 + monthlyGrowth));
     expectClose(
-      result.cashFlow!.periods[2].baseOutflow,
+      periods[2]!.baseOutflow,
       3_000_000 * Math.pow(1 + monthlyGrowth, 2),
     );
     expect(result.cashFlow?.assumptions.uvrAnnualGrowthRate).toBe(0.12);
@@ -156,7 +166,7 @@ describe("Scenario-Based Economic Quote Comparison v0.19", () => {
     );
 
     expect(result.cashFlow?.recurringInsuranceOutflow).toBe(300_000);
-    expect(result.cashFlow?.periods[0].insuranceOutflow).toBe(150_000);
+    expect(result.cashFlow?.periods[0]!.insuranceOutflow).toBe(150_000);
   });
 
   it("does not double count insurance marked as included in the declared payment", () => {
@@ -234,25 +244,23 @@ describe("Scenario-Based Economic Quote Comparison v0.19", () => {
     });
 
     expect(result.status).toBe("modeled");
-    expect(result.cashFlow?.periods[0].purchaseOptionOutflow).toBe(0);
-    expect(result.cashFlow?.periods[1].purchaseOptionOutflow).toBe(10_000_000);
+    expect(result.cashFlow?.periods[0]!.purchaseOptionOutflow).toBe(0);
+    expect(result.cashFlow?.periods[1]!.purchaseOptionOutflow).toBe(10_000_000);
     expect(result.cashFlow?.purchaseOptionOutflow).toBe(10_000_000);
     expect(result.cashFlow?.fullAcquisition).toBe(true);
   });
 
   it("requires an explicit percentage base for a percentage leasing option", () => {
-    const result = modelEconomicQuote(
-      leasing({
-        leasingPurchaseOptionValue: undefined,
-        leasingPurchaseOptionPercentage: 0.1,
-      }),
-      {
-        scenarioId: "leasing-percent",
-        leasingOptions: {
-          B: { exercise: true, timing: "contract_end" },
-        },
-      },
+    const quote = withoutKey(
+      leasing({ leasingPurchaseOptionPercentage: 0.1 }),
+      "leasingPurchaseOptionValue",
     );
+    const result = modelEconomicQuote(quote, {
+      scenarioId: "leasing-percent",
+      leasingOptions: {
+        B: { exercise: true, timing: "contract_end" },
+      },
+    });
 
     expect(result.status).toBe("missing_scenario_assumption");
     expect(result.issues.map((item) => item.code)).toContain(
@@ -261,49 +269,49 @@ describe("Scenario-Based Economic Quote Comparison v0.19", () => {
   });
 
   it("uses property value exactly when selected as the leasing percentage base", () => {
-    const result = modelEconomicQuote(
+    const quote = withoutKey(
       leasing({
         termMonths: 1,
         propertyValue: 500_000_000,
         financedAmount: 350_000_000,
-        leasingPurchaseOptionValue: undefined,
         leasingPurchaseOptionPercentage: 0.1,
       }),
-      {
-        scenarioId: "leasing-property-base",
-        leasingOptions: {
-          B: {
-            exercise: true,
-            timing: "contract_end",
-            percentageBase: "property_value",
-          },
+      "leasingPurchaseOptionValue",
+    );
+    const result = modelEconomicQuote(quote, {
+      scenarioId: "leasing-property-base",
+      leasingOptions: {
+        B: {
+          exercise: true,
+          timing: "contract_end",
+          percentageBase: "property_value",
         },
       },
-    );
+    });
 
     expect(result.cashFlow?.purchaseOptionOutflow).toBe(50_000_000);
   });
 
   it("uses financed amount exactly when selected as the leasing percentage base", () => {
-    const result = modelEconomicQuote(
+    const quote = withoutKey(
       leasing({
         termMonths: 1,
         propertyValue: 500_000_000,
         financedAmount: 350_000_000,
-        leasingPurchaseOptionValue: undefined,
         leasingPurchaseOptionPercentage: 0.1,
       }),
-      {
-        scenarioId: "leasing-financed-base",
-        leasingOptions: {
-          B: {
-            exercise: true,
-            timing: "contract_end",
-            percentageBase: "financed_amount",
-          },
+      "leasingPurchaseOptionValue",
+    );
+    const result = modelEconomicQuote(quote, {
+      scenarioId: "leasing-financed-base",
+      leasingOptions: {
+        B: {
+          exercise: true,
+          timing: "contract_end",
+          percentageBase: "financed_amount",
         },
       },
-    );
+    });
 
     expect(result.cashFlow?.purchaseOptionOutflow).toBe(35_000_000);
   });
@@ -367,7 +375,7 @@ describe("Scenario-Based Economic Quote Comparison v0.19", () => {
   it("returns no present-value metric when no discount rate was supplied", () => {
     const result = modelEconomicQuote(mortgage(), baseScenario);
     expect(result.cashFlow?.presentValueOutflow).toBeNull();
-    expect(result.cashFlow?.periods[0].discountFactor).toBeNull();
+    expect(result.cashFlow?.periods[0]!.discountFactor).toBeNull();
   });
 
   it("models two different-property quotes but blocks both ranking metrics", () => {
@@ -558,10 +566,8 @@ describe("Scenario-Based Economic Quote Comparison v0.19", () => {
   });
 
   it("preserves quote validity warnings without asserting offer availability", () => {
-    const result = modelEconomicQuote(
-      mortgage({ validUntil: undefined }),
-      baseScenario,
-    );
+    const quote = withoutKey(mortgage(), "validUntil");
+    const result = modelEconomicQuote(quote, baseScenario);
 
     expect(result.normalizedQuote.warnings.map((item) => item.code)).toContain(
       "validity_date_missing",
