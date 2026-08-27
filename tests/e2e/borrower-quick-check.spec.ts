@@ -238,7 +238,8 @@ test("explains the 40 percent rule without turning current payment burden into a
   await workspace.getByLabel("Primera cuota que propondrías después de reestructurar").fill("2100000");
 
   await expect(workspace.getByText("El 40% no se usa como detector automático de ilegalidad.", { exact: true })).toBeVisible();
-  await expect(workspace.getByText(/no convierte una cuota vigente superior a ese porcentaje en una infracción automática/i)).toBeVisible();
+  const loanHealth = workspace.locator('section[aria-labelledby="loan-health-title"]');
+  await expect(loanHealth.getByText(/no convierte una cuota vigente superior a ese porcentaje en una infracción automática/i)).toBeVisible();
   await expect(
     workspace.getByText("La primera cuota propuesta supera el 40% del ingreso familiar acreditado y debe rediseñarse.", { exact: true }),
   ).toBeVisible();
