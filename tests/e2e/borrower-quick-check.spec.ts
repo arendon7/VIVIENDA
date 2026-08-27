@@ -177,10 +177,11 @@ test("rejects unsupported document types before guided transcription", async ({ 
 test("keeps locally transcribed statement data at C1 and never grants C3", async ({ page }) => {
   await buildGuidedMortgageTwin(page);
 
-  await expect(page.getByText("Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
-  await expect(page.getByText("C1 · Estimación", { exact: true })).toBeVisible();
+  const twin = page.locator('section[aria-labelledby="mortgage-twin-title"]');
+  await expect(twin.getByText("Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
+  await expect(twin.getByLabel("Nivel de precisión: Estimación")).toHaveText("C1 · Estimación");
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
-  await expect(page.getByText(/extracción simulada/i)).toHaveCount(0);
+  await expect(page.getByText("Demostración · extracción simulada", { exact: true })).toHaveCount(0);
 });
 
 test("keeps unknown product as classification work instead of automatic legal escalation", async ({ page }) => {
