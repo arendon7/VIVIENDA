@@ -14,15 +14,13 @@ Base funcional heredada:
 
 Freeze base heredado v0.20:
 
-`4a9ff2416c6968b49366ce616d87ace02d9e5354`
+`0800f7b41b8ee579375beed9c86ee97f2fd161cb`
 
 Head funcional verde v0.21:
 
 `02b58824ccd99cafc149a3f8c35222414416abb5`
 
-README v0.21 actualizado en:
-
-`66b462098d14c3bddfa2398fdc585d92142b3493`
+README v0.21 actualizado y referencia de base corregida antes del gate final.
 
 El freeze definitivo corresponde al commit que contiene este STATUS junto con el README v0.21. Ese SHA debe conservar **verify + e2e FULL GREEN**; si cualquiera de esos gates falla, el freeze deja de ser válido y no se autoriza PR de cierre.
 
