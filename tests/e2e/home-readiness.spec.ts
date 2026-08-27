@@ -64,7 +64,7 @@ test.describe("Home Readiness v0.16", () => {
 
     await expect(page.getByText("Índice completo", { exact: true })).toBeVisible();
     await expect(page.getByText("/100", { exact: true })).toBeVisible();
-    await expect(page.getByText("No es DataCrédito, score bancario, preaprobación ni probabilidad de aprobación.")).toBeVisible();
+    await expect(page.getByText("No es DataCrédito, score bancario, preaprobación ni probabilidad de aprobación.", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Los cálculos base se muestran aparte del índice." })).toBeVisible();
 
     const body = (await page.locator("body").innerText()).toLowerCase();
