@@ -41,18 +41,20 @@ test("opens guided transcription with no extracted or simulated financial values
   await expect(page.getByLabel("Saldo de capital (COP)")).toHaveValue("");
   await expect(page.getByLabel("Tasa efectiva anual — EA (%)")).toHaveValue("");
   await expect(page.getByLabel("Cuotas restantes")).toHaveValue("");
-  await expect(page.getByText(/extracción simulada/i)).toHaveCount(0);
-  await expect(page.getByText(/extraído/i)).toHaveCount(0);
+  await expect(page.getByText("Demostración · extracción simulada", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Extraído", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("No hay valores precargados ni una extracción simulada. Si un dato no está claro, conserva la incertidumbre.", { exact: true })).toBeVisible();
   await expect(page.getByText(/El archivo permanece local/i)).toBeVisible();
 });
 
 test("keeps the local-reference filename ephemeral and the completed snapshot at C1", async ({ page }) => {
   await buildBaseSnapshot(page);
 
+  const twin = page.locator('section[aria-labelledby="mortgage-twin-title"]');
   await expect(page.getByText("Mortgage Twin guiado · C1", { exact: true })).toBeVisible();
-  await expect(page.getByText("C1 · Estimación", { exact: true })).toBeVisible();
+  await expect(twin.getByLabel("Nivel de precisión: Estimación")).toHaveText("C1 · Estimación");
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
+  await expect(twin.getByText("Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/verificar$/);
   expect(page.url()).not.toContain("mi-extracto-privado");
   expect(page.url()).not.toContain("180000000");
