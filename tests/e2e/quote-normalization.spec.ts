@@ -5,7 +5,7 @@ async function fillCompleteMortgageQuote(page: Page, provider: string) {
   await page.getByLabel("Fecha de la cotización").fill("2026-08-20");
   await page.getByLabel("Vigente hasta").fill("2026-09-20");
   await page.getByLabel("Crédito hipotecario").check();
-  await page.getByLabel("Pesos", { exact: true }).check();
+  await page.getByRole("radio", { name: /^Pesos/ }).check();
   await page.getByLabel("Valor del inmueble (COP)").fill("500000000");
   await page.getByLabel("Monto financiado (COP)").fill("350000000");
   await page.getByLabel("Porcentaje financiado declarado (%)").fill("70");
@@ -25,7 +25,7 @@ async function fillCompleteLeasingQuote(page: Page, provider: string) {
   await page.getByLabel("Fecha de la cotización").fill("2026-08-21");
   await page.getByLabel("Vigente hasta").fill("2026-09-21");
   await page.getByLabel("Leasing habitacional").check();
-  await page.getByLabel("Pesos", { exact: true }).check();
+  await page.getByRole("radio", { name: /^Pesos/ }).check();
   await page.getByLabel("Valor del inmueble (COP)").fill("500000000");
   await page.getByLabel("Monto financiado (COP)").fill("325000000");
   await page.getByLabel("Porcentaje financiado declarado (%)").fill("65");
@@ -55,8 +55,9 @@ test.describe("Quote Normalization v0.18", () => {
     await page.getByRole("button", { name: "Revisar esta cotización" }).click();
 
     await expect(page.getByRole("heading", { name: "Todavía no podemos describir bien esta cotización" })).toBeFocused();
-    await expect(page.getByText("Estructura contractual", { exact: true })).toBeVisible();
-    await expect(page.getByText("Monto financiado", { exact: true })).toBeVisible();
+    const structuralMissing = page.getByRole("heading", { name: "Falta para describir la estructura" }).locator("..");
+    await expect(structuralMissing.getByText("Estructura contractual", { exact: true })).toBeVisible();
+    await expect(structuralMissing.getByText("Monto financiado", { exact: true })).toBeVisible();
     await expect(page.getByText("No verificó documentos, no calculó costo total ni ahorro, no eligió ganador", { exact: false })).toBeVisible();
     await expect(page.locator('input[type="file"]')).toHaveCount(0);
   });
@@ -82,7 +83,7 @@ test.describe("Quote Normalization v0.18", () => {
     await page.goto("/comprar/comparar-cotizaciones");
 
     await page.getByLabel("Crédito hipotecario").check();
-    await page.getByLabel("UVR", { exact: true }).check();
+    await page.getByRole("radio", { name: /^UVR/ }).check();
     await page.getByLabel("Monto financiado (COP)").fill("300000000");
     await page.getByLabel("Plazo (meses)").fill("180");
     await page.getByLabel("Cuota inicial del crédito (COP/mes)").fill("3000000");
