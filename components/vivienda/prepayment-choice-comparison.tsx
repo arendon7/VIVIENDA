@@ -14,7 +14,7 @@ export type PrepaymentChoiceModelInput = {
 
 type PrepaymentChoiceComparisonProps = {
   modelInput: PrepaymentChoiceModelInput;
-  onModeledChange: (modeled: boolean) => void;
+  onModeledAmountChange: (amount: number | null) => void;
 };
 
 const cop = new Intl.NumberFormat("es-CO", {
@@ -30,7 +30,7 @@ const percent = new Intl.NumberFormat("es-CO", {
 
 export function PrepaymentChoiceComparison({
   modelInput,
-  onModeledChange,
+  onModeledAmountChange,
 }: PrepaymentChoiceComparisonProps) {
   const [lumpSum, setLumpSum] = useState("");
   const [result, setResult] = useState<ImmediatePrepaymentChoiceComparison | null>(null);
@@ -39,13 +39,13 @@ export function PrepaymentChoiceComparison({
   function invalidate() {
     setResult(null);
     setError(null);
-    onModeledChange(false);
+    onModeledAmountChange(null);
   }
 
   function modelChoices() {
     setResult(null);
     setError(null);
-    onModeledChange(false);
+    onModeledAmountChange(null);
 
     const amount = Number(lumpSum);
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -64,7 +64,7 @@ export function PrepaymentChoiceComparison({
         lumpSumAmount: amount,
       });
       setResult(comparison);
-      onModeledChange(true);
+      onModeledAmountChange(amount);
     } catch {
       setError("No pudimos construir esta comparación con los datos actuales. Revisa el monto e intenta de nuevo.");
     }
