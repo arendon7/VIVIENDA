@@ -7,7 +7,7 @@ import {
 
 export type DecisionModelContext = {
   prepaymentTermScenario: "not_modeled" | "modeled_c2";
-  prepaymentPaymentScenario: "not_modeled" | "modeled_c2";
+  prepaymentPaymentScenario?: "not_modeled" | "modeled_c2";
 };
 
 function routeByCode(result: OpportunityRouterResult, code: OpportunityRoute["routeCode"]): OpportunityRoute | undefined {
