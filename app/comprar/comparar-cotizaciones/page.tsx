@@ -16,7 +16,7 @@ export default function QuoteNormalizationPage() {
         <QuoteNormalizationTool />
       </main>
       <footer className="shell site-footer">
-        VIVIENDA · Normalización de cotizaciones declaradas. No es verificación documental, ranking, ahorro calculado, elegibilidad, preaprobación ni aprobación.
+        VIVIENDA · Cotizaciones declaradas C1 y escenarios económicos modelados C2. No es verificación documental, recomendación de banco, predicción de UVR, elegibilidad, preaprobación ni aprobación.
       </footer>
     </>
   );
