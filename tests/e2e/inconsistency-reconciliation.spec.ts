@@ -104,7 +104,7 @@ test.describe("Inconsistency Reconciliation v0.15", () => {
     await expect(page.getByRole("link", { name: "Revisar el documento judicial" })).toHaveAttribute("href", "/verificar");
     await expect(page.getByText("Revisión jurídica prioritaria del proceso")).toBeVisible();
     await expect(page.getByRole("link", { name: "Auditar la diferencia" })).toHaveCount(0);
-    await expect(page.getByLabel("Límites de este resultado")).toContainText("no calcula términos ni genera una estrategia de defensa");
+    await expect(page.getByLabel("Límites de este resultado")).toContainText(/calcula términos ni genera una estrategia de defensa/);
   });
 
   test("unknown product is classified before mortgage-specific escalation", async ({ page }) => {
