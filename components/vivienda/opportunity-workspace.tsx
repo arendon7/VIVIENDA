@@ -167,21 +167,14 @@ export function OpportunityWorkspace({
     termModelStillBound,
   ]);
 
-  const modeledRouteCodes = useMemo<OpportunityRouteCode[]>(() => {
-    if (!termModelStillBound) return [];
-    const termRoute = result.routes.find((route) => route.routeCode === "R1_PREPAGO_PLAZO");
-    return termRoute?.precision === "C2" ? ["R1_PREPAGO_PLAZO"] : [];
-  }, [result.routes, termModelStillBound]);
-
   const loanHealth = useMemo(
     () => evaluateLoanHealth({
       precision,
       productType,
       paymentState,
       routerResult: result,
-      modeledRouteCodes,
     }),
-    [modeledRouteCodes, paymentState, precision, productType, result],
+    [paymentState, precision, productType, result],
   );
 
   const selectedRoute = selectedRouteCode
@@ -232,7 +225,7 @@ export function OpportunityWorkspace({
       </div>
 
       <div className="field-group" style={{ marginTop: 24 }}>
-        <span className="field-label">1. ¿Qué tipo de producto es?</span>
+        <span className="field-label">1. Producto de partida: confirma o corrige solo si hace falta</span>
         <div className="choice-list">
           {(Object.keys(productLabels) as ProductType[]).map((value) => (
             <label className="radio-card" key={value}>
