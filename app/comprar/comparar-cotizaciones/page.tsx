@@ -1,34 +1,31 @@
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { ProductFooter, ProductHeader, ProductIntro } from "@/components/brand/ProductChrome";
 import { QuoteNormalizationTool } from "./quote-normalization-tool";
 
 export default function QuoteNormalizationPage() {
   return (
     <>
-      <header className="shell site-header cc-site-header">
-        <a className="cc-brand-link" href="/" aria-label="Casa con Criterio · inicio">
-          <BrandLogo width={230} priority />
-        </a>
-        <nav aria-label="Comparación de cotizaciones de financiación">
-          <a className="nav-link" href="/comprar/cuanto-puedo-comprar">Cuánto puedo comprar</a>
-          <a className="nav-link" href="/comprar/preparacion">Mi preparación</a>
-          <a className="nav-link" href="/comprar/financiacion">Estructuras</a>
-          <a className="nav-link" href="/revisar">Ya tengo crédito</a>
-        </nav>
-      </header>
+      <ProductHeader
+        ariaLabel="Comparación de cotizaciones de financiación"
+        links={[
+          { href: "/comprar/cuanto-puedo-comprar", label: "Cuánto puedo comprar" },
+          { href: "/comprar/preparacion", label: "Mi preparación" },
+          { href: "/comprar/financiacion", label: "Estructuras" },
+          { href: "/revisar", label: "Ya tengo crédito" },
+        ]}
+      />
       <main id="contenido" className="shell">
-        <section style={{ paddingTop: 28 }}>
-          <p className="eyebrow">Compara con Criterio</p>
-          <p className="cc-commercial-line" style={{ marginTop: 0, marginBottom: 20 }}>
-            Una tasa menor no siempre gana. Pon las cotizaciones en las mismas reglas antes de elegir.
-          </p>
-        </section>
+        <ProductIntro
+          eyebrow="Compara con Criterio"
+          statement="Una tasa menor no siempre gana. Pon las cotizaciones en las mismas reglas antes de elegir."
+        />
         <QuoteNormalizationTool />
       </main>
-      <footer className="shell site-footer cc-footer">
-        <BrandLogo width={185} />
-        <p>Cotizaciones declaradas C1 y escenarios económicos modelados C2.</p>
-        <p>No es verificación documental, recomendación de banco, predicción de UVR, elegibilidad, preaprobación ni aprobación.</p>
-      </footer>
+      <ProductFooter
+        lines={[
+          "Cotizaciones declaradas C1 y escenarios económicos modelados C2.",
+          "No es verificación documental, recomendación de banco, predicción de UVR, elegibilidad, preaprobación ni aprobación.",
+        ]}
+      />
     </>
   );
 }
