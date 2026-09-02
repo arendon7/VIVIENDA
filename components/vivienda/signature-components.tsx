@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 
 export type PrecisionLevel = "C0" | "C1" | "C2" | "C3";
 export type StatusTone = "neutral" | "info" | "opportunity" | "positive" | "attention" | "professional";
+export type SourceClass = "user" | "document" | "public" | "partner" | "calculation";
+export type SourceStatus = "current" | "stale" | "needs_refresh" | "verified";
 
 const precisionLabels: Record<PrecisionLevel, string> = {
   C0: "Orientación",
@@ -9,6 +11,28 @@ const precisionLabels: Record<PrecisionLevel, string> = {
   C2: "Simulación modelada",
   C3: "Verificado documentalmente",
 };
+
+const sourceClassLabels: Record<SourceClass, string> = {
+  user: "Declarado por el usuario",
+  document: "Documento",
+  public: "Fuente pública",
+  partner: "Tercero / partner",
+  calculation: "Cálculo o modelo",
+};
+
+const sourceStatusLabels: Record<SourceStatus, string> = {
+  current: "Vigente para esta lectura",
+  stale: "Puede estar desactualizada",
+  needs_refresh: "Requiere actualización",
+  verified: "Verificada para este uso",
+};
+
+function sourceStatusTone(status: SourceStatus): StatusTone {
+  if (status === "verified") return "positive";
+  if (status === "stale") return "attention";
+  if (status === "needs_refresh") return "opportunity";
+  return "info";
+}
 
 export function PrecisionBadge({ level }: { level: PrecisionLevel }) {
   return (
@@ -58,18 +82,26 @@ export function FinancialNumber({
 
 export function SourceFreshness({
   source,
+  sourceClass,
   cutoff,
+  status,
   children,
 }: {
   source: string;
+  sourceClass: SourceClass;
   cutoff: string;
+  status: SourceStatus;
   children?: ReactNode;
 }) {
   return (
     <aside className="evidence-rail" aria-label="Fuente y vigencia">
-      <strong>Fuente y vigencia</strong>
+      <div className="cc-provenance-heading">
+        <strong>Fuente y vigencia</strong>
+        <StatusBadge tone={sourceStatusTone(status)}>{sourceStatusLabels[status]}</StatusBadge>
+      </div>
       <dl className="cc-provenance-list">
         <div><dt>Fuente</dt><dd>{source}</dd></div>
+        <div><dt>Clase</dt><dd>{sourceClassLabels[sourceClass]}</dd></div>
         <div><dt>Corte</dt><dd>{cutoff}</dd></div>
       </dl>
       {children}
