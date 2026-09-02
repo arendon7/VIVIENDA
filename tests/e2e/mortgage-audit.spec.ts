@@ -6,6 +6,10 @@ test.describe("Mortgage Audit assisted preview v0.12", () => {
 
     await expect(page.getByRole("heading", { name: "Entiende una diferencia concreta antes de escalar." })).toBeVisible();
     await expect(page.getByText("Preview de servicio asistido · no contratado")).toBeVisible();
+    await expect(page.getByText(/Esta preview muestra cómo se organizaría la evidencia/)).toBeVisible();
+    await expect(page.getByText(/Organizamos la evidencia, verificamos qué ocurrió y hacemos una revisión profesional/)).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Una auditoría real tendría que avanzar por evidencia, no por promesas." })).toBeVisible();
+    await expect(page.getByText("Resultado profesional previsto", { exact: true })).toBeVisible();
     await expect(page.getByText("R7 · Auditoría / posible reclamación")).toBeVisible();
     await expect(page.getByText("No concedida")).toBeVisible();
     await expect(page.getByText("No concedido")).toBeVisible();
