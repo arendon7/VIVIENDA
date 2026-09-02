@@ -50,7 +50,7 @@ export function MortgageTwin({
   const explanation = verified
     ? "Los campos materiales fueron derivados de evidencia documental y reconciliados antes de construir esta representación."
     : declared
-      ? "Este Mortgage Twin usa datos que transcribiste mirando un extracto local. Casa con Criterio no leyó, extrajo ni verificó el archivo."
+      ? "Mi Situación usa datos que transcribiste mirando un extracto local. Casa con Criterio no leyó, extrajo ni verificó el archivo."
       : "Esta previsualización usa valores simulados confirmados dentro de una demostración. Sirve para validar la experiencia, pero no convierte la simulación en verificación documental.";
 
   const provenance = verified
@@ -76,7 +76,7 @@ export function MortgageTwin({
       <section className="surface result-frame" aria-labelledby="mortgage-twin-title">
         <div className="section-header">
           <div>
-            <p className="eyebrow">Mortgage Twin{declared ? " guiado" : ""}</p>
+            <p className="eyebrow">Mi Situación{declared ? " · lectura guiada" : ""}</p>
             <h2 id="mortgage-twin-title" className="cc-display">{title}</h2>
             <p className="section-copy">{explanation}</p>
           </div>
@@ -85,7 +85,7 @@ export function MortgageTwin({
 
         {!verified ? (
           <div className="surface-warning" role="status">
-            <strong>{declared ? "Datos declarados, no C3." : "Preview, no C3."}</strong>
+            <strong>{declared ? "Datos declarados, no C3." : "Vista previa, no C3."}</strong>
             {declared ? (
               <>
                 <p>Datos transcritos por ti desde un extracto local. Casa con Criterio no leyó ni verificó el archivo.</p>
@@ -107,7 +107,7 @@ export function MortgageTwin({
         </dl>
 
         <ScenarioPath
-          start={verified ? "Estado verificado" : declared ? "Snapshot declarado" : "Estado reconciliado en demo"}
+          start={verified ? "Estado verificado" : declared ? "Situación declarada" : "Estado reconciliado en demo"}
           action="Comparar decisión"
           outcome="Nueva trayectoria"
         />
@@ -137,7 +137,7 @@ export function MortgageTwin({
         ) : (
           <div className="surface-warning" style={{ marginTop: 18 }}>
             <strong>Seguros/costos todavía no confirmados.</strong>
-            <p>Este dato es no material para construir el snapshot base y seguirá separado hasta que exista información suficiente.</p>
+            <p>Este dato no es necesario para construir la fotografía base y seguirá separado hasta que exista información suficiente.</p>
           </div>
         )}
       </section>
