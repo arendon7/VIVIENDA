@@ -1,11 +1,11 @@
 # VIVIENDA — DESIGN.md
 
-Status: V0.1 selected visual direction
-Canonical direction: **Warm Path**
+Status: V1 brand-integrated visual direction
+Canonical direction: **Casa con Criterio over Warm Path**
 
 ## 1. Design thesis
 
-VIVIENDA helps people understand how decisions change the financial and legal path of their home.
+Casa con Criterio helps people understand how decisions change the financial and legal path of their home.
 
 The interface should feel:
 - calm;
@@ -13,6 +13,7 @@ The interface should feel:
 - human;
 - transparent;
 - independent;
+- patrimonial without feeling like a bank;
 - premium through craft, not luxury signaling.
 
 The interface should not feel:
@@ -21,6 +22,20 @@ The interface should not feel:
 - like a crypto/AI fintech;
 - like a real-estate listings portal;
 - like a debt-relief promise funnel.
+
+### 1.1 Brand integration rule
+
+**Casa con Criterio** is the visible masterbrand. **Warm Path** remains the structural product language underneath it.
+
+The brand layer adds:
+- editorial-patrimonial typography;
+- deep navy authority;
+- restrained ochre for opportunity/emphasis;
+- soft green for genuinely favorable or completed states;
+- warm ivory/mineral surfaces;
+- architectural line motifs used sparingly.
+
+Brand expression may never weaken the product truth hierarchy, C0–C3 precision, provenance, DIY visibility or legal/financial boundaries.
 
 ## 2. Core visual grammar: the path
 
@@ -59,28 +74,32 @@ Precision status belongs near the number, not buried in footer copy.
 
 ## 4. Color direction
 
+### Canonical palette
+- Deep navy / authority: `#0B1D2D`;
+- Patrimonial ochre / opportunity: `#C7922F`;
+- Soft green / favorable or completed state: `#6F8F7A`;
+- Mist gray / supporting neutral: `#BFC7D1`;
+- Warm ivory / canvas: `#F6F3EC`.
+
 ### Foundation
 Use warm, low-chroma neutrals rather than sterile pure white.
 
-Suggested starting tokens, subject to contrast validation:
-- `canvas`: warm off-white / light mineral;
-- `surface`: near-white;
-- `surface-muted`: subtle warm/blue mineral tint;
-- `ink`: deep charcoal/navy, not pure black;
-- `ink-muted`: neutral gray with adequate contrast;
-- `border`: quiet neutral.
+Operational tokens are centralized in `styles/casa-criterio.css` and layer over the Warm Path base tokens.
 
-### Primary accent
-A composed blue leaning slightly toward mineral/ink rather than saturated fintech cyan.
-Use for:
-- interactive links;
-- active path;
-- current decision context;
-- selected scenario.
+### Primary interaction
+Deep navy is the default primary-action color. It signals authority and stable interaction without copying generic saturated fintech blue.
+
+### Opportunity accent
+Ochre is used for:
+- opportunities worth exploring;
+- selected or emphasized decision context;
+- trajectory emphasis;
+- editorial accents.
+
+Ochre never means guaranteed benefit.
 
 ### Positive/benefit accent
-A restrained botanical green.
-Use for:
+Restrained botanical green is used for:
 - an economically favorable modeled effect;
 - verified completion;
 - positive progress.
@@ -92,13 +111,17 @@ Use warm amber/earth tones rather than alarming red unless the situation is genu
 
 ## 5. Typography
 
+Canonical typography:
+- **Lora** — editorial/display, narrative outcomes and major decision statements;
+- **Work Sans** — interface, controls, data, supporting copy and financial numbers.
+
+The app loads these through `next/font/google`; font binaries are not stored in the repository.
+
 Principles:
 - highly legible;
 - strong numeric rhythm;
-- no display-fashion typography that weakens financial credibility;
-- clear distinction between reading text and financial numbers.
-
-Initial implementation may use a high-quality variable sans while brand typography is evaluated.
+- display typography must not weaken financial credibility;
+- clear distinction between narrative interpretation and operational data.
 
 Hierarchy:
 - page outcome / major recommendation;
@@ -124,7 +147,8 @@ Mobile is the primary stress test.
 - no tiny multi-column tables;
 - sticky controls only when they reduce navigation burden;
 - target sizes >= 44px where practical;
-- key interpretation must not rely on hover.
+- key interpretation must not rely on hover;
+- product navigation may scroll horizontally inside its own bounded region, never by causing document-level overflow.
 
 ## 7. Radius and surfaces
 
@@ -174,8 +198,8 @@ Compact but visible:
 The self-service option must be genuinely available where applicable.
 Paid assistance cannot visually suppress a viable free route.
 
-### Mortgage Twin
-The canonical overview of the user's verified obligation:
+### Mortgage Twin / Mi Situación
+The canonical overview of the user's obligation or declared/modelled state:
 - balance;
 - installment;
 - rate;
@@ -187,6 +211,16 @@ The canonical overview of the user's verified obligation:
 - current issues/alerts;
 - trajectory.
 
+A Mortgage Twin is not C3 merely because it is visually complete. Precision must remain explicit.
+
+### Product Chrome
+Shared route-level brand primitives live in `components/brand/ProductChrome.tsx`:
+- `ProductHeader`;
+- `ProductFooter`;
+- `ProductIntro`.
+
+These primitives exist to prevent visual and verbal drift across calculators, verification, buyer paths and assisted routes while keeping each surface's own task semantics.
+
 ## 9. Forms and progressive disclosure
 
 Default rule:
@@ -195,6 +229,15 @@ Default rule:
 Ask only what is necessary for the next useful output.
 Allow `No sé` where realistic.
 Unknown inputs lower precision; they should not automatically block the journey.
+
+Form states use the Casa con Criterio operate grammar:
+- warm, quiet surfaces;
+- explicit labels and hints;
+- visible keyboard focus;
+- ochre selection emphasis;
+- disabled states that remain legible;
+- minimum practical touch target around 44px;
+- numeric fields with tabular rhythm where appropriate.
 
 Before document upload explain:
 - what document is needed;
@@ -242,7 +285,7 @@ Avoid a visual vocabulary dominated by:
 - handshakes;
 - shields.
 
-A house may appear when semantically necessary, not as category wallpaper.
+The Casa con Criterio house/double-C symbol is a masterbrand mark, not a reason to wallpaper product UI with house icons.
 
 ## 12. Imagery
 
@@ -266,6 +309,11 @@ Prefer:
 - distinguish rate/reference/offer/approval;
 - no secret-law framing;
 - no guarantee framing.
+
+Canonical brand lines:
+- **Tu vivienda merece criterio.**
+- **Conoce las reglas. Haz las cuentas. Decide con criterio.**
+- **Inteligencia para las decisiones de tu vivienda.**
 
 ## 14. Accessibility
 
@@ -307,14 +355,15 @@ Do not ship:
 
 ## 17. Current reference slice
 
-Figma file:
-`VIVIENDA — Visual Territories V0.1`
+Visible identity:
+**Casa con Criterio**
 
-Selected structural territory:
-`C — Path Decision Map`
+Structural product direction:
+**Warm Path / Path Decision Map**
 
 Supporting influences:
-- A — Warm Instrument for emotional tone;
-- B — Editorial Financial Guide for information discipline.
+- Warm Instrument for emotional tone;
+- Editorial Financial Guide for information discipline;
+- editorial-patrimonial Casa con Criterio layer for recognizable brand expression.
 
-This file is exploratory; this `DESIGN.md` is the canonical rule set going forward.
+The exploratory Figma territories remain historical evidence. This `DESIGN.md`, together with `docs/brand/CASA_CON_CRITERIO.md`, is the canonical rule set going forward.
