@@ -87,7 +87,7 @@ export default function MiViviendaPage() {
               <FinancialNumber label="Sistema" value="Cuota constante" detail="Caso soportado en C2" />
             </dl>
 
-            <SourceFreshness source="Valores de demostración del Warm Path" cutoff="Preview v0.11">
+            <SourceFreshness source="Valores de demostración de Mi Vivienda" cutoff="Beta 0.22 candidate">
               <p>La superficie conserva provenance explícito. No representa un crédito real guardado ni verificado documentalmente.</p>
             </SourceFreshness>
           </article>
@@ -152,7 +152,7 @@ export default function MiViviendaPage() {
       </main>
 
       <footer className="shell site-footer">
-        VIVIENDA · Preview v0.11 · Loan Health cualitativo, simulaciones y rutas con precisión explícita.
+        VIVIENDA · Beta 0.22 candidate · Loan Health cualitativo, simulaciones y rutas con precisión explícita.
       </footer>
     </>
   );
