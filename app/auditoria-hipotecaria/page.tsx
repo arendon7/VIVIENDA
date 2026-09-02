@@ -21,12 +21,74 @@ const demoBlueprint = buildMortgageAuditBlueprint(
   demoInput.asOfDate,
 );
 
-const findingLabels = {
-  explained: "La diferencia puede explicarse con la evidencia",
-  needs_more_evidence: "Falta evidencia para concluir",
-  possible_inconsistency: "Hay una diferencia que merece actuación o revisión",
-  route_change_required: "Los hechos obligan a re-rutear antes de seguir",
+const findingCopy = {
+  explained: {
+    title: "La diferencia puede explicarse con la evidencia",
+    detail: "La información disponible permite entender qué ocurrió sin convertir una duda en una irregularidad.",
+  },
+  needs_more_evidence: {
+    title: "Falta evidencia para concluir",
+    detail: "La revisión identifica exactamente qué documento o antecedente hace falta antes de tomar una posición.",
+  },
+  possible_inconsistency: {
+    title: "Hay una diferencia que merece actuación o revisión",
+    detail: "La evidencia muestra una inconsistencia suficientemente concreta para definir el siguiente paso con criterio profesional.",
+  },
+  route_change_required: {
+    title: "Los hechos obligan a cambiar la prioridad",
+    detail: "Apareció una situación que debe atenderse antes de continuar con una auditoría ordinaria.",
+  },
 };
+
+function executionCopy(eventType: string) {
+  switch (eventType) {
+    case "CASE_CREATED":
+      return {
+        title: "Crear el expediente de revisión",
+        detail: "Abrir un expediente trazable sin afirmar todavía contratación, representación o radicación.",
+      };
+    case "DATA_AUTHORIZATION_RECORDED":
+      return {
+        title: "Autorizar el tratamiento de datos",
+        detail: "Registrar la autorización necesaria antes de conservar evidencia documental de forma persistente.",
+      };
+    case "SERVICE_AGREEMENT_ACCEPTED":
+      return {
+        title: "Aceptar el alcance del servicio",
+        detail: "Dejar claro qué incluye la auditoría y qué facultades no se están concediendo.",
+      };
+    case "EVIDENCE_REQUESTED":
+      return {
+        title: "Definir la evidencia necesaria",
+        detail: "Pedir únicamente los documentos y antecedentes que ayudan a aislar la diferencia reportada.",
+      };
+    case "EVIDENCE_ATTACHED":
+      return {
+        title: "Incorporar la evidencia",
+        detail: "Vincular los documentos pertinentes al expediente una vez exista autorización para tratarlos.",
+      };
+    case "EVIDENCE_VERIFIED":
+      return {
+        title: "Verificar que la evidencia corresponde al hecho",
+        detail: "Confirmar que cada documento utilizado realmente soporta el punto que se va a revisar.",
+      };
+    case "PROFESSIONAL_REVIEW_REQUESTED":
+      return {
+        title: "Solicitar la revisión profesional",
+        detail: "Abrir la fase de análisis profesional únicamente cuando el paquete de evidencia esté preparado.",
+      };
+    case "PROFESSIONAL_REVIEW_COMPLETED":
+      return {
+        title: "Emitir la conclusión profesional",
+        detail: "Separar hechos, evidencia, incertidumbres y siguiente acción sin prometer un resultado predeterminado.",
+      };
+    default:
+      return {
+        title: "Registrar un avance verificable",
+        detail: "Cada avance real debe quedar respaldado por un hecho y una referencia trazable.",
+      };
+  }
+}
 
 export default function AuditoriaHipotecariaPage() {
   return (
@@ -40,14 +102,14 @@ export default function AuditoriaHipotecariaPage() {
       />
 
       <main id="contenido" className={`shell ${styles.main}`}>
-        <section className={styles.previewNotice} aria-label="Estado de esta ruta">
-          <strong>Preview de servicio asistido · no contratado</strong>
-          <span>No crea poder, representación, reclamación ni radicación. El flujo productivo de contratación/pago todavía no está activo.</span>
+        <section className={styles.previewNotice} aria-label="Estado de este servicio">
+          <strong>Vista previa del servicio asistido · aún no contratado</strong>
+          <span>No crea poder, representación, reclamación ni radicación. La contratación y el pago reales todavía no están activos en esta versión.</span>
         </section>
 
         <section className={styles.hero}>
           <div>
-            <p className="eyebrow">Auditoría Hipotecaria · R7</p>
+            <p className="eyebrow">Auditoría Hipotecaria</p>
             <h1 className="cc-display">Entiende una diferencia concreta antes de escalar.</h1>
             <p className="lede">
               Organizamos la evidencia, verificamos qué ocurrió y hacemos una revisión profesional para decidir si basta una explicación, falta información o existe una inconsistencia que merece actuación.
@@ -58,19 +120,25 @@ export default function AuditoriaHipotecariaPage() {
             </div>
           </div>
 
-          <aside className={`surface ${styles.routeState}`} aria-label="Estado del ejemplo">
+          <aside
+            className={`surface ${styles.routeState}`}
+            aria-label="Estado del ejemplo"
+            data-route-code={demoBlueprint.routeCode}
+            data-case-track={demoBlueprint.caseTrack}
+            data-service-code={demoBlueprint.serviceCode}
+          >
             <div className={styles.routeHeader}>
               <div>
-                <p className="instrument-label">Ruta de origen</p>
-                <strong>R7 · Auditoría / posible reclamación</strong>
+                <p className="instrument-label">Estado del servicio</p>
+                <strong>Auditoría orientada por evidencia</strong>
               </div>
               <PrecisionBadge level={demoBlueprint.precision} />
             </div>
             <dl className={styles.routeFacts}>
-              <div><dt>Track</dt><dd>Assisted</dd></div>
+              <div><dt>Modalidad</dt><dd>Acompañamiento profesional</dd></div>
               <div><dt>Revisión profesional</dt><dd>Requerida</dd></div>
-              <div><dt>Facultad extrajudicial</dt><dd>No concedida</dd></div>
-              <div><dt>Poder judicial</dt><dd>No concedido</dd></div>
+              <div><dt>Representación extrajudicial</dt><dd>No incluida</dd></div>
+              <div><dt>Representación judicial</dt><dd>No incluida</dd></div>
             </dl>
           </aside>
         </section>
@@ -80,7 +148,7 @@ export default function AuditoriaHipotecariaPage() {
             <div>
               <p className="eyebrow">Cuándo aparece</p>
               <h2 id="trigger-heading" className="cc-display">Primero debe existir un hecho concreto.</h2>
-              <p className="section-copy">Una sospecha general no se convierte en reclamación. R7 nace cuando el router identifica una diferencia específica que puede documentarse.</p>
+              <p className="section-copy">Una sospecha general no se convierte en reclamación. Esta auditoría tiene sentido cuando existe una diferencia específica que puede documentarse y revisarse.</p>
             </div>
           </div>
           <div className={styles.triggerGrid}>
@@ -114,12 +182,12 @@ export default function AuditoriaHipotecariaPage() {
           </div>
           <ol className={styles.phaseList}>
             {demoBlueprint.casePlan.phases.map((phase, index) => (
-              <li className="surface" key={phase.code}>
+              <li className="surface" key={phase.code} data-phase-code={phase.code}>
                 <span className={styles.phaseIndex}>{String(index + 1).padStart(2, "0")}</span>
                 <div>
                   <h3>{phase.title}</h3>
                   <ul>
-                    {phase.tasks.map((task) => <li key={task.code}>{task.title}</li>)}
+                    {phase.tasks.map((task) => <li key={task.code} data-task-code={task.code}>{task.title}</li>)}
                   </ul>
                 </div>
               </li>
@@ -133,14 +201,14 @@ export default function AuditoriaHipotecariaPage() {
               <div>
                 <p className="eyebrow">Resultado profesional</p>
                 <h2 id="result-heading" className="cc-display">La auditoría no necesita “encontrar algo ilegal” para ser útil.</h2>
-                <p className="section-copy">El entregable separa hechos, evidencia, incertidumbre y siguiente ruta. Estos son los únicos estados previstos en v0.12.</p>
+                <p className="section-copy">El entregable separa hechos, evidencia, incertidumbre y siguiente acción. Estas son las conclusiones que la revisión puede producir sin forzar un resultado.</p>
               </div>
             </div>
             <div className={styles.findingGrid}>
               {demoBlueprint.allowedFindingStatuses.map((status) => (
-                <article key={status}>
-                  <code>{status}</code>
-                  <strong>{findingLabels[status]}</strong>
+                <article key={status} data-finding-status={status}>
+                  <strong>{findingCopy[status].title}</strong>
+                  <p>{findingCopy[status].detail}</p>
                 </article>
               ))}
             </div>
@@ -155,12 +223,15 @@ export default function AuditoriaHipotecariaPage() {
             </div>
           </div>
           <ol className={styles.eventList}>
-            {demoBlueprint.executionSteps.map((step, index) => (
-              <li key={step.eventType}>
-                <span>{index + 1}</span>
-                <div><strong>{step.eventType}</strong><p>{step.purpose}</p></div>
-              </li>
-            ))}
+            {demoBlueprint.executionSteps.map((step, index) => {
+              const copy = executionCopy(step.eventType);
+              return (
+                <li key={step.eventType} data-event-type={step.eventType}>
+                  <span>{index + 1}</span>
+                  <div><strong>{copy.title}</strong><p>{copy.detail}</p></div>
+                </li>
+              );
+            })}
           </ol>
         </section>
 
@@ -174,7 +245,7 @@ export default function AuditoriaHipotecariaPage() {
             <li>No concede poder judicial.</li>
             <li>No registra una reclamación como radicada.</li>
             <li>No garantiza ahorro, corrección o resultado.</li>
-            <li>Si aparece un proceso ejecutivo, el sistema debe re-rutear a R10 antes de continuar.</li>
+            <li data-reroute-route-code="R10_EXECUTIVE_DEFENSE">Si aparece un proceso ejecutivo, la auditoría ordinaria se detiene y debe priorizarse la revisión jurídica del proceso.</li>
           </ul>
         </section>
 
@@ -182,7 +253,7 @@ export default function AuditoriaHipotecariaPage() {
           <div>
             <p className="eyebrow">Primer paso</p>
             <h2 className="cc-display">Empieza por verificar la evidencia, no por firmar un poder.</h2>
-            <p className="section-copy">La ruta productiva futura pedirá autorización y acuerdo de servicio antes de persistir evidencia o iniciar revisión profesional.</p>
+            <p className="section-copy">Un servicio real requerirá autorización de datos y aceptación expresa de su alcance antes de conservar evidencia o iniciar revisión profesional.</p>
           </div>
           <a className="button button-primary" href="/verificar">Preparar evidencia</a>
         </section>
@@ -190,7 +261,7 @@ export default function AuditoriaHipotecariaPage() {
 
       <ProductFooter
         lines={[
-          "Auditoría Hipotecaria v0.12 · servicio asistido en preview.",
+          "Auditoría Hipotecaria · vista previa de servicio asistido.",
           "Sin contratación, poder, representación ni radicación activa.",
         ]}
       />
