@@ -73,7 +73,7 @@ export default function MiViviendaPage() {
           <article className={`surface ${styles.twin}`}>
             <div className={styles.sectionHeading}>
               <div>
-                <p className="eyebrow">Mi Situación · Mortgage Twin</p>
+                <p className="eyebrow">Mi Situación</p>
                 <h2 id="twin-heading" className="cc-display">Estado actual conocido</h2>
               </div>
               <span className={styles.demoTag}>Datos de ejemplo</span>
@@ -89,12 +89,12 @@ export default function MiViviendaPage() {
             </dl>
 
             <SourceFreshness
-              source="Valores de demostración del Warm Path"
+              source="Valores de demostración de Casa con Criterio"
               sourceClass="calculation"
               cutoff="Preview v0.11"
               status="current"
             >
-              <p>La superficie conserva provenance explícito. No representa un crédito real guardado ni verificado documentalmente.</p>
+              <p>La lectura conserva la fuente y el contexto de los datos. No representa un crédito real guardado ni verificado documentalmente.</p>
             </SourceFreshness>
           </article>
 
@@ -102,7 +102,7 @@ export default function MiViviendaPage() {
             <p className="eyebrow">Siguiente mejor acción</p>
             <h2 id="next-action-heading" className="cc-display">Compara el prepago antes de buscar una solución externa.</h2>
             <p className="section-copy">
-              El ejemplo ya tiene precisión C2 para el motor soportado y declara capacidad de abono. Primero conviene comparar reducción de plazo frente a reducción de cuota.
+              El ejemplo ya tiene precisión C2 para el modelo soportado y declara capacidad de abono. Primero conviene comparar reducción de plazo frente a reducción de cuota.
             </p>
             <ol className={styles.steps}>
               <li><span>1</span><div><strong>Simular</strong><p>Comparar la misma aportación bajo dos objetivos distintos.</p></div></li>
@@ -113,7 +113,7 @@ export default function MiViviendaPage() {
           </aside>
         </section>
 
-        <section className={styles.section} aria-label="Loan Health">
+        <section className={styles.section} aria-label="Estado de decisión">
           <LoanHealthPanel result={demoLoanHealth} />
         </section>
 
@@ -127,7 +127,7 @@ export default function MiViviendaPage() {
             </div>
             <ol className={styles.precisionPath}>
               <li><PrecisionBadge level="C1" /><strong>Declarado</strong><span>Primera lectura con datos del usuario.</span></li>
-              <li className={styles.activePrecision}><PrecisionBadge level="C2" /><strong>Modelado</strong><span>Supuestos suficientes para el motor compatible.</span></li>
+              <li className={styles.activePrecision}><PrecisionBadge level="C2" /><strong>Modelado</strong><span>Supuestos suficientes para el modelo compatible.</span></li>
               <li><PrecisionBadge level="C3" /><strong>Verificado</strong><span>Solo con evidencia documental real y reconciliada.</span></li>
             </ol>
           </div>
@@ -136,14 +136,14 @@ export default function MiViviendaPage() {
         <section className={styles.section} aria-labelledby="workspace-heading">
           <div className={styles.sectionHeading}>
             <div>
-              <p className="eyebrow">Workspace</p>
+              <p className="eyebrow">Herramientas</p>
               <h2 id="workspace-heading" className="cc-display">El resto aparece cuando aporta a una decisión.</h2>
             </div>
           </div>
           <div className={styles.workspaceGrid}>
             <article className={`surface ${styles.workspaceItem}`}><strong>Simulaciones</strong><p>Escenarios comparables con supuestos visibles.</p><a href="/revisar">Abrir simulador</a></article>
-            <article className={`surface ${styles.workspaceItem}`}><strong>Documentos</strong><p>La infraestructura segura existe provider-ready, pero el vault persistente aún no está activo.</p><a href="/verificar">Ver flujo de verificación</a></article>
-            <article className={`surface ${styles.workspaceItem}`}><strong>Casos</strong><p>Un Case solo debe existir después de elegir una ejecución real; preparar una ruta no crea representación ni radicación.</p><span>Se habilitará en contexto</span></article>
+            <article className={`surface ${styles.workspaceItem}`}><strong>Documentos</strong><p>La infraestructura segura para gestionar documentos está preparada, pero el archivo personal persistente aún no está activo.</p><a href="/verificar">Ver flujo de verificación</a></article>
+            <article className={`surface ${styles.workspaceItem}`}><strong>Planes y casos</strong><p>Un expediente solo debe existir después de elegir una ejecución real; preparar una opción no crea representación ni radicación.</p><span>Se habilitará en contexto</span></article>
           </div>
         </section>
 
@@ -151,7 +151,7 @@ export default function MiViviendaPage() {
           <div>
             <p className="eyebrow">Continuar</p>
             <h2 className="cc-display">¿Quieres trabajar sobre un crédito real?</h2>
-            <p className="section-copy">Empieza por el Quick Check. La primera lectura no requiere cédula, teléfono, correo ni extracto.</p>
+            <p className="section-copy">Empieza por la revisión inicial. La primera lectura no requiere cédula, teléfono, correo ni extracto.</p>
           </div>
           <a className="button button-primary" href="/revisar">Revisar mi crédito</a>
         </section>
@@ -160,7 +160,7 @@ export default function MiViviendaPage() {
       <ProductFooter
         lines={[
           "Mi Vivienda · preview de producto con precisión explícita.",
-          "Simulaciones, Loan Health y rutas sin confundir orientación, oferta ni verificación.",
+          "Simulaciones, estado de decisión y opciones sin confundir orientación, oferta ni verificación.",
         ]}
       />
     </>
