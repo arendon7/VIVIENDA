@@ -88,7 +88,9 @@ test("delivers first useful result without asking identity or contact data", asy
 test("exposes task progress semantically", async ({ page }) => {
   await page.goto("/revisar");
 
-  const progress = page.getByRole("progressbar", { name: "Progreso del Quick Check" });
+  await expect(page.getByText("Primera revisión", { exact: true })).toBeVisible();
+  await expect(page.getByText("Quick Check", { exact: true })).toHaveCount(0);
+  const progress = page.getByRole("progressbar", { name: "Progreso de la primera revisión" });
   await expect(progress).toHaveAttribute("aria-valuenow", "1");
   await expect(progress).toHaveAttribute("aria-valuemax", "5");
 
@@ -153,7 +155,8 @@ test("upgrades a compatible peso case from C1 to a real C2 modeled scenario", as
   await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toBeVisible();
   await expect(page.getByText("Capital adicional que aportarías durante el escenario")).toBeVisible();
   await expect(page.getByText("Intereses futuros nominales que el modelo estima que dejarían de causarse")).toBeVisible();
-  await expect(page.getByText("Valor atribuible a Casa con Criterio en esta simulación self-service")).toBeVisible();
+  await expect(page.getByText("Valor atribuible a Casa con Criterio en esta simulación autogestionada")).toBeVisible();
+  await expect(page.getByText("self-service", { exact: true })).toHaveCount(0);
   const provenance = page.getByRole("complementary", { name: "Fuente y vigencia" });
   await expect(provenance.getByText("Cálculo o modelo", { exact: true })).toBeVisible();
   await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
