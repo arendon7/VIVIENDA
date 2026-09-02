@@ -217,8 +217,8 @@ export function MortgageTwinSnapshot() {
     <section className="surface result-frame" aria-labelledby="twin-title">
       <div className="section-header">
         <div>
-          <p className="eyebrow">Mortgage Twin</p>
-          <h2 id="twin-title" className="cc-display">Tu crédito, entendido como un sistema vivo.</h2>
+          <p className="eyebrow">Mi Situación</p>
+          <h2 id="twin-title" className="cc-display">Tu crédito, organizado para entender dónde estás y qué puedes decidir.</h2>
           <p className="section-copy">Esta es una vista conceptual del producto. C3 solo aparecerá cuando los campos materiales provengan realmente del documento y hayan sido reconciliados.</p>
         </div>
         <StatusBadge tone="neutral" ariaLabel="Vista conceptual no verificada">
