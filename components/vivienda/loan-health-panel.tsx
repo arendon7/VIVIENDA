@@ -1,4 +1,4 @@
-import { PrecisionBadge } from "@/components/vivienda/signature-components";
+import { PrecisionBadge, StatusBadge, type StatusTone } from "@/components/vivienda/signature-components";
 import type {
   LoanHealthDimensionStatus,
   LoanHealthResult,
@@ -16,11 +16,13 @@ const statusLabels: Record<LoanHealthDimensionStatus, string> = {
   not_applicable: "No aplica en este rulebook",
 };
 
-function statusClass(status: LoanHealthDimensionStatus) {
-  if (status === "attention") return styles.attention;
-  if (status === "professional_review") return styles.professional;
-  if (status === "ready") return styles.ready;
-  return styles.neutral;
+function statusTone(status: LoanHealthDimensionStatus): StatusTone {
+  if (status === "attention") return "attention";
+  if (status === "professional_review") return "professional";
+  if (status === "ready") return "positive";
+  if (status === "explore" || status === "seasonal") return "opportunity";
+  if (status === "needs_data") return "info";
+  return "neutral";
 }
 
 export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
@@ -29,7 +31,7 @@ export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
       <div className={styles.header}>
         <div>
           <p className="eyebrow">Loan Health · estado de decisión</p>
-          <h2 id="loan-health-title">{result.headline}</h2>
+          <h2 id="loan-health-title" className="cc-display">{result.headline}</h2>
           <p className="section-copy">
             No es un score crediticio ni de riesgo. Resume qué entendemos, qué merece atención y qué acción puede compararse con la evidencia disponible.
           </p>
@@ -41,10 +43,13 @@ export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
         {result.dimensions.map((dimension) => (
           <article className={styles.dimension} key={dimension.code} data-loan-health-dimension={dimension.code}>
             <div className={styles.dimensionHeader}>
-              <h3>{dimension.label}</h3>
-              <span className={`${styles.status} ${statusClass(dimension.status)}`}>
+              <h3 className="cc-display">{dimension.label}</h3>
+              <StatusBadge
+                tone={statusTone(dimension.status)}
+                ariaLabel={`${dimension.label}: ${statusLabels[dimension.status]}`}
+              >
                 {statusLabels[dimension.status]}
-              </span>
+              </StatusBadge>
             </div>
             <p>{dimension.explanation}</p>
             <div className={styles.nextAction}>
