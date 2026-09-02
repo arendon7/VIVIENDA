@@ -124,7 +124,12 @@ export function QuickCheck() {
             precision="C1"
             facts={facts}
             evidence={
-              <SourceFreshness source="Datos declarados en este quick check" cutoff="Esta sesión">
+              <SourceFreshness
+                source="Datos declarados en este Quick Check"
+                sourceClass="user"
+                cutoff="Esta sesión"
+                status="current"
+              >
                 <p>No hemos consultado centrales, bancos ni terceros. Este resultado no es una aprobación ni una oferta.</p>
               </SourceFreshness>
             }
