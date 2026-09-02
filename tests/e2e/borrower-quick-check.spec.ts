@@ -34,19 +34,19 @@ async function buildGuidedMortgageTwin(page: import("@playwright/test").Page) {
   await page.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).first().check();
   await page.getByRole("radio", { name: "Pesos", exact: true }).first().check();
   await page.getByLabel("Saldo de capital (COP)").fill("180000000");
-  await page.getByRole("button", { name: "Construir mi Mortgage Twin" }).click();
+  await page.getByRole("button", { name: "Organizar mi situación" }).click();
 
-  await expect(page.getByRole("heading", { name: "Tu fotografía declarada ya tiene la base material del snapshot." })).toBeVisible();
-  await expect(page.getByText("Mortgage Twin guiado · C1", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ya organizamos los datos base de tu situación." })).toBeVisible();
+  await expect(page.getByText("Mi Situación · C1", { exact: true })).toBeVisible();
 }
 
 async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
   await buildGuidedMortgageTwin(page);
-  await page.getByRole("button", { name: "Ver mi Loan Health y rutas" }).click();
-  await expect(page.getByRole("heading", { name: "Entiende primero el estado de decisión; después compara y elige una ruta." })).toBeVisible();
+  await page.getByRole("button", { name: "Ver mi situación y oportunidades" }).click();
+  await expect(page.getByRole("heading", { name: "Entiende tu situación, descubre qué merece atención y compara las opciones que ya tienen suficiente información." })).toBeVisible();
 
   const workspace = page.locator('section[aria-labelledby="opportunity-workspace-title"]');
-  await expect(workspace.getByText(/Partimos de tu Mortgage Twin/)).toBeVisible();
+  await expect(workspace.getByText(/Partimos de Mi Situación/)).toBeVisible();
   await expect(workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" })).toBeChecked();
   return workspace;
 }
@@ -242,7 +242,7 @@ test("makes judicial distress primary instead of hiding it behind optimization",
 test("explains the 40 percent rule without turning current payment burden into automatic illegality", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByLabel("Sí, quiero que el router evalúe la ruta de reestructuración.").check();
+  await workspace.getByLabel("Sí, quiero que Radar Vivienda evalúe la opción de reestructuración.").check();
   await workspace.getByLabel("Ingreso familiar actualmente acreditable").fill("5000000");
   await workspace.getByLabel("Primera cuota que propondrías después de reestructurar").fill("2100000");
 
@@ -306,7 +306,7 @@ test("keeps executive-defense Case Plan behind professional review and contains 
 test("builds an Article 20 seasonal plan for the next window instead of saying file now", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByLabel("Sí, quiero que el router evalúe la ruta de reestructuración.").check();
+  await workspace.getByLabel("Sí, quiero que Radar Vivienda evalúe la opción de reestructuración.").check();
 
   const article20 = workspace.getByRole("article", { name: /Ruta alternativa: Preparar la próxima ventana del artículo 20/ });
   await expect(article20).toBeVisible();
