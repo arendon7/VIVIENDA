@@ -16,7 +16,7 @@ const sourceClassLabels: Record<SourceClass, string> = {
   user: "Declarado por el usuario",
   document: "Documento",
   public: "Fuente pública",
-  partner: "Tercero / partner",
+  partner: "Fuente de un tercero",
   calculation: "Cálculo o modelo",
 };
 
