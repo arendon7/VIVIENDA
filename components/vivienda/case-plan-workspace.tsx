@@ -7,7 +7,7 @@ import { CaseTimelinePreview } from "@/components/vivienda/case-timeline-preview
 
 const actorLabels: Record<CasePlanActor, string> = {
   user: "Tú",
-  system: "VIVIENDA",
+  system: "Casa con Criterio",
   professional: "Profesional",
   bank_or_third_party: "Banco / tercero",
 };
@@ -25,8 +25,8 @@ const taskStateLabels: Record<CasePlanTaskState, string> = {
 };
 
 const routeStatusLabels: Record<OpportunityRoute["status"], string> = {
-  eligible_now: "Ruta activable ahora",
-  candidate: "Ruta candidata",
+  eligible_now: "Se puede activar ahora",
+  candidate: "Vale la pena evaluar",
   seasonal_wait: "Preparación estacional",
   not_recommended: "No recomendada",
   legal_review: "Revisión jurídica",
@@ -48,7 +48,7 @@ export function CasePlanWorkspace({
     <section className="surface result-frame" style={{ marginTop: 24 }} aria-labelledby="case-plan-title">
       <div className="section-header">
         <div>
-          <p className="eyebrow">Case Plan · vista local</p>
+          <p className="eyebrow">Plan de acción · vista local</p>
           <h2 id="case-plan-title">{plan.title}</h2>
           <p className="section-copy">{plan.objective}</p>
         </div>
@@ -70,7 +70,7 @@ export function CasePlanWorkspace({
             <p className="section-copy">{plan.nextEvent.label}</p>
             <p className="field-hint">{plan.nextEvent.timingText}</p>
             {!plan.nextEvent.triggerEstablished ? (
-              <p className="field-hint"><strong>El trigger todavía no está establecido.</strong> No mostramos una fecha límite inventada.</p>
+              <p className="field-hint"><strong>El evento que inicia el plazo todavía no está acreditado.</strong> No mostramos una fecha límite inventada.</p>
             ) : null}
           </>
         ) : (
@@ -110,11 +110,11 @@ export function CasePlanWorkspace({
       <div className="surface" style={{ marginTop: 24, padding: 20 }}>
         <p className="eyebrow">Evidencia y documentos</p>
         <h3>Qué conviene tener a mano</h3>
-        <p className="field-hint">Esta lista no significa que los documentos estén cargados o guardados en VIVIENDA.</p>
+        <p className="field-hint">Esta lista no significa que los documentos estén cargados o guardados en Casa con Criterio.</p>
         <ul>
           {plan.evidenceChecklist.map((item) => (
             <li key={`${item.kind}-${item.label}`}>
-              <strong>{item.kind === "known_required" ? "Requerido por la ruta" : item.kind === "conditional" ? "Si ocurre el evento" : "Recomendado"}:</strong> {item.label}
+              <strong>{item.kind === "known_required" ? "Requerido por esta opción" : item.kind === "conditional" ? "Si ocurre el evento" : "Recomendado"}:</strong> {item.label}
             </li>
           ))}
         </ul>
@@ -128,10 +128,10 @@ export function CasePlanWorkspace({
       ) : null}
 
       <div className="surface" style={{ marginTop: 24, padding: 20 }}>
-        <p className="eyebrow">Siguiente capa del prototipo</p>
-        <h3>Ver cómo este plan se convertiría en un expediente trazable.</h3>
+        <p className="eyebrow">Cómo seguiría este plan</p>
+        <h3>Ver cómo podría convertirse en un expediente trazable.</h3>
         <p className="field-hint">
-          El timeline usa eventos locales simulados para demostrar append-only, versionado y capacidades separadas. No persiste datos ni ejecuta actuaciones reales.
+          El historial usa eventos locales simulados para demostrar trazabilidad, versionado y capacidades separadas sin reescribir eventos anteriores. No persiste datos ni ejecuta actuaciones reales.
         </p>
         <div className="actions" style={{ marginTop: 16 }}>
           <button className="button button-secondary" type="button" onClick={() => setShowTimeline((value) => !value)}>
@@ -143,7 +143,7 @@ export function CasePlanWorkspace({
       {showTimeline ? <CaseTimelinePreview route={route} asOfDate={asOfDate} /> : null}
 
       <div className="actions" style={{ marginTop: 24 }}>
-        <button className="button button-secondary" type="button" onClick={onClose}>Volver a las rutas</button>
+        <button className="button button-secondary" type="button" onClick={onClose}>Volver a oportunidades</button>
       </div>
     </section>
   );
