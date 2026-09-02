@@ -88,7 +88,12 @@ export default function MiViviendaPage() {
               <FinancialNumber label="Sistema" value="Cuota constante" detail="Caso soportado en C2" />
             </dl>
 
-            <SourceFreshness source="Valores de demostración del Warm Path" cutoff="Preview v0.11">
+            <SourceFreshness
+              source="Valores de demostración del Warm Path"
+              sourceClass="calculation"
+              cutoff="Preview v0.11"
+              status="current"
+            >
               <p>La superficie conserva provenance explícito. No representa un crédito real guardado ni verificado documentalmente.</p>
             </SourceFreshness>
           </article>
