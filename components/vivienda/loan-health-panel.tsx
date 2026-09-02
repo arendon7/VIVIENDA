@@ -13,7 +13,7 @@ const statusLabels: Record<LoanHealthDimensionStatus, string> = {
   attention: "Requiere atención",
   professional_review: "Revisión profesional",
   no_flag_reported: "Sin alerta reportada",
-  not_applicable: "No aplica en este rulebook",
+  not_applicable: "No aplica en esta evaluación",
 };
 
 function statusTone(status: LoanHealthDimensionStatus): StatusTone {
@@ -30,7 +30,7 @@ export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
     <section className={`surface ${styles.panel}`} aria-labelledby="loan-health-title">
       <div className={styles.header}>
         <div>
-          <p className="eyebrow">Loan Health · estado de decisión</p>
+          <p className="eyebrow">Mi Situación · estado de decisión</p>
           <h2 id="loan-health-title" className="cc-display">{result.headline}</h2>
           <p className="section-copy">
             No es un score crediticio ni de riesgo. Resume qué entendemos, qué merece atención y qué acción puede compararse con la evidencia disponible.
@@ -41,7 +41,12 @@ export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
 
       <div className={styles.list}>
         {result.dimensions.map((dimension) => (
-          <article className={styles.dimension} key={dimension.code} data-loan-health-dimension={dimension.code}>
+          <article
+            className={styles.dimension}
+            key={dimension.code}
+            data-loan-health-dimension={dimension.code}
+            data-source-route-codes={dimension.sourceRouteCodes.join(",")}
+          >
             <div className={styles.dimensionHeader}>
               <h3 className="cc-display">{dimension.label}</h3>
               <StatusBadge
@@ -56,16 +61,11 @@ export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
               <strong>Siguiente acción</strong>
               <span>{dimension.nextAction}</span>
             </div>
-            {dimension.sourceRouteCodes.length > 0 ? (
-              <div className={styles.sourceRoutes}>
-                Fuente de decisión: {dimension.sourceRouteCodes.join(" · ")}
-              </div>
-            ) : null}
           </article>
         ))}
       </div>
 
-      <div className={styles.notices} aria-label="Límites de Loan Health">
+      <div className={styles.notices} aria-label="Límites de esta lectura">
         {result.notices.map((notice) => <p key={notice}>{notice}</p>)}
       </div>
     </section>
