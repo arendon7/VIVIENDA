@@ -73,6 +73,20 @@
   border-color: #CBD9D0;
 }
 
+.cc-provenance-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.cc-provenance-heading > strong {
+  color: var(--cc-ink);
+  font-family: var(--font-brand-ui), var(--cc-font-ui);
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .cc-provenance-list {
   display: grid;
   gap: 10px;
@@ -105,11 +119,21 @@
   margin-top: 14px;
 }
 
+.evidence-rail > p {
+  color: var(--cc-ink-muted);
+  line-height: 1.55;
+}
+
 @media (max-width: 620px) {
   .cc-status-badge {
     white-space: normal;
     line-height: 1.25;
     padding-block: 6px;
+  }
+
+  .cc-provenance-heading {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .cc-provenance-list > div {
