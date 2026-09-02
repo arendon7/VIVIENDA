@@ -18,7 +18,7 @@ export default function VerificarPage() {
       </main>
       <ProductFooter
         lines={[
-          "Extracto como referencia local + Mortgage Twin C1.",
+          "Extracto como referencia local para Mi Situación · C1.",
           "El archivo no se sube, no se procesa y no concede C3 en esta versión.",
         ]}
       />
