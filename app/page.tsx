@@ -50,10 +50,12 @@ export default function HomePage() {
                 Entiende cómo está funcionando tu crédito, descubre oportunidades y compara qué cambia en cuota, plazo, intereses y liquidez antes de decidir.
               </p>
               <div className="actions">
-                <a className="button button-primary" href="/revisar">Encender mi Radar</a>
-                <a className="button button-secondary" href="/mi-vivienda">Ver Mi Vivienda</a>
+                <a className="button button-primary" href="/revisar">Revisar mi crédito</a>
+                <a className="button button-secondary" href="/mi-vivienda">Ver Mi Vivienda · preview</a>
+                <a className="button button-quiet" href="/revisar">Preparar mi ruta</a>
               </div>
               <p className="trust-line">Empieza sin cédula, teléfono ni credenciales bancarias. Los resultados iniciales muestran su nivel de precisión y los supuestos utilizados.</p>
+              <p className="trust-line"><a href="/ayuda">¿Te está costando pagar o ya te están cobrando? Ubica primero qué tan urgente es →</a></p>
             </div>
 
             <aside className="surface hero-instrument cc-panorama" aria-label="Panorama de ejemplo">
@@ -130,7 +132,7 @@ export default function HomePage() {
             <h2 id="buyer-path-heading" className="cc-display">Primero calcula cuánto puedes sostener. Después mira cuánto te prestan.</h2>
             <p className="section-copy">Estima un rango sostenible, revisa tu preparación y compara estructuras de financiación antes de comprometerte.</p>
             <div className="actions">
-              <a className="button button-secondary" href="/comprar/cuanto-puedo-comprar">Calcular mi rango</a>
+              <a className="button button-secondary" href="/comprar/cuanto-puedo-comprar">Calcular cuánto puedo planear</a>
               <a className="button button-quiet" href="/comprar/preparacion">Conocer mi preparación</a>
             </div>
           </div>
