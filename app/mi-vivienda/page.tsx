@@ -1,4 +1,4 @@
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { ProductFooter, ProductHeader } from "@/components/brand/ProductChrome";
 import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
 import {
   FinancialNumber,
@@ -32,15 +32,13 @@ const demoLoanHealth = evaluateLoanHealth({
 export default function MiViviendaPage() {
   return (
     <>
-      <header className="shell site-header cc-site-header">
-        <a className="cc-brand-link" href="/" aria-label="Casa con Criterio · inicio">
-          <BrandLogo width={230} priority />
-        </a>
-        <nav aria-label="Mi Vivienda">
-          <a className="nav-link" href="/revisar">Revisar crédito</a>
-          <a className="nav-link" href="/verificar">Verificar</a>
-        </nav>
-      </header>
+      <ProductHeader
+        ariaLabel="Mi Vivienda"
+        links={[
+          { href: "/revisar", label: "Revisar crédito" },
+          { href: "/verificar", label: "Verificar" },
+        ]}
+      />
 
       <main id="contenido" className={`shell ${styles.main}`}>
         <section className={styles.previewNotice} aria-label="Estado de esta vista">
@@ -154,11 +152,12 @@ export default function MiViviendaPage() {
         </section>
       </main>
 
-      <footer className="shell site-footer cc-footer">
-        <BrandLogo width={190} />
-        <p>Mi Vivienda · preview de producto con precisión explícita.</p>
-        <p>Simulaciones, Loan Health y rutas sin confundir orientación, oferta ni verificación.</p>
-      </footer>
+      <ProductFooter
+        lines={[
+          "Mi Vivienda · preview de producto con precisión explícita.",
+          "Simulaciones, Loan Health y rutas sin confundir orientación, oferta ni verificación.",
+        ]}
+      />
     </>
   );
 }
