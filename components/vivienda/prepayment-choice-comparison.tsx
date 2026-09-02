@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { StatusBadge } from "@/components/vivienda/signature-components";
 import {
   compareImmediatePartialPrepaymentChoices,
   type ImmediatePrepaymentChoiceComparison,
@@ -75,12 +76,12 @@ export function PrepaymentChoiceComparison({
       <div className="section-header">
         <div>
           <p className="eyebrow">Comparador de prepago · v0.22</p>
-          <h3 id="prepayment-choice-title">Compara el mismo abono parcial: reducir plazo vs. reducir cuota.</h3>
+          <h3 id="prepayment-choice-title" className="cc-display">Compara el mismo abono parcial: reducir plazo vs. reducir cuota.</h3>
           <p className="section-copy">
             Usamos exactamente el mismo abono único en las dos alternativas. Solo cambia la instrucción sobre qué conservar: la cuota financiera modelada o el plazo restante.
           </p>
         </div>
-        {result ? <span className="material-chip">R1 + R2 · C2 modelado</span> : null}
+        {result ? <StatusBadge tone="info">R1 + R2 · C2 modelado</StatusBadge> : null}
       </div>
 
       <div className="privacy-panel" style={{ marginTop: 18 }}>
@@ -135,26 +136,26 @@ export function PrepaymentChoiceComparison({
           <div className="guided-grid" style={{ marginTop: 18 }}>
             <article className="surface" aria-labelledby="reduce-term-title">
               <p className="eyebrow">Opción A · R1 · C2</p>
-              <h4 id="reduce-term-title">Reducir plazo</h4>
+              <h4 id="reduce-term-title" className="cc-display">Reducir plazo</h4>
               <p className="section-copy">Conserva la cuota financiera modelada y usa el menor saldo para terminar antes.</p>
               <dl className="guided-context-grid">
-                <div><dt>Cuota financiera modelada</dt><dd>{cop.format(result.reduceTerm.scheduledPayment)}</dd></div>
-                <div><dt>Plazo resultante</dt><dd>{result.reduceTerm.payoffMonth} cuotas</dd></div>
-                <div><dt>Reducción de plazo</dt><dd>{result.reduceTerm.termReductionMonths} cuotas</dd></div>
-                <div><dt>Interés nominal futuro evitado</dt><dd>{cop.format(result.reduceTerm.interestAvoided)}</dd></div>
+                <div><dt>Cuota financiera modelada</dt><dd className="cc-number">{cop.format(result.reduceTerm.scheduledPayment)}</dd></div>
+                <div><dt>Plazo resultante</dt><dd className="cc-number">{result.reduceTerm.payoffMonth} cuotas</dd></div>
+                <div><dt>Reducción de plazo</dt><dd className="cc-number">{result.reduceTerm.termReductionMonths} cuotas</dd></div>
+                <div><dt>Interés nominal futuro evitado</dt><dd className="cc-number">{cop.format(result.reduceTerm.interestAvoided)}</dd></div>
               </dl>
             </article>
 
             <article className="surface" aria-labelledby="reduce-payment-title">
               <p className="eyebrow">Opción B · R2 · C2</p>
-              <h4 id="reduce-payment-title">Reducir cuota</h4>
+              <h4 id="reduce-payment-title" className="cc-display">Reducir cuota</h4>
               <p className="section-copy">Conserva el plazo restante y recalcula la cuota financiera sobre el menor saldo.</p>
               <dl className="guided-context-grid">
-                <div><dt>Nueva cuota financiera modelada</dt><dd>{cop.format(result.reducePayment.scheduledPayment)}</dd></div>
-                <div><dt>Reducción mensual modelada</dt><dd>{cop.format(result.reducePayment.paymentReduction)}</dd></div>
-                <div><dt>Reducción porcentual</dt><dd>{percent.format(result.reducePayment.paymentReductionPercent)}</dd></div>
-                <div><dt>Plazo modelado</dt><dd>{result.reducePayment.payoffMonth} cuotas</dd></div>
-                <div><dt>Interés nominal futuro evitado</dt><dd>{cop.format(result.reducePayment.interestAvoided)}</dd></div>
+                <div><dt>Nueva cuota financiera modelada</dt><dd className="cc-number">{cop.format(result.reducePayment.scheduledPayment)}</dd></div>
+                <div><dt>Reducción mensual modelada</dt><dd className="cc-number">{cop.format(result.reducePayment.paymentReduction)}</dd></div>
+                <div><dt>Reducción porcentual</dt><dd className="cc-number">{percent.format(result.reducePayment.paymentReductionPercent)}</dd></div>
+                <div><dt>Plazo modelado</dt><dd className="cc-number">{result.reducePayment.payoffMonth} cuotas</dd></div>
+                <div><dt>Interés nominal futuro evitado</dt><dd className="cc-number">{cop.format(result.reducePayment.interestAvoided)}</dd></div>
               </dl>
             </article>
           </div>
