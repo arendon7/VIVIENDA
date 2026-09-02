@@ -16,7 +16,7 @@ const actorLabels: Record<CaseActorKind, string> = {
   client: "Cliente",
   lawyer: "Abogado",
   admin: "Administración",
-  system: "VIVIENDA",
+  system: "Casa con Criterio",
   external_recorded: "Tercero registrado",
 };
 
@@ -37,6 +37,20 @@ const stageLabels: Record<CaseStage, string> = {
   resolved_verified: "Resultado verificado",
   closed: "Cerrado",
   cancelled: "Cancelado",
+};
+
+const routeStatusLabels: Record<OpportunityRoute["status"], string> = {
+  eligible_now: "Se puede activar ahora",
+  candidate: "Vale la pena evaluar",
+  seasonal_wait: "Preparación estacional",
+  not_recommended: "No recomendada",
+  legal_review: "Revisión jurídica",
+};
+
+const trackLabels: Record<CaseTrack, string> = {
+  self_service: "Autogestión",
+  assisted: "Acompañamiento",
+  legal: "Revisión jurídica",
 };
 
 const eventLabels: Record<CaseEvent["type"], string> = {
@@ -199,10 +213,10 @@ export function CaseTimelinePreview({ route, asOfDate }: { route: OpportunityRou
     <section className="surface result-frame" style={{ marginTop: 24 }} aria-labelledby="case-timeline-title">
       <div className="section-header">
         <div>
-          <p className="eyebrow">Case Timeline · laboratorio local</p>
-          <h3 id="case-timeline-title">Así se reconstruiría el expediente a partir de hechos.</h3>
+          <p className="eyebrow">Historial del expediente · demostración local</p>
+          <h3 id="case-timeline-title">Así se reconstruiría el expediente a partir de hechos registrados.</h3>
           <p className="section-copy">
-            Los eventos de este panel son simulados y viven solo en esta sesión. Sirven para probar el contrato de estado; no crean un expediente productivo.
+            Los eventos de este panel son simulados y viven solo en esta sesión. Sirven para mostrar cómo cambia el estado del expediente sin reescribir hechos anteriores; no crean un expediente real.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -215,22 +229,29 @@ export function CaseTimelinePreview({ route, asOfDate }: { route: OpportunityRou
       <div className="surface-warning" style={{ marginTop: 18 }}>
         <strong>No es una radicación ni una aceptación contractual real.</strong>
         <p>
-          Este laboratorio no guarda documentos, no contacta bancos, no otorga poder y no registra actuaciones fuera de esta vista local.
+          Esta demostración no guarda documentos, no contacta bancos, no otorga poder y no registra actuaciones fuera de esta vista local.
         </p>
       </div>
 
-      <div className="surface" style={{ marginTop: 20, padding: 20 }}>
-        <p className="eyebrow">Origen inmutable</p>
+      <div
+        className="surface"
+        style={{ marginTop: 20, padding: 20 }}
+        data-case-origin
+        data-route-code={projection.origin.routeCode}
+        data-route-status={projection.origin.routeStatus}
+        data-track={projection.origin.track}
+      >
+        <p className="eyebrow">Punto de partida</p>
         <div className="metric-grid">
-          <div><span className="metric-label">Ruta</span><strong>{projection.origin.routeCode}</strong></div>
-          <div><span className="metric-label">Status</span><strong>{projection.origin.routeStatus}</strong></div>
+          <div><span className="metric-label">Opción</span><strong>{route.title}</strong></div>
+          <div><span className="metric-label">Estado de la opción</span><strong>{routeStatusLabels[projection.origin.routeStatus]}</strong></div>
           <div><span className="metric-label">Precisión</span><strong>{projection.origin.precision}</strong></div>
-          <div><span className="metric-label">Track</span><strong>{projection.origin.track}</strong></div>
+          <div><span className="metric-label">Tipo de acompañamiento</span><strong>{trackLabels[projection.origin.track]}</strong></div>
         </div>
       </div>
 
       <div className="surface" style={{ marginTop: 20, padding: 20 }} aria-label="Capacidades separadas del expediente">
-        <p className="eyebrow">Capacidades separadas</p>
+        <p className="eyebrow">Qué está realmente habilitado</p>
         <div className="metric-grid">
           <div><span className="metric-label">Autorización de datos</span><strong>{capabilityLabel(c.dataAuthorizationRecorded)}</strong></div>
           <div><span className="metric-label">Servicio aceptado</span><strong>{capabilityLabel(c.serviceAgreementAccepted)}</strong></div>
@@ -244,7 +265,7 @@ export function CaseTimelinePreview({ route, asOfDate }: { route: OpportunityRou
       </div>
 
       <div style={{ marginTop: 22 }}>
-        <p className="eyebrow">Simular eventos internos seguros</p>
+        <p className="eyebrow">Probar eventos seguros en esta demostración</p>
         <div className="actions" style={{ flexWrap: "wrap" }}>
           {!c.dataAuthorizationRecorded ? (
             <button className="button button-secondary" type="button" onClick={simulateDataAuthorization}>
@@ -274,26 +295,30 @@ export function CaseTimelinePreview({ route, asOfDate }: { route: OpportunityRou
         </div>
         {c.professionalReviewRequested && !c.professionalReviewCompleted ? (
           <p className="field-hint" style={{ marginTop: 12 }}>
-            La revisión fue solicitada, pero no ofrecemos un botón para marcarla automáticamente como completada: el dominio exige actor <strong>lawyer</strong>.
+            La revisión fue solicitada, pero esta demostración no puede marcarla automáticamente como completada: debe completarla un profesional autorizado.
           </p>
         ) : null}
       </div>
 
       <div style={{ marginTop: 28 }}>
-        <p className="eyebrow">Event log append-only</p>
-        <div className="extraction-list" aria-label="Timeline local del expediente">
+        <p className="eyebrow">Historial de hechos</p>
+        <div className="extraction-list" aria-label="Historial local del expediente">
           {[...history].reverse().map((item) => (
-            <article className="extraction-row" key={item.eventId} aria-label={`Evento ${item.sequence}: ${eventLabels[item.type]}`}>
+            <article
+              className="extraction-row"
+              key={item.eventId}
+              aria-label={`Evento ${item.sequence}: ${eventLabels[item.type]}`}
+              data-event-type={item.type}
+              data-idempotency-key={item.idempotencyKey}
+            >
               <div>
                 <div className="extraction-heading">
                   <strong>#{item.sequence} · {eventLabels[item.type]}</strong>
                   <span className="material-chip">{actorLabels[item.actor.kind]}</span>
                 </div>
-                <p className="field-hint">{item.type}</p>
               </div>
               <div className="extraction-actions">
-                <p className="field-hint">idempotencyKey: {item.idempotencyKey}</p>
-                <p className="field-hint">Evidencias referenciadas: {item.evidenceRefs?.length ?? 0}</p>
+                <p className="field-hint">Evidencias relacionadas: {item.evidenceRefs?.length ?? 0}</p>
               </div>
             </article>
           ))}
