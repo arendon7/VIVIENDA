@@ -9,6 +9,7 @@
   --ink-muted: #657078;
   --border: #d7d8d3;
   --border-strong: #b9c0c4;
+  --control-border: #858e93;
   --accent: #155889;
   --accent-hover: #104873;
   --accent-soft: #e4eef5;
@@ -168,7 +169,7 @@ h3 { font-size: 22px; line-height: 1.2; font-weight: 600; }
 .field-control {
   min-height: 48px;
   width: 100%;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   background: var(--surface);
   color: var(--ink);
   border-radius: var(--radius-md);
