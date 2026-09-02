@@ -306,13 +306,13 @@ export function ReconciliationTool() {
         {result.opportunityRoutes.length > 0 ? (
           <section className={styles.section} aria-labelledby="reconciliation-routes-heading">
             <div className={styles.sectionHeading}>
-              <p className="eyebrow">Ruta contextual</p>
-              <h2 id="reconciliation-routes-heading">Lo que el motor permite evaluar</h2>
-              <p className="section-copy">Solo aparecen R7 o R10 cuando tus respuestas cumplen sus condiciones. Una ruta candidata no equivale a una infracción probada ni a un resultado garantizado.</p>
+              <p className="eyebrow">Opciones relacionadas</p>
+              <h2 id="reconciliation-routes-heading">Qué opciones aparecen con tus respuestas</h2>
+              <p className="section-copy">Solo mostramos una auditoría o una revisión jurídica prioritaria cuando los hechos que reportaste cumplen sus condiciones. Una opción candidata no equivale a una infracción probada ni a un resultado garantizado.</p>
             </div>
             <div className={styles.routeGrid}>
               {result.opportunityRoutes.map((route) => (
-                <article className={`surface ${styles.routeCard}`} key={route.routeCode}>
+                <article className={`surface ${styles.routeCard}`} key={route.routeCode} data-route-code={route.routeCode}>
                   <div className={styles.routeMeta}>
                     <strong>{routeStatusLabel[route.status]}</strong>
                     <span>{route.precision}</span>
