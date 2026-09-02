@@ -55,9 +55,15 @@ Primary consumer surfaces use:
 - `Radar Vivienda` instead of `Opportunity Router`;
 - `Mi Situación · estado de decisión` instead of `Loan Health`;
 - `Mis Escenarios` for consequence comparison;
+- `Plan de acción` instead of `Case Plan`;
+- `Historial del expediente` instead of `Case Timeline` or `Event log`;
 - ordinary-language option names instead of internal route codes such as `R1`, `R2` or `R10`.
 
 Internal route codes remain available through data attributes or engineering contexts where needed for deterministic testing and auditability. They should not be normal visible copy.
+
+The same rule applies to case-state internals. Machine identifiers such as route status values, track values, `CaseEvent` types, idempotency keys and state-machine terms may remain in domain code, logs or `data-*` attributes, but the customer-facing history must show the human event, actor, state and consequence. Technical identity must remain inspectable without forcing the customer to read implementation vocabulary.
+
+The firewall is a translation boundary, not a deletion boundary: a user-facing label may become simpler while the underlying machine identifier remains stable for tests, auditability, replay and deterministic behavior.
 
 Precision levels **C0/C1/C2/C3 remain visible** because they are a product-truth contract, not engineering decoration. Legal article references may also remain visible when the specific rule materially defines a right, deadline, eligibility condition or user decision.
 
