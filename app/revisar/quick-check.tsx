@@ -120,7 +120,7 @@ export function QuickCheck() {
         <div style={{ marginTop: 20 }}>
           <DecisionResult
             title="Ya podemos construir una primera fotografía de tu crédito."
-            explanation="Con saldo, cuota y plazo podemos organizar el crédito y decidir qué información falta. Todavía no conocemos tu tasa ni sistema exacto de amortización, así que no mostramos un supuesto ahorro preciso. El siguiente nivel es simular con más datos o verificar tu extracto."
+            explanation="Con saldo, cuota y plazo podemos organizar el crédito y decidir qué información falta. Todavía no conocemos tu tasa ni sistema exacto de amortización, así que no mostramos un supuesto ahorro preciso. El siguiente nivel es simular con más datos o usar tu extracto como guía para confirmar campos."
             precision="C1"
             facts={facts}
             evidence={
@@ -131,7 +131,7 @@ export function QuickCheck() {
           >
             <div className="result-callout">
               <strong>Siguiente decisión útil</strong>
-              <p className="section-copy">Podemos añadir tasa y sistema de amortización para pasar a una simulación modelada, o revisar un extracto si quieres mayor precisión.</p>
+              <p className="section-copy">Podemos añadir tasa y sistema de amortización para pasar a una simulación modelada, o usar un extracto como referencia local si quieres una fotografía más precisa.</p>
             </div>
             <div className="actions">
               <button className="button button-primary" type="button" onClick={() => setShowModel(true)}>Continuar con más precisión</button>
