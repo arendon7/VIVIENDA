@@ -125,7 +125,7 @@ export function QuickCheck() {
             facts={facts}
             evidence={
               <SourceFreshness
-                source="Datos declarados en este Quick Check"
+                source="Datos declarados en esta primera revisión"
                 sourceClass="user"
                 cutoff="Esta sesión"
                 status="current"
@@ -154,7 +154,7 @@ export function QuickCheck() {
       <div
         className="progress-track"
         role="progressbar"
-        aria-label="Progreso del Quick Check"
+        aria-label="Progreso de la primera revisión"
         aria-valuemin={1}
         aria-valuemax={steps}
         aria-valuenow={step + 1}
@@ -162,7 +162,7 @@ export function QuickCheck() {
       >
         <div className="progress-fill" style={{ width: `${progress}%` }} />
       </div>
-      <p className="eyebrow" style={{ marginTop: 28 }}>Quick Check</p>
+      <p className="eyebrow" style={{ marginTop: 28 }}>Primera revisión</p>
       <h1 id="quick-check-title" style={{ fontSize: "clamp(32px, 6vw, 46px)" }}>Cuéntanos lo mínimo para entender tu crédito.</h1>
       <p className="section-copy">Puedes usar valores aproximados. No necesitamos cédula, teléfono, correo ni extracto en esta etapa.</p>
 
