@@ -35,13 +35,17 @@ Historical PRs remain useful as slice-level traceability until a consolidation/r
 
 The historical v0.22 slice remains frozen separately. Its versioned STATUS and ADR files intentionally preserve the test counts and SHAs that belonged to that historical slice.
 
-The latest fully green **behavioral consolidation head before this documentation synchronization** was:
+The latest fully green **behavioral consolidation head before documentation synchronization** was:
 
 `60643fc3cc4cf6f79cb1c44d8fbb587c93671024`
 
-GitHub Actions PR run:
+The first documentation-synchronized head was:
 
-`33599856405`
+`18d8d2abf59cd434bcf739513679785115754f98`
+
+GitHub Actions PR run for `18d8d2ab…`:
+
+`33602730035`
 
 Validated on that head:
 
@@ -52,7 +56,7 @@ Validated on that head:
 - Chromium desktop: **PASS**;
 - mobile 390 px: **PASS**.
 
-This document synchronization is intentionally documentation-only. The commit containing this updated readiness file must itself pass the same repository gates before becoming the final internally certified release candidate. A green predecessor is evidence, not permission to skip validation of the new head.
+Any subsequent documentation-only synchronization must itself pass the same repository gates before it becomes the final internally certified release candidate. A green predecessor is evidence, not permission to skip validation of the new head.
 
 ## 4. CI/release hardening added during consolidation
 
@@ -153,6 +157,16 @@ Legal/source hardening must remain a recurring release task because these rules 
 - provider-ready Supabase code is not represented as an activated provider;
 - anonymous-first user value remains available without productive auth/storage.
 
+### Direct dependency review
+
+A read-only review on 2026-09-02 found the direct versions deliberately on patched lines:
+
+- Next.js `16.3.3` — patched security release for the Aug-25 critical advisories affecting `<16.3.3`;
+- React `19.2.8` — patched line for the July Server Functions DoS affecting through `19.2.7`;
+- Vitest `4.1.11` — patched line for the maintained 4.x mocker path-traversal advisory.
+
+This is **not** equivalent to a registry-backed full transitive `npm audit`; that remains post-Beta hardening in #32 unless a material applicable vulnerability is demonstrated.
+
 ### Intentionally unavailable
 
 - productive Supabase project for VIVIENDA;
@@ -165,7 +179,7 @@ Legal/source hardening must remain a recurring release task because these rules 
 
 These absences are not defects for anonymous Beta surfaces if the UI continues to describe them truthfully. They are blockers for any feature that would claim the corresponding capability.
 
-## 8. Release blockers
+## 8. Release blockers and launch decisions
 
 ### BLOCKER A — branch governance
 
@@ -208,19 +222,19 @@ Required before public Beta:
 - evidence APIs remain fail-closed while providers are intentionally inactive;
 - `noindex`, `nofollow`, `nocache` and defensive headers remain preserved during preview validation.
 
-### BLOCKER C — public-release indexing policy
+### LAUNCH DECISION C — indexing policy
 
-The current application intentionally sets global `noindex`, `nofollow` and `nocache` metadata and `X-Robots-Tag` headers.
+The current application intentionally sets global `noindex`, `nofollow` and `nocache` metadata plus `X-Robots-Tag: noindex, nofollow, noarchive`.
 
-This is correct for private preview / pre-release Beta validation.
+This is the correct default for private Preview and is also compatible with a deliberately **unindexed public Beta**. It is therefore **not a third Beta blocker** by itself.
 
-It must be an explicit launch decision before a public SEO-indexable release; it must not be removed merely to make a preview look production-like.
+Before any SEO-indexable public launch, indexing must become an explicit product/release decision. Do not remove these protections merely to make Preview look production-like.
 
 ## 9. Non-blocking technical debt
 
 Tracked in issue #32 and explicitly **not** a Beta 0.22 blocker without new material evidence:
 
-- dependency/security scanning policy;
+- full transitive dependency/security scanning policy;
 - Content Security Policy design;
 - WebKit/Firefox deliberate smoke coverage;
 - automated accessibility scanning;
@@ -249,4 +263,4 @@ Do not execute this post-Beta backlog by mutating the release candidate merely t
 
 **Do not merge or promote to production yet.**
 
-The product and internal release candidate are materially mature. Remaining release work is governance of `main`, exact-SHA Vercel Preview validation and the rendered cross-surface audit. No new product slice is authorized before that baseline exists.
+The product and internal release candidate are materially mature. Remaining Beta release work is limited to governance of `main`, exact-SHA Vercel Preview validation and the rendered cross-surface audit. Indexing remains disabled unless a later launch decision explicitly changes that policy. No new product slice is authorized before the Beta baseline exists.
