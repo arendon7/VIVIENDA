@@ -113,7 +113,7 @@ test("carries the exact C2 term-prepayment model into Loan Health and invalidate
   await workspace.getByLabel("3. ¿Cuánto capital adicional podrías destinar a prepago?").fill("250000");
 
   await expect(workspace.getByText("R1 · C2 modelado", { exact: true })).toHaveCount(0);
-  await expect(workspace.getByText(/El escenario C2 anterior ya no coincide con estos datos/)).toBeVisible();
+  await expect(workspace.getByText(/El escenario mensual C2 anterior ya no coincide con estos datos/)).toBeVisible();
   await expect(r1.getByText(/R1_PREPAGO_PLAZO · precisión C1/)).toBeVisible();
   await expect(prepaymentHealth.getByText("Explorar", { exact: true })).toBeVisible();
   await expect(workspace.getByRole("heading", { name: "La siguiente mejora de valor es aumentar la precisión antes de tomar una decisión material." })).toBeVisible();
