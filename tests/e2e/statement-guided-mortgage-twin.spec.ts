@@ -97,7 +97,7 @@ test("carries the exact C2 term-prepayment model into Loan Health and invalidate
   await expect(workspace).toBeVisible();
   await expect(workspace.getByText("C1 · fuente base", { exact: true })).toBeVisible();
   await expect(workspace.getByText("R1 · C2 modelado", { exact: true })).toBeVisible();
-  await expect(workspace.getByLabel("3. ¿Cuánto capital adicional quieres comparar?")).toHaveValue("200000");
+  await expect(workspace.getByLabel("3. ¿Cuánto capital adicional podrías destinar a prepago?")).toHaveValue("200000");
   await expect(workspace.getByText(/Ya modelaste .*200\.000.* adicionales al mes/i)).toBeVisible();
 
   const prepaymentHealth = workspace.locator('[data-loan-health-dimension="prepayment"]');
@@ -110,7 +110,7 @@ test("carries the exact C2 term-prepayment model into Loan Health and invalidate
   await expect(r1.getByText(/R1_PREPAGO_PLAZO · precisión C2 solo para esta ruta/)).toBeVisible();
   await expect(r2.getByText(/R2_PREPAGO_CUOTA · precisión C1/)).toBeVisible();
 
-  await workspace.getByLabel("3. ¿Cuánto capital adicional quieres comparar?").fill("250000");
+  await workspace.getByLabel("3. ¿Cuánto capital adicional podrías destinar a prepago?").fill("250000");
 
   await expect(workspace.getByText("R1 · C2 modelado", { exact: true })).toHaveCount(0);
   await expect(workspace.getByText(/El escenario C2 anterior ya no coincide con estos datos/)).toBeVisible();
@@ -172,7 +172,7 @@ test("moves keyboard focus into downstream Loan Health routing when the user ope
   await page.keyboard.press("Enter");
 
   await expect(page.locator("#guided-opportunity-router")).toBeFocused();
-  await expect(page.getByRole("heading", { name: "Entiende primero el estado de decisión; después elige una ruta." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Entiende primero el estado de decisión; después compara y elige una ruta." })).toBeVisible();
   await expect(page.getByText("Loan Health · estado de decisión", { exact: true })).toBeVisible();
 });
 
