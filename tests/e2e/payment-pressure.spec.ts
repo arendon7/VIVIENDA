@@ -84,6 +84,9 @@ test.describe("Payment Pressure v0.14", () => {
     await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toHaveAttribute("href", "/verificar");
     await expect(page.getByText("Revisión jurídica prioritaria del proceso")).toBeVisible();
     await expect(page.getByRole("link", { name: "Revisar la diferencia" })).toHaveCount(0);
+    await expect(page.locator('[data-route-code="R10_EXECUTIVE_DEFENSE"]')).toBeVisible();
+    await expect(page.getByText("R10", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("R10_EXECUTIVE_DEFENSE", { exact: true })).toHaveCount(0);
     const boundary = page.getByLabel("Límites de este resultado");
     await expect(boundary).toContainText("No calcula términos procesales, no genera una defensa y no garantiza reestructuración.");
   });
@@ -119,6 +122,9 @@ test.describe("Payment Pressure v0.14", () => {
     await expect(page.getByText("Revisar una diferencia", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Revisar la diferencia" })).toHaveAttribute("href", "/auditoria-hipotecaria");
     await expect(page.getByText("Auditar y documentar una posible reclamación")).toBeVisible();
+    await expect(page.locator('[data-route-code="R7_RECLAMACION"]')).toBeVisible();
+    await expect(page.getByText("R7", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("R7_RECLAMACION", { exact: true })).toHaveCount(0);
   });
 
   test("R10 remains primary if a judicial process and inconsistency coexist", async ({ page }) => {
