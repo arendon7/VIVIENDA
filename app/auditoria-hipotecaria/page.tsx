@@ -34,7 +34,7 @@ export default function AuditoriaHipotecariaPage() {
         <a className="brand" href="/">VIVIENDA</a>
         <nav aria-label="Auditoría Hipotecaria">
           <a className="nav-link" href="/mi-vivienda">Mi Vivienda</a>
-          <a className="nav-link" href="/verificar">Verificar documentos</a>
+          <a className="nav-link" href="/verificar">Extracto como guía</a>
         </nav>
       </header>
 
@@ -52,7 +52,7 @@ export default function AuditoriaHipotecariaPage() {
               Organizamos la evidencia, verificamos qué ocurrió y hacemos una revisión profesional para decidir si basta una explicación, falta información o existe una inconsistencia que merece actuación.
             </p>
             <div className="actions">
-              <a className="button button-primary" href="/verificar">Preparar mi evidencia</a>
+              <a className="button button-primary" href="#evidence-heading">Ver qué evidencia preparar</a>
               <a className="button button-secondary" href="/mi-vivienda">Volver a Mi Vivienda</a>
             </div>
           </div>
@@ -180,10 +180,10 @@ export default function AuditoriaHipotecariaPage() {
         <section className={styles.endState}>
           <div>
             <p className="eyebrow">Primer paso</p>
-            <h2>Empieza por verificar la evidencia, no por firmar un poder.</h2>
+            <h2>Empieza por preparar la evidencia, no por firmar un poder.</h2>
             <p className="section-copy">La ruta productiva futura pedirá autorización y acuerdo de servicio antes de persistir evidencia o iniciar revisión profesional.</p>
           </div>
-          <a className="button button-primary" href="/verificar">Preparar evidencia</a>
+          <a className="button button-primary" href="#evidence-heading">Ver qué evidencia preparar</a>
         </section>
       </main>
 
