@@ -282,7 +282,7 @@ test("keeps the Article 24 clock relative until real delivery evidence exists", 
   await expect(plan.getByRole("heading", { name: "Plan para activar la cesión del artículo 24" })).toBeVisible();
   await expect(plan.getByText(/Máximo 10 días hábiles después de la entrega comprobada/i)).toBeVisible();
   await expect(plan.getByText(/Sin fecha real de entrega no se calcula una fecha límite/i)).toBeVisible();
-  await expect(plan.getByText(/El trigger todavía no está establecido/i)).toBeVisible();
+  await expect(plan.getByText(/El evento que inicia el plazo todavía no está acreditado/i)).toBeVisible();
   await expect(plan.getByText(/El reloj no se considera iniciado por seleccionar esta ruta o generar el plan/i)).toBeVisible();
 });
 
