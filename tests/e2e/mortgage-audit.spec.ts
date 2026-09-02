@@ -21,7 +21,8 @@ test.describe("Mortgage Audit assisted preview v0.12", () => {
     await expect(page.getByText("SUBMISSION_RECORDED", { exact: true })).toHaveCount(0);
 
     await expect(page.getByRole("link", { name: "Ver qué evidencia preparar" }).first()).toHaveAttribute("href", "#evidence-heading");
-    await expect(page.getByRole("link", { name: "Extracto como guía" })).toHaveAttribute("href", "/verificar");
+    const statementGuideLink = page.locator('nav[aria-label="Auditoría Hipotecaria"] a[href="/verificar"]');
+    await expect(statementGuideLink).toHaveText("Extracto como guía");
     await expect(page.getByRole("link", { name: "Preparar mi evidencia" })).toHaveCount(0);
   });
 
