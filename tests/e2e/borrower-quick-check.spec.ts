@@ -155,7 +155,7 @@ test("upgrades a compatible peso case from C1 to a real C2 modeled scenario", as
   await expect(page.getByText("Intereses futuros nominales que el modelo estima que dejarían de causarse")).toBeVisible();
   await expect(page.getByText("Valor atribuible a Casa con Criterio en esta simulación self-service")).toBeVisible();
   const provenance = page.getByRole("complementary", { name: "Fuente y vigencia" });
-  await expect(provenance.getByText("Cálculo / simulación", { exact: true })).toBeVisible();
+  await expect(provenance.getByText("Cálculo o modelo", { exact: true })).toBeVisible();
   await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
 });
 
