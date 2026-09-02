@@ -73,4 +73,19 @@ Never convert a modeled opportunity into a claim of realized savings.
 Brand assets live in `public/brand/`.
 Brand-specific CSS lives in `styles/casa-criterio.css` and layers over the existing `app/globals.css` Warm Path system.
 
+Shared product chrome lives in `components/brand/ProductChrome.tsx`:
+- `ProductHeader` for consistent masterbrand and route navigation;
+- `ProductFooter` for surface-specific truth boundaries;
+- `ProductIntro` for the route-level commercial/context statement.
+
+Operate-form grammar is centralized in the Casa con Criterio layer:
+- visible focus states;
+- restrained ochre selection state;
+- warm inputs and choice surfaces;
+- legible disabled states;
+- tabular numeric rhythm;
+- mobile product navigation contained within its own horizontal scroll region when necessary.
+
+The shared chrome is now used across the Quick Check, buyer preparation/affordability/financing/quote-comparison flows, payment-pressure triage, reconciliation, verification, Mi Vivienda and Auditoría Hipotecaria.
+
 This branch is a visual/brand integration branch only. It must not weaken product, legal, evidence or calculation contracts.
