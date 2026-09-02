@@ -215,7 +215,7 @@ export function PaymentPressureTool() {
             <h2>{result.primaryAction.title}</h2>
             <p className="section-copy">{result.primaryAction.explanation}</p>
             {isJudicial ? (
-              <a className="button button-primary" href="/verificar">Revisar el documento que recibí</a>
+              <a className="button button-primary" href="#evidencia">Ver qué documentos preparar</a>
             ) : hasR7 && !isJudicial ? (
               <a className="button button-primary" href="/auditoria-hipotecaria">Revisar la diferencia</a>
             ) : null}
