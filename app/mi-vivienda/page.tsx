@@ -42,8 +42,8 @@ export default function MiViviendaPage() {
 
       <main id="contenido" className={`shell ${styles.main}`}>
         <section className={styles.previewNotice} aria-label="Estado de esta vista">
-          <strong>Preview de producto · sin cuenta ni persistencia activa</strong>
-          <span>Los valores visibles son de demostración. Esta superficie no afirma que haya datos guardados, sincronizados ni verificados.</span>
+          <strong>Vista previa del producto · sin cuenta ni información guardada</strong>
+          <span>Los valores visibles son de demostración. Esta vista no afirma que haya datos guardados, sincronizados ni verificados.</span>
         </section>
 
         <section className={styles.hero} aria-labelledby="mi-vivienda-title">
@@ -83,15 +83,15 @@ export default function MiViviendaPage() {
               <FinancialNumber label="Saldo" value="$180.000.000" detail="Declarado / ejemplo" />
               <FinancialNumber label="Cuota" value="$2.100.000" detail="Declarado / ejemplo" />
               <FinancialNumber label="Modalidad" value="Pesos" detail="Confirmada para la simulación" />
-              <FinancialNumber label="Plazo restante" value="17 años" detail="Confirmado para la demo" />
-              <FinancialNumber label="Tasa" value="11,7 % EA" detail="Confirmada para la demo" />
+              <FinancialNumber label="Plazo restante" value="17 años" detail="Confirmado para el ejemplo" />
+              <FinancialNumber label="Tasa" value="11,7 % EA" detail="Confirmada para el ejemplo" />
               <FinancialNumber label="Sistema" value="Cuota constante" detail="Caso soportado en C2" />
             </dl>
 
             <SourceFreshness
               source="Valores de demostración de Casa con Criterio"
               sourceClass="calculation"
-              cutoff="Preview v0.11"
+              cutoff="Datos ilustrativos"
               status="current"
             >
               <p>La lectura conserva la fuente y el contexto de los datos. No representa un crédito real guardado ni verificado documentalmente.</p>
@@ -107,7 +107,7 @@ export default function MiViviendaPage() {
             <ol className={styles.steps}>
               <li><span>1</span><div><strong>Simular</strong><p>Comparar la misma aportación bajo dos objetivos distintos.</p></div></li>
               <li><span>2</span><div><strong>Entender el efecto</strong><p>Separar capital aportado por ti de intereses futuros modelados.</p></div></li>
-              <li><span>3</span><div><strong>Verificar si hace falta</strong><p>Subir a C3 antes de una decisión que requiera precisión documental.</p></div></li>
+              <li><span>3</span><div><strong>Verificar si hace falta</strong><p>Llegar a C3 antes de una decisión que requiera precisión documental.</p></div></li>
             </ol>
             <a className="button button-primary" href="/revisar">Simular prepago</a>
           </aside>
@@ -121,7 +121,7 @@ export default function MiViviendaPage() {
           <div className={`surface ${styles.precisionPanel}`}>
             <div className={styles.sectionHeading}>
               <div>
-                <p className="eyebrow">Ruta de precisión</p>
+                <p className="eyebrow">Niveles de precisión</p>
                 <h2 id="precision-heading" className="cc-display">Más datos no siempre significa más verdad.</h2>
               </div>
             </div>
@@ -159,7 +159,7 @@ export default function MiViviendaPage() {
 
       <ProductFooter
         lines={[
-          "Mi Vivienda · preview de producto con precisión explícita.",
+          "Mi Vivienda · vista previa del producto con precisión explícita.",
           "Simulaciones, estado de decisión y opciones sin confundir orientación, oferta ni verificación.",
         ]}
       />
