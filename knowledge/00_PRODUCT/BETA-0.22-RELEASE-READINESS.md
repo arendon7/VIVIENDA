@@ -31,18 +31,28 @@ PR #28 consolidates the full product line without rewriting or deleting the hist
 
 Historical PRs remain useful as slice-level traceability until a consolidation/release decision is completed.
 
-## 3. Functional gate inherited from v0.22
+## 3. Current consolidation gate
 
-The v0.22 freeze and its validated PR head established:
+The historical v0.22 slice remains frozen separately. Its versioned STATUS and ADR files intentionally preserve the test counts and SHAs that belonged to that historical slice.
 
-- TypeScript: PASS;
-- domain tests: **397/397 PASS**;
-- production build: PASS;
-- Playwright: **176/176 PASS**;
-- Chromium desktop: PASS;
-- mobile 390 px: PASS.
+The latest fully green **behavioral consolidation head before this documentation synchronization** was:
 
-The release consolidation must reproduce those gates against current `main` before any merge.
+`60643fc3cc4cf6f79cb1c44d8fbb587c93671024`
+
+GitHub Actions PR run:
+
+`33599856405`
+
+Validated on that head:
+
+- TypeScript: **PASS**;
+- domain/server tests: **401/401 PASS** across 30 files;
+- production build: **PASS**;
+- Playwright: **180/180 PASS**;
+- Chromium desktop: **PASS**;
+- mobile 390 px: **PASS**.
+
+This document synchronization is intentionally documentation-only. The commit containing this updated readiness file must itself pass the same repository gates before becoming the final internally certified release candidate. A green predecessor is evidence, not permission to skip validation of the new head.
 
 ## 4. CI/release hardening added during consolidation
 
@@ -53,7 +63,7 @@ The consolidation branch updates `.github/workflows/frontend-ci.yml` so that:
 - push CI also runs on `release/**`;
 - existing `implementation/**`, `design/**` and `product/**` branch validation is preserved;
 - superseded runs are cancelled through workflow concurrency;
-- GitHub actions runtime versions are updated from deprecated v4 Node-runtime actions to current majors used by GitHub documentation (`checkout@v6`, `setup-node@v7`);
+- GitHub actions runtime versions use `checkout@v6`, `setup-node@v7` and current artifact handling;
 - Playwright diagnostics remain uploaded only on failure.
 
 This does not substitute repository branch protection.
@@ -96,6 +106,17 @@ Preserved:
 
 The presence of one C2 decision does not promote the entire Mortgage Twin, other routes or user-declared facts.
 
+### Consolidation truth hardening
+
+The cross-surface Beta audit additionally confirmed or corrected the following boundaries:
+
+- Home separates self-service value from `Acompañamiento · preview`; productive assisted execution is not represented as active;
+- `/revisar` and `/verificar` distinguish a local statement reference and user transcription from real documentary verification;
+- R10 procedural priority does not route judicial documents into the Mortgage Twin;
+- R7 `/auditoria-hipotecaria` describes how a professional audit **would be organized** rather than implying that VIVIENDA is already performing a contracted professional review;
+- buyer flows do not represent planning, readiness or quote normalization as underwriting, approval, bank ranking or live offers;
+- economic quote comparison remains C2 under explicit assumptions and does not convert modeled differences into guaranteed savings or universal recommendations.
+
 ## 6. Legal/truth revalidation — 2026-09-02
 
 Release review rechecked current official public sources and found the implemented boundaries still aligned:
@@ -105,6 +126,13 @@ Release review rechecked current official public sources and found the implement
 - Ley 546 Article 24 continues to contemplate debtor-requested assignment after a binding offer, with authorization within a maximum of ten business days under the statutory predicates;
 - the 40% rule is not treated as a generic illegality detector for any current installment;
 - lender approval, underwriting and offer generation remain outside canonical legal routing.
+
+A release audit also identified that `/ayuda` was deriving `asOfDate` from the browser's local timezone even though the Opportunity Router uses the month of that date to decide whether the Article 20 January-February window is open. That could produce a one-day/month mismatch for users outside Colombia at boundary instants.
+
+The consolidation now uses a canonical `America/Bogota` date for that legal routing path. Coverage includes:
+
+- four unit tests for Colombia calendar boundaries; and
+- an E2E case at `2026-03-01T04:30:00Z`, which is still 28 February in Colombia and therefore must preserve the February window.
 
 Legal/source hardening must remain a recurring release task because these rules can change.
 
@@ -116,6 +144,9 @@ Legal/source hardening must remain a recurring release task because these rules 
 - evidence operations fail closed while provider wiring is absent;
 - rate-limit infrastructure fails closed rather than silently allowing requests;
 - trusted-origin policy requires an explicit valid configured origin;
+- the three evidence API routes bind to the trusted server origin before entering the HTTP boundary;
+- when trusted-origin configuration is unavailable, the route fails closed with `503`, JSON error semantics and `Cache-Control: no-store`;
+- the HTTP boundary validates POST/JSON, same-origin, path identifiers, body size, idempotency where applicable and rejects privileged browser-supplied authority fields;
 - browser-controlled role, subject, storage locator and provider authority are rejected by architecture;
 - Case Journal is designed append-only;
 - canonical database tables receive least-privilege grants and no direct DELETE grant in the provider-ready SQL;
@@ -138,7 +169,11 @@ These absences are not defects for anonymous Beta surfaces if the UI continues t
 
 ### BLOCKER A — branch governance
 
-Current `main` is not protected and has no required status checks configured at repository level.
+Last verified on 2026-09-02:
+
+- `main` is `protected: false`;
+- required status checks are OFF;
+- no repository-level rule currently prevents an accidental direct push/merge.
 
 Before a public release, repository governance should require at minimum:
 
@@ -146,24 +181,32 @@ Before a public release, repository governance should require at minimum:
 - `verify` required;
 - `e2e` required;
 - no direct accidental push to `main`;
+- force pushes disabled;
+- branch deletion disabled;
 - explicit merge strategy.
 
 CI configuration alone does not enforce this.
 
 ### BLOCKER B — real preview deployment
 
-A deployable Vercel preview has not yet been validated in the currently connected Vercel team.
+Last verified on 2026-09-02 in connected Vercel team `NNNN` / `team_f0CRhAmwxqF9rXYd89sCVkTP`:
+
+- project count: **0**;
+- VIVIENDA is not imported as a project;
+- no auditable Preview URL exists.
 
 Required before public Beta:
 
-- real Preview Deployment of the exact candidate SHA;
-- audit `/`, `/revisar`, `/verificar`, `/mi-vivienda`, buyer flows, `/ayuda`, `/revisar-diferencia`;
-- desktop and mobile visual inspection;
-- keyboard/accessibility smoke test;
+- real Preview Deployment of the exact final candidate SHA;
+- audit all 11 Beta routes: `/`, `/revisar`, `/verificar`, `/mi-vivienda`, `/auditoria-hipotecaria`, `/ayuda`, `/revisar-diferencia`, `/comprar/cuanto-puedo-comprar`, `/comprar/preparacion`, `/comprar/financiacion`, `/comprar/comparar-cotizaciones`;
+- desktop and mobile 390 px visual inspection;
+- keyboard/skip-link/focus accessibility smoke test;
 - network/runtime error inspection;
 - no horizontal overflow;
-- no accidental provider/network calls;
-- claims/truth inspection on rendered output.
+- no accidental productive provider/network calls;
+- claims/truth inspection on rendered output;
+- evidence APIs remain fail-closed while providers are intentionally inactive;
+- `noindex`, `nofollow`, `nocache` and defensive headers remain preserved during preview validation.
 
 ### BLOCKER C — public-release indexing policy
 
@@ -175,27 +218,35 @@ It must be an explicit launch decision before a public SEO-indexable release; it
 
 ## 9. Non-blocking technical debt
 
-- Vitest currently emits a config-loader warning because ESM syntax is loaded from `vitest.config.ts` in a CommonJS package context; tests still pass. Resolve deliberately rather than suppressing blindly.
-- dependency/security scanning is not yet a documented release gate in this repository;
-- preview performance/Core Web Vitals have not been measured against a deployed candidate;
-- real-browser cross-engine coverage is Chromium-focused; Safari/WebKit and Firefox remain future release hardening candidates.
+Tracked in issue #32 and explicitly **not** a Beta 0.22 blocker without new material evidence:
+
+- dependency/security scanning policy;
+- Content Security Policy design;
+- WebKit/Firefox deliberate smoke coverage;
+- automated accessibility scanning;
+- Preview performance/Core Web Vitals;
+- Vitest ESM/CommonJS config hygiene;
+- optional remote-preview Playwright support;
+- selective visual regression after Warm Path stabilizes.
+
+Do not execute this post-Beta backlog by mutating the release candidate merely to obtain a cosmetically cleaner checklist.
 
 ## 10. Recommended closure order
 
-1. Consolidation PR #28 FULL GREEN on its final head.
-2. Audit consolidated diff and critical security/truth files.
-3. Preserve v0.22 freeze and record any consolidation-only commits separately.
-4. Resolve branch protection / required checks for `main`.
-5. Create a real Vercel Preview for the exact consolidation candidate.
-6. Run visual/usability/accessibility/truth audit using the Housing Finance Design Orchestrator acceptance sequence.
-7. Fix only demonstrated hard failures; re-run full gate.
-8. Record Beta release SHA.
+1. Make this documentation-synchronized PR #28 head FULL GREEN.
+2. Preserve the v0.22 historical freeze and keep historical version documents immutable unless factually wrong about their own version.
+3. Resolve branch protection / required checks for `main`.
+4. Import `arendon7/VIVIENDA` into the connected Vercel team.
+5. Create a real Preview for the exact final consolidation candidate.
+6. Run the 11-route visual/usability/accessibility/runtime/truth audit using the Housing Finance Design Orchestrator acceptance sequence.
+7. Fix only demonstrated material failures; if code changes, repeat the complete gate and record the new SHA.
+8. Record the Beta release SHA.
 9. Decide explicitly whether to merge consolidation PR into `main`.
 10. Only after the Beta baseline exists, close/retire stacked historical PRs as superseded rather than deleting history.
-11. Start v0.23 from the Beta baseline, not from an arbitrary old stacked branch.
+11. Start v0.23 from the accepted Beta baseline, not from an arbitrary old stacked branch.
 
 ## 11. Current decision
 
-**Do not merge or deploy yet.**
+**Do not merge or promote to production yet.**
 
-The codebase is materially closer to a Beta than the current Git history suggests. The remaining work is primarily release governance, preview validation and final cross-surface audit—not invention of another product slice.
+The product and internal release candidate are materially mature. Remaining release work is governance of `main`, exact-SHA Vercel Preview validation and the rendered cross-surface audit. No new product slice is authorized before that baseline exists.
