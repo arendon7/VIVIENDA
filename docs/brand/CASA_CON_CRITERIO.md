@@ -47,7 +47,23 @@ Masterbrand remains single. Product experiences include:
 - **Comprar con Criterio** — buyer journey;
 - **Casa con Criterio** can also name the editorial/content layer when context makes the distinction clear.
 
-## 7. Commercial voice
+## 7. Consumer-language firewall
+Internal engineering names may remain in code, domain types, tests, logs and technical documentation when they improve traceability, but they are not the default product language.
+
+Primary consumer surfaces use:
+- `Mi Situación` instead of `Mortgage Twin`;
+- `Radar Vivienda` instead of `Opportunity Router`;
+- `Mi Situación · estado de decisión` instead of `Loan Health`;
+- `Mis Escenarios` for consequence comparison;
+- ordinary-language option names instead of internal route codes such as `R1`, `R2` or `R10`.
+
+Internal route codes remain available through data attributes or engineering contexts where needed for deterministic testing and auditability. They should not be normal visible copy.
+
+Precision levels **C0/C1/C2/C3 remain visible** because they are a product-truth contract, not engineering decoration. Legal article references may also remain visible when the specific rule materially defines a right, deadline, eligibility condition or user decision.
+
+The firewall must never hide uncertainty, source provenance, professional-review requirements or a material limitation merely to make copy feel simpler.
+
+## 8. Commercial voice
 The brand may be commercially provocative when evidence supports the hook.
 
 Examples:
@@ -61,7 +77,7 @@ Pattern:
 
 Never convert a modeled opportunity into a claim of realized savings.
 
-## 8. Product truth rules that branding cannot override
+## 9. Product truth rules that branding cannot override
 - C0/C1/C2/C3 precision remains explicit.
 - User-supplied principal is not platform-generated savings.
 - A simulation is not a bank offer or approval.
@@ -69,7 +85,7 @@ Never convert a modeled opportunity into a claim of realized savings.
 - Commercial relationships cannot silently alter analysis.
 - Free/DIY routes remain visible where legitimately available.
 
-## 9. Implementation
+## 10. Implementation
 Brand assets live in `public/brand/`.
 Brand-specific CSS lives in `styles/casa-criterio.css` and layers over the existing `app/globals.css` Warm Path system.
 
