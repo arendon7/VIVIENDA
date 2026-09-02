@@ -154,7 +154,16 @@ export default function HomePage() {
             explanation="Con estos datos aproximados, un abono adicional podría reducir el costo financiero futuro. Todavía no conocemos la tasa ni el sistema exacto de amortización, por lo que este ejemplo mantiene precisión C1."
             precision="C1"
             facts={facts}
-            evidence={<SourceFreshness source="Datos ingresados por el usuario" cutoff="Ejemplo de producto"><p>Para pasar a C2/C3 necesitamos datos suficientes del crédito y, para C3, conciliación documental.</p></SourceFreshness>}
+            evidence={
+              <SourceFreshness
+                source="Datos ingresados por el usuario"
+                sourceClass="user"
+                cutoff="Ejemplo de producto"
+                status="current"
+              >
+                <p>Para pasar a C2/C3 necesitamos datos suficientes del crédito y, para C3, conciliación documental.</p>
+              </SourceFreshness>
+            }
           >
             <div className="demo-scenario">
               <p className="eyebrow">Haz las cuentas</p>
