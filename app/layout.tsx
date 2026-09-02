@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Lora, Work_Sans } from "next/font/google";
 import "./globals.css";
 import "../styles/casa-criterio.css";
+import "../styles/decision-components.css";
 
 const brandDisplay = Lora({
   subsets: ["latin"],
