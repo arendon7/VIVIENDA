@@ -160,7 +160,12 @@ export function ModeledScenario({
               { label: "Reducción modelada", value: `${comparison.termReductionMonths} cuotas` },
             ]}
             evidence={
-              <SourceFreshness source="Datos declarados + motor de amortización VIVIENDA" cutoff="Esta sesión">
+              <SourceFreshness
+                source="Datos declarados + motor de amortización Casa con Criterio"
+                sourceClass="calculation"
+                cutoff="Esta sesión"
+                status="current"
+              >
                 <p>Valores nominales proyectados. C2 significa modelo suficiente, no verificación contractual ni aprobación bancaria.</p>
                 {paymentDifference !== null ? <p>La cuota financiera calculada difiere de tu cuota declarada en aproximadamente {formatCop(paymentDifference)}; seguros u otros componentes pueden explicar parte de la diferencia.</p> : null}
               </SourceFreshness>
@@ -176,7 +181,7 @@ export function ModeledScenario({
               <BenefitBreakdown rows={[
                 { label: "Capital adicional que aportarías durante el escenario", value: formatCop(comparison.userExtraPrincipal) },
                 { label: "Intereses futuros nominales que el modelo estima que dejarían de causarse", value: formatCop(comparison.interestAvoided), kind: "positive" },
-                { label: "Valor atribuible a VIVIENDA en esta simulación self-service", value: formatCop(0) },
+                { label: "Valor atribuible a Casa con Criterio en esta simulación self-service", value: formatCop(0) },
               ]} />
               <div className="actions">
                 <a className="button button-primary" href="/verificar">Verificar con extracto</a>
