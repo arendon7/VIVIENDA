@@ -33,7 +33,7 @@ export function LoanHealthPanel({ result }: { result: LoanHealthResult }) {
           <p className="eyebrow">Mi Situación · estado de decisión</p>
           <h2 id="loan-health-title" className="cc-display">{result.headline}</h2>
           <p className="section-copy">
-            No es un score crediticio ni de riesgo. Resume qué entendemos, qué merece atención y qué acción puede compararse con la evidencia disponible.
+            No es una calificación crediticia ni de riesgo. Resume qué entendemos, qué merece atención y qué acción puede compararse con la evidencia disponible.
           </p>
         </div>
         <PrecisionBadge level={result.precision} />
