@@ -27,22 +27,28 @@ The historical v0.22 slice remains frozen separately; its STATUS/ADR counts and 
 
 Latest fully green **behavioral head** before this documentation synchronization:
 
-`e1bcc2d3308ba48b4926332104072a703c371f7d`
+`86d52d79cc3734524179ce26c23c0f60cdc52e68`
 
 GitHub Actions PR run:
 
-`33655884786`
+`33674762037`
 
-Validated on that head:
+Validated against `main` on merge candidate:
+
+`a668a546b3617bae862b0cecb8ce7a4627242dbd`
 
 - TypeScript: **PASS**;
 - domain/server tests: **401/401 PASS** across 30 files;
 - production build: **PASS**;
-- Playwright: **182/182 PASS**;
+- Playwright: **186/186 PASS**;
 - Chromium desktop: **PASS**;
 - mobile 390 px: **PASS**.
 
-The increase from 180 to 182 E2E comes from an accessibility regression check executed in both Playwright projects.
+The E2E count evolved from 180 to 186 through three accessibility regression checks, each executed in both Playwright projects:
+
+1. muted normal text token;
+2. warning normal text token;
+3. primary field boundary token.
 
 This documentation-synchronized head must itself pass the same repository gates before it becomes the final internally certified release candidate.
 
@@ -111,7 +117,7 @@ Release review rechecked current official public sources and found the implement
 - the 40% rule is not treated as a generic illegality detector for any current installment;
 - lender approval, underwriting and offer generation remain outside canonical legal routing.
 
-The consolidation now uses canonical `America/Bogota` date handling for the Article 20 routing path. Coverage includes four unit tests and an E2E boundary instant at `2026-03-01T04:30:00Z`, which is still 28 February in Colombia.
+The consolidation uses canonical `America/Bogota` date handling for the Article 20 routing path. Coverage includes four unit tests and an E2E boundary instant at `2026-03-01T04:30:00Z`, which is still 28 February in Colombia.
 
 Legal/source hardening remains a recurring release task because these rules can change.
 
@@ -122,10 +128,42 @@ Static and executable review confirmed:
 - the global skip link targets `#contenido`;
 - all 11 Beta routes expose a semantic `<main id="contenido">`;
 - the skip link is moved onscreen on focus and the global focus ring remains visible;
-- mobile routes preserve a reachable primary journey even when compact navigation is hidden;
-- the global muted text token previously produced approximately **4.48:1** contrast against the canvas, narrowly below the WCAG AA 4.5:1 threshold for normal text;
-- `--ink-muted` was hardened from `#66727b` to `#657078`, yielding approximately **4.60:1** against `--canvas: #f5f4ef`;
-- E2E now locks the rendered `.nav-link` color to the hardened token so the regression cannot silently reappear.
+- mobile routes preserve a reachable primary journey even when compact navigation is hidden.
+
+### A. Muted normal text
+
+The prior `--ink-muted: #66727b` produced approximately **4.48:1** against `--canvas: #f5f4ef`, narrowly below WCAG AA 4.5:1 for normal text.
+
+It was hardened to:
+
+`--ink-muted: #657078`
+
+which yields approximately **4.60:1** against the canvas. E2E locks the rendered navigation color.
+
+### B. Warning normal text
+
+The prior `--warning: #a7661c` produced approximately **3.99:1** against `--warning-soft: #f6eedf`, while the combination is used for normal warning/status text.
+
+It was hardened to:
+
+`--warning: #9c5d16`
+
+which yields approximately **4.56:1** against the warning-soft background. E2E locks the rendered warning text color.
+
+### C. Primary field boundaries
+
+The generic `--border-strong: #b9c0c4` produced approximately **1.83:1** against `--surface: #fffefb`. `.field-control` used that border while the field background and surrounding surface are visually close, making the border a material component boundary.
+
+Rather than darkening all decorative borders globally, the consolidation introduces a dedicated control token:
+
+`--control-border: #858e93`
+
+This yields approximately:
+
+- **3.31:1** against `--surface: #fffefb`;
+- **3.03:1** against `--canvas: #f5f4ef`.
+
+`--control-border` is applied specifically to `.field-control`; a dedicated E2E on `/revisar` locks the rendered input border color.
 
 This does not replace the post-Beta automated accessibility scanner backlog in #32 or the final rendered keyboard/visual audit on Vercel Preview.
 
