@@ -18,8 +18,8 @@ test.describe("Mi Vivienda + Loan Health product integration", () => {
 
     await expect(page.getByRole("link", { name: "Simular prepago" })).toHaveAttribute("href", "/revisar");
     await expect(page.getByRole("link", { name: "Revisar mi crédito" })).toHaveAttribute("href", "/revisar");
-    await expect(page.getByRole("link", { name: "Extracto como guía" })).toHaveAttribute("href", "/verificar");
-    await expect(page.getByRole("link", { name: "Usar extracto como guía" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Extracto como guía", exact: true })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Usar extracto como guía", exact: true })).toHaveAttribute("href", "/verificar");
     await expect(page.getByRole("link", { name: "Ver flujo de verificación" })).toHaveCount(0);
   });
 
