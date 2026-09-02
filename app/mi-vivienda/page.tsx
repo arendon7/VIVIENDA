@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
 import {
   FinancialNumber,
@@ -31,8 +32,10 @@ const demoLoanHealth = evaluateLoanHealth({
 export default function MiViviendaPage() {
   return (
     <>
-      <header className="shell site-header">
-        <a className="brand" href="/">VIVIENDA</a>
+      <header className="shell site-header cc-site-header">
+        <a className="cc-brand-link" href="/" aria-label="Casa con Criterio · inicio">
+          <BrandLogo width={230} priority />
+        </a>
         <nav aria-label="Mi Vivienda">
           <a className="nav-link" href="/revisar">Revisar crédito</a>
           <a className="nav-link" href="/verificar">Verificar</a>
@@ -48,7 +51,7 @@ export default function MiViviendaPage() {
         <section className={styles.hero} aria-labelledby="mi-vivienda-title">
           <div>
             <p className="eyebrow">Mi Vivienda</p>
-            <h1 id="mi-vivienda-title" className={styles.title}>Tu crédito, tus decisiones y lo que falta verificar.</h1>
+            <h1 id="mi-vivienda-title" className={`${styles.title} cc-display`}>Tu crédito, tus decisiones y lo que falta verificar.</h1>
             <p className="lede">
               Un lugar para entender el estado actual, comparar acciones y avanzar con más precisión sin confundir simulación, oferta externa o conclusión jurídica.
             </p>
@@ -72,8 +75,8 @@ export default function MiViviendaPage() {
           <article className={`surface ${styles.twin}`}>
             <div className={styles.sectionHeading}>
               <div>
-                <p className="eyebrow">Mortgage Twin</p>
-                <h2 id="twin-heading">Estado actual conocido</h2>
+                <p className="eyebrow">Mi Situación · Mortgage Twin</p>
+                <h2 id="twin-heading" className="cc-display">Estado actual conocido</h2>
               </div>
               <span className={styles.demoTag}>Datos de ejemplo</span>
             </div>
@@ -94,7 +97,7 @@ export default function MiViviendaPage() {
 
           <aside className={`surface ${styles.nextAction}`} aria-labelledby="next-action-heading">
             <p className="eyebrow">Siguiente mejor acción</p>
-            <h2 id="next-action-heading">Compara el prepago antes de buscar una solución externa.</h2>
+            <h2 id="next-action-heading" className="cc-display">Compara el prepago antes de buscar una solución externa.</h2>
             <p className="section-copy">
               El ejemplo ya tiene precisión C2 para el motor soportado y declara capacidad de abono. Primero conviene comparar reducción de plazo frente a reducción de cuota.
             </p>
@@ -116,7 +119,7 @@ export default function MiViviendaPage() {
             <div className={styles.sectionHeading}>
               <div>
                 <p className="eyebrow">Ruta de precisión</p>
-                <h2 id="precision-heading">Más datos no siempre significa más verdad.</h2>
+                <h2 id="precision-heading" className="cc-display">Más datos no siempre significa más verdad.</h2>
               </div>
             </div>
             <ol className={styles.precisionPath}>
@@ -131,7 +134,7 @@ export default function MiViviendaPage() {
           <div className={styles.sectionHeading}>
             <div>
               <p className="eyebrow">Workspace</p>
-              <h2 id="workspace-heading">El resto aparece cuando aporta a una decisión.</h2>
+              <h2 id="workspace-heading" className="cc-display">El resto aparece cuando aporta a una decisión.</h2>
             </div>
           </div>
           <div className={styles.workspaceGrid}>
@@ -144,15 +147,17 @@ export default function MiViviendaPage() {
         <section className={styles.endState}>
           <div>
             <p className="eyebrow">Continuar</p>
-            <h2>¿Quieres trabajar sobre un crédito real?</h2>
+            <h2 className="cc-display">¿Quieres trabajar sobre un crédito real?</h2>
             <p className="section-copy">Empieza por el Quick Check. La primera lectura no requiere cédula, teléfono, correo ni extracto.</p>
           </div>
           <a className="button button-primary" href="/revisar">Revisar mi crédito</a>
         </section>
       </main>
 
-      <footer className="shell site-footer">
-        VIVIENDA · Preview v0.11 · Loan Health cualitativo, simulaciones y rutas con precisión explícita.
+      <footer className="shell site-footer cc-footer">
+        <BrandLogo width={190} />
+        <p>Mi Vivienda · preview de producto con precisión explícita.</p>
+        <p>Simulaciones, Loan Health y rutas sin confundir orientación, oferta ni verificación.</p>
       </footer>
     </>
   );
