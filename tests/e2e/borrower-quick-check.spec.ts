@@ -74,6 +74,9 @@ test("delivers first useful result without asking identity or contact data", asy
   await expect(
     resultRegion.getByRole("link", { name: "Volver al inicio" }),
   ).toHaveAttribute("href", "/");
+  const provenance = resultRegion.getByRole("complementary", { name: "Fuente y vigencia" });
+  await expect(provenance.getByText("Declarado por el usuario", { exact: true })).toBeVisible();
+  await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
   await expect(page.getByText("Guardar esto para después", { exact: true })).toHaveCount(0);
 
   const forbiddenInputs = ["cédula", "teléfono", "correo", "email"];
@@ -150,7 +153,10 @@ test("upgrades a compatible peso case from C1 to a real C2 modeled scenario", as
   await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toBeVisible();
   await expect(page.getByText("Capital adicional que aportarías durante el escenario")).toBeVisible();
   await expect(page.getByText("Intereses futuros nominales que el modelo estima que dejarían de causarse")).toBeVisible();
-  await expect(page.getByText("Valor atribuible a VIVIENDA en esta simulación self-service")).toBeVisible();
+  await expect(page.getByText("Valor atribuible a Casa con Criterio en esta simulación self-service")).toBeVisible();
+  const provenance = page.getByRole("complementary", { name: "Fuente y vigencia" });
+  await expect(provenance.getByText("Cálculo / simulación", { exact: true })).toBeVisible();
+  await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
 });
 
 test("refuses to apply the peso annuity model to UVR", async ({ page }) => {
@@ -178,8 +184,11 @@ test("keeps locally transcribed statement data at C1 and never grants C3", async
   await buildGuidedMortgageTwin(page);
 
   const twin = page.locator('section[aria-labelledby="mortgage-twin-title"]');
-  await expect(twin.getByText("Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
+  await expect(twin.getByText("Datos transcritos por ti desde un extracto local. Casa con Criterio no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
   await expect(twin.getByLabel("Nivel de precisión: Estimación")).toHaveText("C1 · Estimación");
+  const provenance = twin.getByRole("complementary", { name: "Fuente y vigencia" });
+  await expect(provenance.getByText("Declarado por el usuario", { exact: true })).toBeVisible();
+  await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Demostración · extracción simulada", { exact: true })).toHaveCount(0);
 });
