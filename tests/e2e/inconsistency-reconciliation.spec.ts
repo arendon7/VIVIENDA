@@ -94,14 +94,15 @@ test.describe("Inconsistency Reconciliation v0.15", () => {
     await expect(page.getByText("Saldo/plazo de la segunda fuente con fecha de corte comparable")).toBeVisible();
   });
 
-  test("judicial state keeps R10 ahead of an ordinary mismatch", async ({ page }) => {
+  test("judicial state keeps R10 ahead of an ordinary mismatch without pretending to ingest court documents", async ({ page }) => {
     await completeReconciliation(page, {
       kind: "El extracto parece decir algo distinto a lo pactado",
       judicial: "Sí; recibí un documento de juzgado o sé que hay un proceso",
     });
 
     await expect(page.getByText("Revisión prioritaria", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Revisar el documento judicial" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveAttribute("href", "#evidencia");
+    await expect(page.locator('a[href="/verificar"]')).toHaveCount(0);
     await expect(page.getByText("Revisión jurídica prioritaria del proceso")).toBeVisible();
     await expect(page.getByRole("link", { name: "Auditar la diferencia" })).toHaveCount(0);
     await expect(page.getByLabel("Límites de este resultado")).toContainText(/calcula términos ni genera una estrategia de defensa/);
