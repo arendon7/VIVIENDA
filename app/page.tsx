@@ -52,7 +52,6 @@ export default function HomePage() {
               <div className="actions">
                 <a className="button button-primary" href="/revisar">Revisar mi crédito</a>
                 <a className="button button-secondary" href="/mi-vivienda">Ver Mi Vivienda · preview</a>
-                <a className="button button-quiet" href="/revisar">Preparar mi ruta</a>
               </div>
               <p className="trust-line">Empieza sin cédula, teléfono ni credenciales bancarias. Los resultados iniciales muestran su nivel de precisión y los supuestos utilizados.</p>
               <p className="trust-line"><a href="/ayuda">¿Te está costando pagar o ya te están cobrando? Ubica primero qué tan urgente es →</a></p>
