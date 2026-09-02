@@ -1,0 +1,119 @@
+/* Casa con Criterio — shared decision-state primitives.
+   These styles encode presentation only; semantic truth remains in component text and domain contracts.
+*/
+
+.cc-status-badge {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.cc-chip[data-tone="neutral"] {
+  background: #F3F1EA;
+  color: #59636B;
+  border-color: #D9D8D1;
+}
+
+.cc-chip[data-tone="info"] {
+  background: #EEF2F5;
+  color: #425466;
+  border-color: #D5DDE3;
+}
+
+.cc-chip[data-tone="opportunity"] {
+  background: #F7EEDD;
+  color: #80540E;
+  border-color: #E5C783;
+}
+
+.cc-chip[data-tone="positive"] {
+  background: #EAF0EC;
+  color: #476C59;
+  border-color: #CBD9D0;
+}
+
+.cc-chip[data-tone="attention"] {
+  background: #F7EBDD;
+  color: #8A5317;
+  border-color: #E8C69D;
+}
+
+.cc-chip[data-tone="professional"] {
+  background: #F5E9E7;
+  color: #87433F;
+  border-color: #E2C2BE;
+}
+
+.cc-precision-badge {
+  border: 1px solid transparent;
+  font-family: var(--font-brand-ui), var(--cc-font-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-precision-badge[data-precision="C0"] {
+  background: #F3F1EA;
+  color: #59636B;
+  border-color: #D9D8D1;
+}
+
+.cc-precision-badge[data-precision="C1"] {
+  background: #F7EEDD;
+  color: #80540E;
+  border-color: #E5C783;
+}
+
+.cc-precision-badge[data-precision="C2"] {
+  background: #EAF0F4;
+  color: #27465E;
+  border-color: #C8D6E0;
+}
+
+.cc-precision-badge[data-precision="C3"] {
+  background: #EAF0EC;
+  color: #476C59;
+  border-color: #CBD9D0;
+}
+
+.cc-provenance-list {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.cc-provenance-list > div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.cc-provenance-list dt {
+  color: var(--cc-ink-muted);
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.cc-provenance-list dd {
+  margin: 0;
+  color: var(--cc-ink);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.evidence-rail > .cc-provenance-list + p {
+  margin-top: 14px;
+}
+
+@media (max-width: 620px) {
+  .cc-status-badge {
+    white-space: normal;
+    line-height: 1.25;
+    padding-block: 6px;
+  }
+
+  .cc-provenance-list > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
