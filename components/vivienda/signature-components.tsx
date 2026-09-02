@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 export type PrecisionLevel = "C0" | "C1" | "C2" | "C3";
+export type StatusTone = "neutral" | "info" | "opportunity" | "positive" | "attention" | "professional";
 
 const precisionLabels: Record<PrecisionLevel, string> = {
   C0: "Orientación",
@@ -11,8 +12,28 @@ const precisionLabels: Record<PrecisionLevel, string> = {
 
 export function PrecisionBadge({ level }: { level: PrecisionLevel }) {
   return (
-    <span className="precision-badge" aria-label={`Nivel de precisión: ${precisionLabels[level]}`}>
+    <span
+      className="precision-badge cc-precision-badge"
+      data-precision={level}
+      aria-label={`Nivel de precisión: ${precisionLabels[level]}`}
+    >
       {level} · {precisionLabels[level]}
+    </span>
+  );
+}
+
+export function StatusBadge({
+  children,
+  tone = "neutral",
+  ariaLabel,
+}: {
+  children: ReactNode;
+  tone?: StatusTone;
+  ariaLabel?: string;
+}) {
+  return (
+    <span className="cc-chip cc-status-badge" data-tone={tone} aria-label={ariaLabel}>
+      {children}
     </span>
   );
 }
@@ -29,7 +50,7 @@ export function FinancialNumber({
   return (
     <div className="fact">
       <dt>{label}</dt>
-      <dd>{value}</dd>
+      <dd className="cc-number">{value}</dd>
       {detail ? <div className="instrument-meta">{detail}</div> : null}
     </div>
   );
@@ -47,8 +68,10 @@ export function SourceFreshness({
   return (
     <aside className="evidence-rail" aria-label="Fuente y vigencia">
       <strong>Fuente y vigencia</strong>
-      <p>{source}</p>
-      <p>Corte: {cutoff}</p>
+      <dl className="cc-provenance-list">
+        <div><dt>Fuente</dt><dd>{source}</dd></div>
+        <div><dt>Corte</dt><dd>{cutoff}</dd></div>
+      </dl>
       {children}
     </aside>
   );
@@ -98,7 +121,7 @@ export function BenefitBreakdown({ rows }: { rows: BenefitRow[] }) {
       {rows.map((row) => (
         <div className={`ledger-row ${row.kind === "positive" ? "positive" : ""}`} key={row.label}>
           <span>{row.label}</span>
-          <strong>{row.value}</strong>
+          <strong className="cc-number">{row.value}</strong>
         </div>
       ))}
     </div>
@@ -125,7 +148,7 @@ export function DecisionResult({
       <div className="result-grid">
         <div>
           <PrecisionBadge level={precision} />
-          <h2 id="decision-title" style={{ marginTop: 14 }}>{title}</h2>
+          <h2 id="decision-title" className="cc-display" style={{ marginTop: 14 }}>{title}</h2>
           <p className="section-copy">{explanation}</p>
           <dl className="fact-grid">
             {facts.map((fact) => <FinancialNumber key={fact.label} {...fact} />)}
@@ -143,13 +166,13 @@ export function DiyAssistedChoice() {
     <div className="choice-grid" aria-label="Siguientes opciones">
       <article className="surface choice-card">
         <p className="eyebrow">Hazlo directamente</p>
-        <h3>Puedes gestionar el siguiente paso con tu entidad.</h3>
+        <h3 className="cc-display">Puedes gestionar el siguiente paso con tu entidad.</h3>
         <p className="section-copy">Te mostraremos qué solicitar y qué evidencia conservar. No necesitas contratar acompañamiento para usar esta ruta.</p>
         <a className="button button-secondary" href="/revisar">Preparar mi ruta</a>
       </article>
       <article className="surface choice-card">
         <p className="eyebrow">Acompañamiento</p>
-        <h3>Podemos ayudarte a verificar y ejecutar la decisión.</h3>
+        <h3 className="cc-display">Podemos ayudarte a verificar y ejecutar la decisión.</h3>
         <p className="section-copy">Primero confirmamos los datos del crédito. Una gestión de terceros sigue sujeta a sus propias decisiones y políticas.</p>
         <a className="button button-primary" href="/revisar">Mejorar precisión</a>
       </article>
@@ -163,12 +186,12 @@ export function MortgageTwinSnapshot() {
       <div className="section-header">
         <div>
           <p className="eyebrow">Mortgage Twin</p>
-          <h2 id="twin-title">Tu crédito, entendido como un sistema vivo.</h2>
+          <h2 id="twin-title" className="cc-display">Tu crédito, entendido como un sistema vivo.</h2>
           <p className="section-copy">Esta es una vista conceptual del producto. C3 solo aparecerá cuando los campos materiales provengan realmente del documento y hayan sido reconciliados.</p>
         </div>
-        <span className="precision-badge" aria-label="Vista conceptual no verificada">
+        <StatusBadge tone="neutral" ariaLabel="Vista conceptual no verificada">
           Vista conceptual · no verificada
-        </span>
+        </StatusBadge>
       </div>
       <dl className="twin-facts">
         <FinancialNumber label="Saldo" value="$180.000.000" />
