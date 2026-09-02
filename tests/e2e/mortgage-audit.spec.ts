@@ -20,7 +20,9 @@ test.describe("Mortgage Audit assisted preview v0.12", () => {
     await expect(page.getByText("PROFESSIONAL_REVIEW_COMPLETED", { exact: true })).toBeVisible();
     await expect(page.getByText("SUBMISSION_RECORDED", { exact: true })).toHaveCount(0);
 
-    await expect(page.getByRole("link", { name: "Preparar mi evidencia" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Ver qué evidencia preparar" }).first()).toHaveAttribute("href", "#evidence-heading");
+    await expect(page.getByRole("link", { name: "Extracto como guía" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Preparar mi evidencia" })).toHaveCount(0);
   });
 
   test("preserves the no-power and no-guarantee disclosure", async ({ page }) => {
