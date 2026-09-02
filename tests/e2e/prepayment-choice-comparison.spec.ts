@@ -15,12 +15,13 @@ async function openCompatibleWorkspace(page: import("@playwright/test").Page) {
   await page.getByLabel("Tasa efectiva anual — EA (%)").fill("12");
   await page.getByLabel("Cuotas restantes").fill("180");
   await page.getByRole("radio", { name: "Cuota constante en pesos" }).first().check();
-  await page.getByRole("button", { name: "Construir mi Mortgage Twin" }).click();
-  await expect(page.getByRole("heading", { name: "Tu fotografía declarada ya tiene la base material del snapshot." })).toBeVisible();
+  await page.getByRole("button", { name: "Organizar mi situación" }).click();
+  await expect(page.getByRole("heading", { name: "Ya organizamos los datos base de tu situación." })).toBeVisible();
 
-  await page.getByRole("button", { name: "Ver mi Loan Health y rutas" }).click();
+  await page.getByRole("button", { name: "Ver mi situación y oportunidades" }).click();
   const workspace = page.locator('section[aria-labelledby="opportunity-workspace-title"]');
   await expect(workspace).toBeVisible();
+  await expect(workspace.getByRole("heading", { name: "Entiende tu situación, descubre qué merece atención y compara las opciones que ya tienen suficiente información." })).toBeVisible();
   return workspace;
 }
 
@@ -28,7 +29,9 @@ async function modelTwentyMillion(page: import("@playwright/test").Page) {
   const workspace = await openCompatibleWorkspace(page);
   await workspace.getByLabel("Abono único que quieres comparar (COP)").fill("20000000");
   await workspace.getByRole("button", { name: "Comparar reducir plazo vs. reducir cuota" }).click();
-  await expect(workspace.getByText("R1 + R2 · C2 modelado", { exact: true })).toBeVisible();
+  await expect(workspace.getByText("Dos opciones · C2 modelado", { exact: true })).toBeVisible();
+  await expect(workspace.getByText("Reducir plazo · C2", { exact: true })).toBeVisible();
+  await expect(workspace.getByText("Reducir cuota · C2", { exact: true })).toBeVisible();
   return workspace;
 }
 
@@ -38,6 +41,8 @@ test("models the same immediate partial prepayment under reduce-term and reduce-
   const reduceTerm = workspace.locator('article[aria-labelledby="reduce-term-title"]');
   const reducePayment = workspace.locator('article[aria-labelledby="reduce-payment-title"]');
 
+  await expect(reduceTerm).toHaveAttribute("data-route-code", "R1_PREPAGO_PLAZO");
+  await expect(reducePayment).toHaveAttribute("data-route-code", "R2_PREPAGO_CUOTA");
   await expect(workspace.getByText(/Abono único:.*20\.000\.000/)).toBeVisible();
   await expect(reduceTerm).toContainText("141 cuotas");
   await expect(reduceTerm).toContainText("39 cuotas");
@@ -49,32 +54,31 @@ test("models the same immediate partial prepayment under reduce-term and reduce-
   await expect(reducePayment).toContainText("180 cuotas");
   await expect(reducePayment).toContainText(/21\.795\.54[0-9]/);
 
-  const r1 = workspace.locator(".extraction-row").filter({ hasText: "R1_PREPAGO_PLAZO" });
-  const r2 = workspace.locator(".extraction-row").filter({ hasText: "R2_PREPAGO_CUOTA" });
-  const r3 = workspace.locator(".extraction-row").filter({ hasText: "R3_RESTRUCTURACION_546_20" });
-  const r5 = workspace.locator(".extraction-row").filter({ hasText: "R5_CESION_546_24" });
+  const r1 = workspace.locator('.extraction-row[data-route-code="R1_PREPAGO_PLAZO"]');
+  const r2 = workspace.locator('.extraction-row[data-route-code="R2_PREPAGO_CUOTA"]');
+  const r3 = workspace.locator('.extraction-row[data-route-code="R3_RESTRUCTURACION_546_20"]');
+  const r5 = workspace.locator('.extraction-row[data-route-code="R5_CESION_546_24"]');
 
-  await expect(r1.getByText(/R1_PREPAGO_PLAZO · precisión C2 solo para esta ruta/)).toBeVisible();
-  await expect(r2.getByText(/R2_PREPAGO_CUOTA · precisión C2 solo para esta ruta/)).toBeVisible();
-  await expect(r3.getByText(/R3_RESTRUCTURACION_546_20 · precisión C1/)).toBeVisible();
-  await expect(r5.getByText(/R5_CESION_546_24 · precisión C1/)).toBeVisible();
+  await expect(r1.getByText("Precisión C2 solo para esta opción", { exact: true })).toBeVisible();
+  await expect(r2.getByText("Precisión C2 solo para esta opción", { exact: true })).toBeVisible();
+  await expect(r3.getByText("Precisión C1", { exact: true })).toBeVisible();
+  await expect(r5.getByText("Precisión C1", { exact: true })).toBeVisible();
+  await expect(workspace.getByText("R1_PREPAGO_PLAZO", { exact: true })).toHaveCount(0);
+  await expect(workspace.getByText("R2_PREPAGO_CUOTA", { exact: true })).toHaveCount(0);
   await expect(workspace.getByText("La comparación no elige por ti.", { exact: true })).toBeVisible();
 });
 
 test("invalidates both route-specific C2 states as soon as the modeled lump sum changes", async ({ page }) => {
   const workspace = await modelTwentyMillion(page);
 
-  await expect(workspace.getByText("R1 · C2 modelado", { exact: true })).toBeVisible();
-  await expect(workspace.getByText("R2 · C2 modelado", { exact: true })).toBeVisible();
-
   await workspace.getByLabel("Abono único que quieres comparar (COP)").fill("25000000");
 
-  await expect(workspace.getByText("R1 + R2 · C2 modelado", { exact: true })).toHaveCount(0);
-  await expect(workspace.getByText("R1 · C2 modelado", { exact: true })).toHaveCount(0);
-  await expect(workspace.getByText("R2 · C2 modelado", { exact: true })).toHaveCount(0);
+  await expect(workspace.getByText("Dos opciones · C2 modelado", { exact: true })).toHaveCount(0);
+  await expect(workspace.getByText("Reducir plazo · C2", { exact: true })).toHaveCount(0);
+  await expect(workspace.getByText("Reducir cuota · C2", { exact: true })).toHaveCount(0);
   await expect(workspace.locator('[data-loan-health-dimension="prepayment"]').getByText("Explorar", { exact: true })).toBeVisible();
-  await expect(workspace.locator(".extraction-row").filter({ hasText: "R1_PREPAGO_PLAZO" })).toHaveCount(0);
-  await expect(workspace.locator(".extraction-row").filter({ hasText: "R2_PREPAGO_CUOTA" })).toHaveCount(0);
+  await expect(workspace.locator('.extraction-row[data-route-code="R1_PREPAGO_PLAZO"]')).toHaveCount(0);
+  await expect(workspace.locator('.extraction-row[data-route-code="R2_PREPAGO_CUOTA"]')).toHaveCount(0);
 });
 
 test("keeps professional review above both modeled prepayment optimizations", async ({ page }) => {
@@ -83,12 +87,13 @@ test("keeps professional review above both modeled prepayment optimizations", as
   await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("executive");
 
   await expect(workspace.getByRole("heading", { name: "Hay una situación que debe revisarse profesionalmente antes de priorizar optimizaciones ordinarias." })).toBeVisible();
-  await expect(workspace.getByText("R1 · C2 modelado", { exact: true })).toBeVisible();
-  await expect(workspace.getByText("R2 · C2 modelado", { exact: true })).toBeVisible();
+  await expect(workspace.getByText("Reducir plazo · C2", { exact: true })).toBeVisible();
+  await expect(workspace.getByText("Reducir cuota · C2", { exact: true })).toBeVisible();
 
   const firstRoute = workspace.locator(".extraction-row").first();
-  await expect(firstRoute).toContainText("R10_EXECUTIVE_DEFENSE");
-  await expect(firstRoute).toContainText("precisión C1");
+  await expect(firstRoute).toHaveAttribute("data-route-code", "R10_EXECUTIVE_DEFENSE");
+  await expect(firstRoute.getByText("Precisión C1", { exact: true })).toBeVisible();
+  await expect(firstRoute.getByText("R10_EXECUTIVE_DEFENSE", { exact: true })).toHaveCount(0);
 });
 
 test("keeps the comparison and route cards usable without horizontal overflow at 390 px", async ({ page }) => {
