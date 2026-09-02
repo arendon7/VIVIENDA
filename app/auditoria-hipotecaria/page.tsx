@@ -49,7 +49,7 @@ export default function AuditoriaHipotecariaPage() {
             <p className="eyebrow">Auditoría Hipotecaria · R7</p>
             <h1>Entiende una diferencia concreta antes de escalar.</h1>
             <p className="lede">
-              Organizamos la evidencia, verificamos qué ocurrió y hacemos una revisión profesional para decidir si basta una explicación, falta información o existe una inconsistencia que merece actuación.
+              Esta preview muestra cómo se organizaría la evidencia, qué tendría que verificar una revisión profesional y cómo se decidiría si basta una explicación, falta información o existe una inconsistencia que merece actuación.
             </p>
             <div className="actions">
               <a className="button button-primary" href="#evidence-heading">Ver qué evidencia preparar</a>
@@ -107,8 +107,8 @@ export default function AuditoriaHipotecariaPage() {
         <section className={styles.section} aria-labelledby="process-heading">
           <div className={styles.sectionHeading}>
             <div>
-              <p className="eyebrow">Proceso</p>
-              <h2 id="process-heading">La auditoría avanza por evidencia, no por promesas.</h2>
+              <p className="eyebrow">Proceso previsto</p>
+              <h2 id="process-heading">Una auditoría real tendría que avanzar por evidencia, no por promesas.</h2>
             </div>
           </div>
           <ol className={styles.phaseList}>
@@ -130,9 +130,9 @@ export default function AuditoriaHipotecariaPage() {
           <div className={`surface ${styles.resultPanel}`}>
             <div className={styles.sectionHeading}>
               <div>
-                <p className="eyebrow">Resultado profesional</p>
-                <h2 id="result-heading">La auditoría no necesita “encontrar algo ilegal” para ser útil.</h2>
-                <p className="section-copy">El entregable separa hechos, evidencia, incertidumbre y siguiente ruta. Estos son los únicos estados previstos en v0.12.</p>
+                <p className="eyebrow">Resultado profesional previsto</p>
+                <h2 id="result-heading">Una revisión profesional no necesita “encontrar algo ilegal” para ser útil.</h2>
+                <p className="section-copy">El entregable previsto separaría hechos, evidencia, incertidumbre y siguiente ruta. Estos son los únicos estados contemplados en esta preview v0.12.</p>
               </div>
             </div>
             <div className={styles.findingGrid}>
