@@ -66,7 +66,10 @@ test("keeps the local-reference filename ephemeral and the completed snapshot at
   await expect(page.getByText("Mortgage Twin guiado · C1", { exact: true })).toBeVisible();
   await expect(twin.getByLabel("Nivel de precisión: Estimación")).toHaveText("C1 · Estimación");
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
-  await expect(twin.getByText("Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
+  await expect(twin.getByText("Datos transcritos por ti desde un extracto local. Casa con Criterio no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
+  const provenance = twin.getByRole("complementary", { name: "Fuente y vigencia" });
+  await expect(provenance.getByText("Declarado por el usuario", { exact: true })).toBeVisible();
+  await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/verificar$/);
   expect(page.url()).not.toContain("mi-extracto-privado");
   expect(page.url()).not.toContain("180000000");
