@@ -240,7 +240,7 @@ export function ReconciliationTool() {
             <h2>{displayAction.title}</h2>
             <p className="section-copy">{displayAction.explanation}</p>
             {hasR10 ? (
-              <a className="button button-primary" href="/verificar">Revisar el documento judicial</a>
+              <a className="button button-primary" href="#evidencia">Ver qué documentos preparar</a>
             ) : hasR7 ? (
               <a className="button button-primary" href="/auditoria-hipotecaria">Auditar la diferencia</a>
             ) : null}
@@ -284,7 +284,7 @@ export function ReconciliationTool() {
           </div>
         </section>
 
-        <section className={styles.section} aria-labelledby="reconciliation-evidence-heading">
+        <section className={styles.section} id="evidencia" aria-labelledby="reconciliation-evidence-heading">
           <div className={styles.sectionHeading}>
             <p className="eyebrow">Evidencia</p>
             <h2 id="reconciliation-evidence-heading">Qué conviene tener a la mano</h2>
