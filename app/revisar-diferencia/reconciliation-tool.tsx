@@ -339,14 +339,19 @@ export function ReconciliationTool() {
         ) : null}
 
         <div className={styles.sourceBlock}>
-          <SourceFreshness source="Información de crédito de vivienda + deber de información" cutoff="26 ago 2026">
+          <SourceFreshness
+            source="Información de crédito de vivienda + deber de información"
+            sourceClass="public"
+            cutoff="26 ago 2026"
+            status="current"
+          >
             <p>Los extractos permiten contrastar campos como tasa, saldo, plazo/cuotas y discriminación del pago. Una diferencia exige comparar fuentes equivalentes antes de concluir que existe un error.</p>
           </SourceFreshness>
         </div>
 
         <section className={styles.boundary} aria-label="Límites de este resultado">
           <strong>Este resultado no concluye que exista un error, ilegalidad, fraude o devolución a tu favor.</strong>
-          <p>Es orientación C0 basada en tus respuestas. Incluso si declaraste dos fuentes, VIVIENDA todavía no ha leído ni reconciliado esos documentos y no concede C2 ni C3 desde este flujo.</p>
+          <p>Es orientación C0 basada en tus respuestas. Incluso si declaraste dos fuentes, Casa con Criterio todavía no ha leído ni reconciliado esos documentos y no concede C2 ni C3 desde este flujo.</p>
           {hasR10 ? <p>Si reportaste un proceso judicial, este flujo tampoco calcula términos ni genera una estrategia de defensa.</p> : null}
         </section>
 
