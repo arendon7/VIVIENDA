@@ -121,7 +121,8 @@ test("a legal route can request professional review but cannot auto-complete law
 
   const origin = timeline.locator("[data-case-origin]");
   await expect(origin).toHaveAttribute("data-track", "legal");
-  await expect(origin.getByText("Revisión jurídica", { exact: true })).toBeVisible();
+  const accompaniment = origin.getByText("Tipo de acompañamiento", { exact: true }).locator("..");
+  await expect(accompaniment.getByText("Revisión jurídica", { exact: true })).toBeVisible();
   await expect(timeline.getByText("legal", { exact: true })).toHaveCount(0);
   await expect(capabilityRow(timeline, "Revisión profesional").getByText("No", { exact: true })).toBeVisible();
 
