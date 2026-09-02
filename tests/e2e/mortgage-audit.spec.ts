@@ -40,6 +40,12 @@ test.describe("Mortgage Audit assisted preview v0.12", () => {
     await expect(page.getByText("No garantiza ahorro, corrección o resultado.")).toBeVisible();
   });
 
+  test("keeps warning text on the AA-compliant color token", async ({ page }) => {
+    await page.goto("/auditoria-hipotecaria");
+
+    await expect(page.getByText("Preview de servicio asistido · no contratado")).toHaveCSS("color", "rgb(156, 93, 22)");
+  });
+
   test("is keyboard reachable and has no horizontal overflow", async ({ page }) => {
     await page.goto("/auditoria-hipotecaria");
 
