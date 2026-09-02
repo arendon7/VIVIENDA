@@ -1,20 +1,18 @@
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { ProductHeader, ProductIntro } from "@/components/brand/ProductChrome";
 import { QuickCheck } from "./quick-check";
 
 export default function RevisarPage() {
   return (
     <>
-      <header className="shell site-header cc-site-header">
-        <a className="cc-brand-link" href="/" aria-label="Casa con Criterio · inicio">
-          <BrandLogo width={230} priority />
-        </a>
-        <a className="nav-link" href="/">Volver al inicio</a>
-      </header>
+      <ProductHeader
+        ariaLabel="Análisis de crédito"
+        links={[{ href: "/", label: "Volver al inicio" }]}
+      />
       <main id="contenido" className="form-shell">
-        <p className="eyebrow">Radar Vivienda · primera lectura</p>
-        <p className="cc-commercial-line" style={{ marginTop: 0, marginBottom: 24 }}>
-          Conoce tus números antes de decidir qué hacer con ellos.
-        </p>
+        <ProductIntro
+          eyebrow="Radar Vivienda · primera lectura"
+          statement="Conoce tus números antes de decidir qué hacer con ellos."
+        />
         <QuickCheck />
       </main>
     </>
