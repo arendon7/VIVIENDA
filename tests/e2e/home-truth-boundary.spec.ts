@@ -16,3 +16,9 @@ test("keeps assisted execution explicitly preview-only on Home", async ({ page }
   await expect(page.getByText("Podemos ayudarte a verificar y ejecutar la decisión.", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Mejorar precisión" })).toHaveAttribute("href", "/revisar");
 });
+
+test("keeps muted navigation text on the AA-compliant color token", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator(".nav-link").first()).toHaveCSS("color", "rgb(101, 112, 120)");
+});
