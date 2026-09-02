@@ -1,3 +1,4 @@
+import { ProductFooter, ProductHeader } from "@/components/brand/ProductChrome";
 import { PrecisionBadge } from "@/components/vivienda/signature-components";
 import { buildMortgageAuditBlueprint } from "@/domain/assisted-execution/mortgage-audit";
 import {
@@ -30,13 +31,13 @@ const findingLabels = {
 export default function AuditoriaHipotecariaPage() {
   return (
     <>
-      <header className="shell site-header">
-        <a className="brand" href="/">VIVIENDA</a>
-        <nav aria-label="Auditoría Hipotecaria">
-          <a className="nav-link" href="/mi-vivienda">Mi Vivienda</a>
-          <a className="nav-link" href="/verificar">Verificar documentos</a>
-        </nav>
-      </header>
+      <ProductHeader
+        ariaLabel="Auditoría Hipotecaria"
+        links={[
+          { href: "/mi-vivienda", label: "Mi Vivienda" },
+          { href: "/verificar", label: "Verificar documentos" },
+        ]}
+      />
 
       <main id="contenido" className={`shell ${styles.main}`}>
         <section className={styles.previewNotice} aria-label="Estado de esta ruta">
@@ -47,7 +48,7 @@ export default function AuditoriaHipotecariaPage() {
         <section className={styles.hero}>
           <div>
             <p className="eyebrow">Auditoría Hipotecaria · R7</p>
-            <h1>Entiende una diferencia concreta antes de escalar.</h1>
+            <h1 className="cc-display">Entiende una diferencia concreta antes de escalar.</h1>
             <p className="lede">
               Organizamos la evidencia, verificamos qué ocurrió y hacemos una revisión profesional para decidir si basta una explicación, falta información o existe una inconsistencia que merece actuación.
             </p>
@@ -78,7 +79,7 @@ export default function AuditoriaHipotecariaPage() {
           <div className={styles.sectionHeading}>
             <div>
               <p className="eyebrow">Cuándo aparece</p>
-              <h2 id="trigger-heading">Primero debe existir un hecho concreto.</h2>
+              <h2 id="trigger-heading" className="cc-display">Primero debe existir un hecho concreto.</h2>
               <p className="section-copy">Una sospecha general no se convierte en reclamación. R7 nace cuando el router identifica una diferencia específica que puede documentarse.</p>
             </div>
           </div>
@@ -94,7 +95,7 @@ export default function AuditoriaHipotecariaPage() {
             <div className={styles.sectionHeading}>
               <div>
                 <p className="eyebrow">Evidencia</p>
-                <h2 id="evidence-heading">Pedimos lo necesario para aislar la diferencia.</h2>
+                <h2 id="evidence-heading" className="cc-display">Pedimos lo necesario para aislar la diferencia.</h2>
               </div>
             </div>
             <ul className={styles.checklist}>
@@ -108,7 +109,7 @@ export default function AuditoriaHipotecariaPage() {
           <div className={styles.sectionHeading}>
             <div>
               <p className="eyebrow">Proceso</p>
-              <h2 id="process-heading">La auditoría avanza por evidencia, no por promesas.</h2>
+              <h2 id="process-heading" className="cc-display">La auditoría avanza por evidencia, no por promesas.</h2>
             </div>
           </div>
           <ol className={styles.phaseList}>
@@ -131,7 +132,7 @@ export default function AuditoriaHipotecariaPage() {
             <div className={styles.sectionHeading}>
               <div>
                 <p className="eyebrow">Resultado profesional</p>
-                <h2 id="result-heading">La auditoría no necesita “encontrar algo ilegal” para ser útil.</h2>
+                <h2 id="result-heading" className="cc-display">La auditoría no necesita “encontrar algo ilegal” para ser útil.</h2>
                 <p className="section-copy">El entregable separa hechos, evidencia, incertidumbre y siguiente ruta. Estos son los únicos estados previstos en v0.12.</p>
               </div>
             </div>
@@ -150,7 +151,7 @@ export default function AuditoriaHipotecariaPage() {
           <div className={styles.sectionHeading}>
             <div>
               <p className="eyebrow">Ejecución segura</p>
-              <h2 id="events-heading">Qué tendría que ocurrir para que el servicio sea real.</h2>
+              <h2 id="events-heading" className="cc-display">Qué tendría que ocurrir para que el servicio sea real.</h2>
             </div>
           </div>
           <ol className={styles.eventList}>
@@ -166,7 +167,7 @@ export default function AuditoriaHipotecariaPage() {
         <section className={styles.boundaries} aria-labelledby="boundaries-heading">
           <div>
             <p className="eyebrow">Límites</p>
-            <h2 id="boundaries-heading">Aceptar una auditoría no equivale a contratar representación.</h2>
+            <h2 id="boundaries-heading" className="cc-display">Aceptar una auditoría no equivale a contratar representación.</h2>
           </div>
           <ul>
             <li>No concede facultad extrajudicial.</li>
@@ -180,16 +181,19 @@ export default function AuditoriaHipotecariaPage() {
         <section className={styles.endState}>
           <div>
             <p className="eyebrow">Primer paso</p>
-            <h2>Empieza por verificar la evidencia, no por firmar un poder.</h2>
+            <h2 className="cc-display">Empieza por verificar la evidencia, no por firmar un poder.</h2>
             <p className="section-copy">La ruta productiva futura pedirá autorización y acuerdo de servicio antes de persistir evidencia o iniciar revisión profesional.</p>
           </div>
           <a className="button button-primary" href="/verificar">Preparar evidencia</a>
         </section>
       </main>
 
-      <footer className="shell site-footer">
-        VIVIENDA · Auditoría Hipotecaria v0.12 · Preview sin contratación ni representación activa.
-      </footer>
+      <ProductFooter
+        lines={[
+          "Auditoría Hipotecaria v0.12 · servicio asistido en preview.",
+          "Sin contratación, poder, representación ni radicación activa.",
+        ]}
+      />
     </>
   );
 }
