@@ -148,9 +148,9 @@ export function DiyAssistedChoice() {
         <a className="button button-secondary" href="/revisar">Preparar mi ruta</a>
       </article>
       <article className="surface choice-card">
-        <p className="eyebrow">Acompañamiento</p>
-        <h3>Podemos ayudarte a verificar y ejecutar la decisión.</h3>
-        <p className="section-copy">Primero confirmamos los datos del crédito. Una gestión de terceros sigue sujeta a sus propias decisiones y políticas.</p>
+        <p className="eyebrow">Acompañamiento · preview</p>
+        <h3>La ruta asistida aparece solo cuando realmente aporta.</h3>
+        <p className="section-copy">Esta Beta todavía no activa contratación ni ejecución asistida. Antes de cualquier gestión habría que confirmar los datos del crédito y separar lo que depende de terceros.</p>
         <a className="button button-primary" href="/revisar">Mejorar precisión</a>
       </article>
     </div>
