@@ -333,9 +333,14 @@ export function AffordabilityTool() {
             <div>
               <p className="eyebrow">Dos referencias distintas</p>
               <h2 id="truth-heading">30% para planear no es lo mismo que 40% regulatorio.</h2>
-              <p className="section-copy">VIVIENDA usa 30% como benchmark educativo de endeudamiento total sobre ingreso neto declarado. La regulación vigente limita la primera cuota del crédito de vivienda al 40% de ingresos familiares acreditables. Ese 40% no es nuestra recomendación de sostenibilidad.</p>
+              <p className="section-copy">Casa con Criterio usa 30% como benchmark educativo de endeudamiento total sobre ingreso neto declarado. La regulación vigente limita la primera cuota del crédito de vivienda al 40% de ingresos familiares acreditables. Ese 40% no es nuestra recomendación de sostenibilidad.</p>
             </div>
-            <SourceFreshness source="Metodología v0.13 + referencia regulatoria Colombia" cutoff="26 ago 2026">
+            <SourceFreshness
+              source="Metodología v0.13 + referencia regulatoria Colombia"
+              sourceClass="public"
+              cutoff="26 ago 2026"
+              status="current"
+            >
               <p>Sin ingreso familiar acreditable explícito no calculamos un techo regulatorio personalizado.</p>
             </SourceFreshness>
           </section>
