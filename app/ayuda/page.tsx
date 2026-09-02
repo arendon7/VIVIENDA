@@ -8,7 +8,7 @@ export default function PaymentPressurePage() {
         ariaLabel="Ayuda con pagos"
         links={[
           { href: "/revisar", label: "Revisar crédito" },
-          { href: "/mi-vivienda", label: "Mi Vivienda · preview" },
+          { href: "/mi-vivienda", label: "Mi Vivienda · vista previa" },
         ]}
       />
       <main id="contenido">
