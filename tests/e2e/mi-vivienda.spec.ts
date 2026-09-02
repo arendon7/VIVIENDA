@@ -10,6 +10,8 @@ test.describe("Mi Vivienda + Loan Health product integration", () => {
     await expect(page.getByText("Loan Health · estado de decisión")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Existe al menos una acción concreta que puedes comparar con los datos actuales." })).toBeVisible();
     await expect(page.getByText("No es un score crediticio ni de riesgo.", { exact: false })).toBeVisible();
+    await expect(page.getByText("Beta 0.22 candidate", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText(/Preview v0\.11/)).toHaveCount(0);
 
     await expect(page.getByText("76/100")).toHaveCount(0);
     await expect(page.getByText("89%")).toHaveCount(0);
