@@ -35,7 +35,7 @@ export default function MiViviendaPage() {
         <a className="brand" href="/">VIVIENDA</a>
         <nav aria-label="Mi Vivienda">
           <a className="nav-link" href="/revisar">Revisar crédito</a>
-          <a className="nav-link" href="/verificar">Verificar</a>
+          <a className="nav-link" href="/verificar">Extracto como guía</a>
         </nav>
       </header>
 
@@ -136,7 +136,7 @@ export default function MiViviendaPage() {
           </div>
           <div className={styles.workspaceGrid}>
             <article className={`surface ${styles.workspaceItem}`}><strong>Simulaciones</strong><p>Escenarios comparables con supuestos visibles.</p><a href="/revisar">Abrir simulador</a></article>
-            <article className={`surface ${styles.workspaceItem}`}><strong>Documentos</strong><p>La infraestructura segura existe provider-ready, pero el vault persistente aún no está activo.</p><a href="/verificar">Ver flujo de verificación</a></article>
+            <article className={`surface ${styles.workspaceItem}`}><strong>Documentos</strong><p>La infraestructura segura existe provider-ready, pero el vault persistente aún no está activo.</p><a href="/verificar">Usar extracto como guía</a></article>
             <article className={`surface ${styles.workspaceItem}`}><strong>Casos</strong><p>Un Case solo debe existir después de elegir una ejecución real; preparar una ruta no crea representación ni radicación.</p><span>Se habilitará en contexto</span></article>
           </div>
         </section>
