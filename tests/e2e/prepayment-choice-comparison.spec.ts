@@ -45,7 +45,7 @@ test("models the same immediate partial prepayment under reduce-term and reduce-
 
   await expect(reducePayment).toContainText(/2\.089\.777/);
   await expect(reducePayment).toContainText(/232\.197/);
-  await expect(reducePayment).toContainText("10 %");
+  await expect(reducePayment).toContainText(/10\s?%/);
   await expect(reducePayment).toContainText("180 cuotas");
   await expect(reducePayment).toContainText(/21\.795\.54[0-9]/);
 
