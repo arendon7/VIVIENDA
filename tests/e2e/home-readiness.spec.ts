@@ -66,7 +66,7 @@ test.describe("Home Readiness v0.16", () => {
     await expect(page.getByText("/100", { exact: true })).toBeVisible();
     await expect(page.getByText("Índice orientativo propio de Casa con Criterio", { exact: true })).toBeVisible();
     await expect(page.getByText("No es DataCrédito, una calificación bancaria, una preaprobación ni una probabilidad de aprobación.", { exact: true })).toBeVisible();
-    await expect(page.getByText("Referencia mínima de aporte propio", { exact: true })).toBeVisible();
+    await expect(page.getByText("Referencia mínima de aporte propio", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "Los cálculos base se muestran aparte del índice." })).toBeVisible();
 
     const body = (await page.locator("body").innerText()).toLowerCase();
