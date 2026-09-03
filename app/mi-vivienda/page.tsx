@@ -36,7 +36,7 @@ export default function MiViviendaPage() {
         ariaLabel="Mi Vivienda"
         links={[
           { href: "/revisar", label: "Revisar crédito" },
-          { href: "/verificar", label: "Verificar" },
+          { href: "/verificar", label: "Extracto como guía" },
         ]}
       />
 
@@ -63,7 +63,7 @@ export default function MiViviendaPage() {
               <PrecisionBadge level="C2" />
             </div>
             <p className="section-copy">
-              Hay suficiente información confirmada para modelar el escenario soportado. Verificar documentalmente sigue siendo un paso distinto y necesario para C3.
+              Hay suficiente información confirmada para modelar el escenario soportado. La verificación documental sigue siendo un paso distinto y necesario para C3.
             </p>
             <a className="button button-primary" href="/revisar">Comparar una decisión</a>
           </div>
@@ -142,7 +142,7 @@ export default function MiViviendaPage() {
           </div>
           <div className={styles.workspaceGrid}>
             <article className={`surface ${styles.workspaceItem}`}><strong>Simulaciones</strong><p>Escenarios comparables con supuestos visibles.</p><a href="/revisar">Abrir simulador</a></article>
-            <article className={`surface ${styles.workspaceItem}`}><strong>Documentos</strong><p>La infraestructura segura para gestionar documentos está preparada, pero el archivo personal persistente aún no está activo.</p><a href="/verificar">Ver flujo de verificación</a></article>
+            <article className={`surface ${styles.workspaceItem}`}><strong>Documentos</strong><p>En esta Beta puedes usar tu extracto como referencia local para confirmar campos manualmente. El archivo personal persistente y la verificación documental no están activos.</p><a href="/verificar">Usar extracto como guía</a></article>
             <article className={`surface ${styles.workspaceItem}`}><strong>Planes y casos</strong><p>Un expediente solo debe existir después de elegir una ejecución real; preparar una opción no crea representación ni radicación.</p><span>Se habilitará en contexto</span></article>
           </div>
         </section>
