@@ -12,12 +12,16 @@ test.describe("Mi Vivienda + estado de decisión product integration", () => {
     await expect(page.getByText("No es una calificación crediticia ni de riesgo.", { exact: false })).toBeVisible();
     await expect(page.getByText("Loan Health · estado de decisión", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Preview de producto · sin cuenta ni persistencia activa", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Preview v0.11", { exact: true })).toHaveCount(0);
 
     await expect(page.getByText("76/100")).toHaveCount(0);
     await expect(page.getByText("89%")).toHaveCount(0);
 
     await expect(page.getByRole("link", { name: "Simular prepago" })).toHaveAttribute("href", "/revisar");
     await expect(page.getByRole("link", { name: "Revisar mi crédito" })).toHaveAttribute("href", "/revisar");
+    await expect(page.getByRole("link", { name: "Extracto como guía" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Usar extracto como guía" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Ver flujo de verificación" })).toHaveCount(0);
   });
 
   test("is keyboard reachable and has no horizontal overflow", async ({ page }) => {
