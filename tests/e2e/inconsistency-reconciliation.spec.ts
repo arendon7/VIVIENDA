@@ -105,7 +105,8 @@ test.describe("Inconsistency Reconciliation v0.15", () => {
     });
 
     await expect(page.getByText("Revisión prioritaria", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Revisar el documento judicial" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveAttribute("href", "#evidencia");
+    await expect(page.locator('a[href="/verificar"]')).toHaveCount(0);
     await expect(page.getByText("Revisión jurídica prioritaria del proceso")).toBeVisible();
     await expect(page.getByRole("link", { name: "Auditar la diferencia" })).toHaveCount(0);
     await expect(page.getByLabel("Límites de este resultado")).toContainText(/calcula términos ni genera una estrategia de defensa/);
