@@ -97,7 +97,7 @@ export default function AuditoriaHipotecariaPage() {
         ariaLabel="Auditoría Hipotecaria"
         links={[
           { href: "/mi-vivienda", label: "Mi Vivienda" },
-          { href: "/verificar", label: "Verificar documentos" },
+          { href: "/verificar", label: "Extracto como guía" },
         ]}
       />
 
@@ -112,10 +112,10 @@ export default function AuditoriaHipotecariaPage() {
             <p className="eyebrow">Auditoría Hipotecaria</p>
             <h1 className="cc-display">Entiende una diferencia concreta antes de escalar.</h1>
             <p className="lede">
-              Organizamos la evidencia, verificamos qué ocurrió y hacemos una revisión profesional para decidir si basta una explicación, falta información o existe una inconsistencia que merece actuación.
+              Esta vista previa muestra cómo se organizaría la evidencia, qué tendría que verificar una revisión profesional y cómo se decidiría si basta una explicación, falta información o existe una inconsistencia que merece actuación.
             </p>
             <div className="actions">
-              <a className="button button-primary" href="/verificar">Preparar mi evidencia</a>
+              <a className="button button-primary" href="#evidence-heading">Ver qué evidencia preparar</a>
               <a className="button button-secondary" href="/mi-vivienda">Volver a Mi Vivienda</a>
             </div>
           </div>
@@ -176,8 +176,8 @@ export default function AuditoriaHipotecariaPage() {
         <section className={styles.section} aria-labelledby="process-heading">
           <div className={styles.sectionHeading}>
             <div>
-              <p className="eyebrow">Proceso</p>
-              <h2 id="process-heading" className="cc-display">La auditoría avanza por evidencia, no por promesas.</h2>
+              <p className="eyebrow">Proceso previsto</p>
+              <h2 id="process-heading" className="cc-display">Una auditoría real tendría que avanzar por evidencia, no por promesas.</h2>
             </div>
           </div>
           <ol className={styles.phaseList}>
@@ -199,9 +199,9 @@ export default function AuditoriaHipotecariaPage() {
           <div className={`surface ${styles.resultPanel}`}>
             <div className={styles.sectionHeading}>
               <div>
-                <p className="eyebrow">Resultado profesional</p>
-                <h2 id="result-heading" className="cc-display">La auditoría no necesita “encontrar algo ilegal” para ser útil.</h2>
-                <p className="section-copy">El entregable separa hechos, evidencia, incertidumbre y siguiente acción. Estas son las conclusiones que la revisión puede producir sin forzar un resultado.</p>
+                <p className="eyebrow">Resultado profesional previsto</p>
+                <h2 id="result-heading" className="cc-display">Una revisión profesional no necesita “encontrar algo ilegal” para ser útil.</h2>
+                <p className="section-copy">El entregable previsto separaría hechos, evidencia, incertidumbre y siguiente acción. Estas son las conclusiones que una revisión podría producir sin forzar un resultado.</p>
               </div>
             </div>
             <div className={styles.findingGrid}>
@@ -252,10 +252,10 @@ export default function AuditoriaHipotecariaPage() {
         <section className={styles.endState}>
           <div>
             <p className="eyebrow">Primer paso</p>
-            <h2 className="cc-display">Empieza por verificar la evidencia, no por firmar un poder.</h2>
-            <p className="section-copy">Un servicio real requerirá autorización de datos y aceptación expresa de su alcance antes de conservar evidencia o iniciar revisión profesional.</p>
+            <h2 className="cc-display">Empieza por preparar la evidencia, no por firmar un poder.</h2>
+            <p className="section-copy">Un servicio real requeriría autorización de datos y aceptación expresa de su alcance antes de conservar evidencia o iniciar revisión profesional.</p>
           </div>
-          <a className="button button-primary" href="/verificar">Preparar evidencia</a>
+          <a className="button button-primary" href="#evidence-heading">Ver qué evidencia preparar</a>
         </section>
       </main>
 
