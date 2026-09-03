@@ -143,7 +143,7 @@ export function ModeledScenario({
       {!comparison && modality === "pesos" ? (
         <div className="surface form-card" style={{ marginTop: 16 }} role="status">
           <strong>Completa tasa, cuotas y sistema compatible para activar el modelo.</strong>
-          <p className="section-copy">Si tu sistema es distinto o no lo conoces, el siguiente paso correcto es verificar documentación; no aproximar una anualidad como si fuera universal.</p>
+          <p className="section-copy">Si tu sistema es distinto o no lo conoces, el siguiente paso correcto es usar el extracto como guía para confirmar los datos; no aproximar una anualidad como si fuera universal.</p>
         </div>
       ) : null}
 
@@ -184,10 +184,10 @@ export function ModeledScenario({
                 { label: "Valor atribuible a Casa con Criterio en esta simulación autogestionada", value: formatCop(0) },
               ]} />
               <div className="actions">
-                <a className="button button-primary" href="/verificar">Verificar con extracto</a>
+                <a className="button button-primary" href="/verificar">Usar mi extracto como guía</a>
                 <button className="button button-secondary" type="button" onClick={onBack}>Cambiar mis datos</button>
               </div>
-              <p className="field-hint">El siguiente salto de precisión depende de evidencia documental reconciliada; no de añadir más supuestos manuales.</p>
+              <p className="field-hint">El extracto puede servir como referencia local para confirmar campos. C3 solo corresponde a evidencia documental realmente derivada y reconciliada.</p>
             </div>
           </DecisionResult>
         </div>
