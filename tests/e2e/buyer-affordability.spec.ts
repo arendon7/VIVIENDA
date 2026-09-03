@@ -16,6 +16,7 @@ test.describe("Buyer affordability v0.13", () => {
     await expect(page.getByRole("heading", { name: "Tu primer rango de planificación" })).toBeFocused();
     await expect(page.getByText("Cuota mensual para planear")).toBeVisible();
     await expect(page.getByText(/2\.000\.000/).first()).toBeVisible();
+    await expect(page.getByText("Referencia de planificación", { exact: true })).toBeVisible();
     await expect(page.getByText("30% para planear no es lo mismo que 40% regulatorio.")).toBeVisible();
     await expect(page.getByText("Principal modelado")).toHaveCount(0);
 
@@ -29,6 +30,7 @@ test.describe("Buyer affordability v0.13", () => {
     await expect(page.getByText("Techo del escenario modelado")).toBeVisible();
     await expect(page.getByText(/263\.448\.623/).first()).toBeVisible();
     await expect(page.getByText("Hoy te limita más la capacidad mensual del escenario.").first()).toBeVisible();
+    await expect(page.getByText("Monto de crédito modelado", { exact: true })).toBeVisible();
     await expect(page.getByText("Crédito + efectivo")).toBeVisible();
 
     const body = (await page.locator("body").innerText()).toLowerCase();
@@ -36,6 +38,10 @@ test.describe("Buyer affordability v0.13", () => {
     expect(body).not.toContain("te prestan hasta");
     expect(body).not.toMatch(/\d+\s*%\s+de\s+probabilidad/);
     expect(body).not.toContain("tu score es");
+    expect(body).not.toContain("benchmark");
+    expect(body).not.toContain("ltv");
+    expect(body).not.toContain("principal modelado");
+    expect(body).not.toContain("persistencia");
   });
 
   test("keeps VIS and non-VIS separate when category is unknown", async ({ page }) => {
@@ -51,14 +57,14 @@ test.describe("Buyer affordability v0.13", () => {
     await expect(page.getByRole("article")).toHaveCount(2);
   });
 
-  test("shows a valid zero-room result when existing debt exhausts the planning benchmark", async ({ page }) => {
+  test("shows a valid zero-room result when existing debt exhausts the planning reference", async ({ page }) => {
     await page.goto("/comprar/cuanto-puedo-comprar");
     await page.getByLabel("Ingreso neto mensual del hogar").fill("10000000");
     await page.getByLabel("Cuotas mensuales de otras deudas").fill("4000000");
     await page.getByLabel("Cuota inicial disponible").fill("100000000");
     await page.getByRole("button", { name: "Calcular mi rango" }).click();
 
-    await expect(page.getByText("Con el benchmark de planificación actual no queda espacio mensual para una nueva cuota de vivienda.")).toBeVisible();
+    await expect(page.getByText("Con la referencia de planificación actual no queda espacio mensual para una nueva cuota de vivienda.")).toBeVisible();
     await expect(page.getByText(/\$\s*0/).first()).toBeVisible();
   });
 
