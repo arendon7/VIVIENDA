@@ -9,7 +9,7 @@ export default function ReconciliationPage() {
         links={[
           { href: "/revisar", label: "Revisar crédito" },
           { href: "/ayuda", label: "Dificultad para pagar" },
-          { href: "/mi-vivienda", label: "Mi Vivienda · vista previa" },
+          { href: "/mi-vivienda", label: "Mi Vivienda" },
         ]}
       />
       <main id="contenido">
