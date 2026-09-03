@@ -104,7 +104,7 @@ export function AffordabilityTool() {
       setC1(null);
       if (cause instanceof BuyerAffordabilityError) {
         setError(cause.code === "invalid_net_income"
-          ? "Necesitamos un ingreso mensual mayor que cero para calcular el benchmark."
+          ? "Necesitamos un ingreso mensual mayor que cero para calcular la referencia de planificación."
           : cause.message);
       } else {
         setError("No pudimos calcular este escenario. Revisa los datos e inténtalo de nuevo.");
@@ -258,13 +258,13 @@ export function AffordabilityTool() {
                 <strong>{money(activeResult.planning.planningHousingPaymentRoom)}</strong>
               </div>
               {activeResult.planning.planningHousingPaymentRoom === 0 ? (
-                <p className={styles.warning}>Con el benchmark de planificación actual no queda espacio mensual para una nueva cuota de vivienda.</p>
+                <p className={styles.warning}>Con la referencia de planificación actual no queda espacio mensual para una nueva cuota de vivienda.</p>
               ) : (
-                <p className="section-copy">Es el espacio que queda bajo el benchmark educativo del 30% de endeudamiento recurrente total después de las otras cuotas declaradas.</p>
+                <p className="section-copy">Es el espacio que queda bajo la referencia educativa del 30% de endeudamiento recurrente total después de las otras cuotas declaradas.</p>
               )}
               <div className={styles.factRow}>
                 <div><span>Endeudamiento actual declarado</span><strong>{percent.format(activeResult.planning.currentDebtRatio)}</strong></div>
-                <div><span>Benchmark de planificación</span><strong>30%</strong></div>
+                <div><span>Referencia de planificación</span><strong>30%</strong></div>
                 <div><span>Cuota inicial declarada</span><strong>{money(baseInput.availableDownPayment)}</strong></div>
               </div>
             </section>
@@ -286,7 +286,7 @@ export function AffordabilityTool() {
               )}
               <div className={styles.factRow}>
                 <div><span>Presupuesto mensual modelado para crédito</span><strong>{money(c2.financing?.modeledCreditPaymentBudget ?? 0)}</strong></div>
-                <div><span>Principal modelado</span><strong>{money(c2.scenarios[0]?.modeledPrincipal ?? 0)}</strong></div>
+                <div><span>Monto de crédito modelado</span><strong>{money(c2.scenarios[0]?.modeledPrincipal ?? 0)}</strong></div>
                 <div><span>Tasa usada</span><strong>{ratePercent}% EA</strong></div>
                 <div><span>Plazo usado</span><strong>{termYears} años</strong></div>
               </div>
@@ -305,13 +305,13 @@ export function AffordabilityTool() {
                 <article className={`surface ${styles.scenarioCard}`} key={scenario.housingCategory}>
                   <div className={styles.scenarioTitle}>
                     <strong>{categoryLabel[scenario.housingCategory]}</strong>
-                    <span>Referencia LTV máx. {percent.format(scenario.maxLtv)}</span>
+                    <span>Financiación máxima sobre el valor: {percent.format(scenario.maxLtv)}</span>
                   </div>
                   {!c2 ? (
                     <>
                       <span className={styles.valueLabel}>Referencia estructural por inicial</span>
                       <strong className={styles.scenarioValue}>{money(scenario.propertyCeilingFromDownPayment)}</strong>
-                      <p>Este valor usa solamente tu inicial y el LTV regulatorio máximo. Todavía no comprueba si una cuota cabe en tus ingresos.</p>
+                      <p>Este valor usa solamente tu inicial y el porcentaje regulatorio máximo de financiación sobre el valor. Todavía no comprueba si una cuota cabe en tus ingresos.</p>
                     </>
                   ) : (
                     <>
@@ -320,7 +320,7 @@ export function AffordabilityTool() {
                       <p>{bindingCopy(scenario.bindingConstraint)}</p>
                       <dl className={styles.miniLedger}>
                         <div><dt>Crédito + efectivo</dt><dd>{money(scenario.propertyCeilingFromCreditAndCash ?? 0)}</dd></div>
-                        <div><dt>Límite por inicial/LTV</dt><dd>{money(scenario.propertyCeilingFromDownPayment)}</dd></div>
+                        <div><dt>Límite por inicial y financiación máxima</dt><dd>{money(scenario.propertyCeilingFromDownPayment)}</dd></div>
                       </dl>
                     </>
                   )}
@@ -333,7 +333,7 @@ export function AffordabilityTool() {
             <div>
               <p className="eyebrow">Dos referencias distintas</p>
               <h2 id="truth-heading">30% para planear no es lo mismo que 40% regulatorio.</h2>
-              <p className="section-copy">Casa con Criterio usa 30% como benchmark educativo de endeudamiento total sobre ingreso neto declarado. La regulación vigente limita la primera cuota del crédito de vivienda al 40% de ingresos familiares acreditables. Ese 40% no es nuestra recomendación de sostenibilidad.</p>
+              <p className="section-copy">Casa con Criterio usa 30% como referencia educativa de endeudamiento total sobre ingreso neto declarado. La regulación vigente limita la primera cuota del crédito de vivienda al 40% de ingresos familiares acreditables. Ese 40% no es nuestra recomendación de sostenibilidad.</p>
             </div>
             <SourceFreshness
               source="Metodología v0.13 + referencia regulatoria Colombia"
@@ -409,8 +409,8 @@ export function AffordabilityTool() {
 
           <section className={styles.disclaimer} aria-label="Lo que este resultado no significa">
             <strong>Lo que este resultado no significa</strong>
-            <p>No es aprobación bancaria, oferta, probabilidad de aprobación ni recomendación de compra. No consulta score, centrales de riesgo ni productos de una entidad.</p>
-            <p>Más adelante podrás guardar este análisis en Mi Vivienda y completar tu perfil progresivamente; v0.16 todavía no activa cuenta ni persistencia.</p>
+            <p>No es aprobación bancaria, oferta, probabilidad de aprobación ni recomendación de compra. No consulta una calificación crediticia, centrales de riesgo ni productos de una entidad.</p>
+            <p>Más adelante podrás guardar este análisis en Mi Vivienda y completar tu perfil progresivamente; esta versión todavía no permite crear una cuenta ni guardar este análisis.</p>
           </section>
         </div>
       ) : null}
