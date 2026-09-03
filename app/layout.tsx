@@ -3,6 +3,7 @@ import { Lora, Work_Sans } from "next/font/google";
 import "./globals.css";
 import "../styles/casa-criterio.css";
 import "../styles/decision-components.css";
+import "../styles/casa-criterio-responsive.css";
 
 const brandDisplay = Lora({
   subsets: ["latin"],
