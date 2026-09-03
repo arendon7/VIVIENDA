@@ -58,7 +58,7 @@ test("keeps the home conceptual Mortgage Twin outside verified C3 and exposes on
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
   await expect(page.locator('a[href="#comprar"]')).toHaveCount(0);
   await expect(page.locator('a[href="#diy"]')).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Revisar mi crédito" })).toHaveAttribute("href", "/revisar");
+  await expect(page.getByRole("link", { name: "Revisar mi crédito" }).first()).toHaveAttribute("href", "/revisar");
   await expect(page.getByRole("link", { name: "Preparar mi ruta" })).toHaveAttribute("href", "/revisar");
 });
 
