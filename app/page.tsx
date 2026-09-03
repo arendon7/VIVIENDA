@@ -31,7 +31,7 @@ export default function HomePage() {
         </a>
         <nav className="cc-main-nav" aria-label="Principal">
           <a className="nav-link" href="#radar">Radar Vivienda</a>
-          <a className="nav-link" href="/mi-vivienda">Mi Situación</a>
+          <a className="nav-link" href="/mi-vivienda">Mi Vivienda</a>
           <a className="nav-link" href="/comparar-ofertas">Comparar</a>
           <a className="nav-link" href="/comprar/cuanto-puedo-comprar">Comprar</a>
           <a className="nav-link" href="/ayuda">Resolver</a>
