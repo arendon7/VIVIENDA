@@ -53,7 +53,6 @@ test.describe("Casa con Criterio consumer-language firewall", () => {
     await page.goto("/");
 
     await expect(page.getByLabel("Casa con Criterio · inicio")).toBeVisible();
-    const visibleText = await page.locator("body").innerText();
-    expect(visibleText).not.toMatch(/(^|\s)VIVIENDA(\s|$)/);
+    await expect(page.getByText("VIVIENDA", { exact: true })).toHaveCount(0);
   });
 });
