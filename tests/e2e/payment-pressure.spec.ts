@@ -37,7 +37,7 @@ test.describe("Payment Pressure v0.14", () => {
     await expect(page.getByRole("heading", { name: "Aún no reportas mora: este es el mejor momento para actuar preventivamente." })).toBeFocused();
     await expect(page.getByText("Prevención", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Revisar la diferencia" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveCount(0);
     await expect(page.getByText("Preparar una conversación temprana con tu entidad")).toBeVisible();
   });
 
@@ -49,7 +49,7 @@ test.describe("Payment Pressure v0.14", () => {
 
     await expect(page.getByText("Actuar pronto", { exact: true })).toBeVisible();
     await expect(page.getByText("Hay mora temprana reportada: conviene actuar pronto.")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveCount(0);
   });
 
   test("collections is clearly separated from a judicial process", async ({ page }) => {
@@ -61,7 +61,7 @@ test.describe("Payment Pressure v0.14", () => {
     await expect(page.getByText("Actuar pronto", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Cobranza no es lo mismo que proceso judicial." })).toBeVisible();
     await expect(page.getByText("Una gestión de cobranza no demuestra por sí sola que exista un proceso judicial.")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveCount(0);
   });
 
   test("prelegal remains extrajudicial in the user result", async ({ page }) => {
@@ -74,14 +74,15 @@ test.describe("Payment Pressure v0.14", () => {
     await expect(page.getByRole("heading", { name: "Cobranza no es lo mismo que proceso judicial." })).toBeVisible();
   });
 
-  test("reported executive process prioritizes document review and R10", async ({ page }) => {
+  test("reported executive process prioritizes evidence preparation and R10", async ({ page }) => {
     await completeTriage(page, {
       state: "Recibí un documento de juzgado o sé que hay un proceso judicial",
       outlook: "No puedo pagarla completa",
     });
 
     await expect(page.getByText("Revisión prioritaria", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveAttribute("href", "#evidencia");
+    await expect(page.locator('a[href="/verificar"]')).toHaveCount(0);
     await expect(page.getByText("Revisión jurídica prioritaria del proceso")).toBeVisible();
     await expect(page.getByRole("link", { name: "Revisar la diferencia" })).toHaveCount(0);
     await expect(page.locator('[data-route-code="R10_EXECUTIVE_DEFENSE"]')).toBeVisible();
@@ -98,7 +99,8 @@ test.describe("Payment Pressure v0.14", () => {
     });
 
     await expect(page.getByText("Revisión prioritaria", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveAttribute("href", "#evidencia");
+    await expect(page.locator('a[href="/verificar"]')).toHaveCount(0);
   });
 
   test("unknown stage asks for information instead of lawyer escalation", async ({ page }) => {
@@ -110,7 +112,7 @@ test.describe("Payment Pressure v0.14", () => {
     await expect(page.getByText("Falta ubicar la etapa", { exact: true })).toBeVisible();
     await expect(page.getByText("Confirmar el estado antes de decidir")).toBeVisible();
     await expect(page.getByRole("link", { name: "Revisar la diferencia" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveCount(0);
   });
 
   test("explicit inconsistency unlocks contextual R7 audit, not generic legal cross-sell", async ({ page }) => {
@@ -134,7 +136,8 @@ test.describe("Payment Pressure v0.14", () => {
     });
 
     await expect(page.getByText("Revisión prioritaria", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Revisar el documento que recibí" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Ver qué documentos preparar" })).toHaveAttribute("href", "#evidencia");
+    await expect(page.locator('a[href="/verificar"]')).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Revisar la diferencia" })).toHaveCount(0);
   });
 
