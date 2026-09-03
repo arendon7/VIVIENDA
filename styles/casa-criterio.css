@@ -306,7 +306,7 @@ fieldset.field-group { border: 0; padding: 0; min-width: 0; }
 .field-hint { color: var(--cc-ink-muted); }
 .field-control {
   min-height: 50px;
-  border-color: #AEB6BC;
+  border-color: var(--control-border);
   border-radius: var(--cc-radius-md);
   background: #FFFDF8;
   color: var(--cc-ink);
