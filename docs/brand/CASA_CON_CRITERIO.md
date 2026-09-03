@@ -39,13 +39,18 @@ Casa con Criterio combines Warm Path with an editorial-patrimonial layer:
 
 ## 6. Product vocabulary
 Masterbrand remains single. Product experiences include:
-- **Mi Vivienda** — longitudinal home profile;
-- **Mi Situación** — current context;
-- **Radar Vivienda** — opportunities and issues worth exploring;
+- **Mi Vivienda** — the longitudinal customer workspace/profile for the home, financing, decisions, documents and future history;
+- **Mi Situación** — the current financial/decision context inside Mi Vivienda or a guided analysis; it is not a synonym for the whole workspace;
+- **Radar Vivienda** — opportunities, issues and next actions worth exploring;
 - **Mis Escenarios** — comparison of consequences;
-- **Crédito en Claro** — understanding the current obligation;
 - **Comprar con Criterio** — buyer journey;
-- **Casa con Criterio** can also name the editorial/content layer when context makes the distinction clear.
+- **Resolver con Criterio** — contextual help when payment pressure, inconsistencies or legal urgency change the priority.
+
+Navigation rule:
+- links to `/mi-vivienda` should normally say **Mi Vivienda**;
+- a panel that represents the current known state should normally say **Mi Situación**.
+
+**Casa con Criterio** can also name the editorial/content layer when context makes the distinction clear.
 
 ## 7. Consumer-language firewall
 Internal engineering names may remain in code, domain types, tests, logs and technical documentation when they improve traceability, but they are not the default product language.
