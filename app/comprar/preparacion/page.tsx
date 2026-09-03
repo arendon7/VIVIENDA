@@ -22,7 +22,7 @@ export default function HomeReadinessPage() {
       <ProductFooter
         lines={[
           "Índice orientativo de preparación.",
-          "No reemplaza un score de central de riesgo, una preaprobación ni una decisión de una entidad financiera.",
+          "No reemplaza una calificación de una central de riesgo, una preaprobación ni una decisión de una entidad financiera.",
         ]}
       />
     </>
