@@ -6,6 +6,8 @@ test.describe("Auditoría Hipotecaria assisted preview", () => {
 
     await expect(page.getByRole("heading", { name: "Entiende una diferencia concreta antes de escalar." })).toBeVisible();
     await expect(page.getByText("Vista previa del servicio asistido · aún no contratado")).toBeVisible();
+    await expect(page.getByText("Extracto como guía", { exact: true })).toBeVisible();
+    await expect(page.getByText(/Esta vista previa muestra cómo se organizaría la evidencia/)).toBeVisible();
 
     const serviceState = page.locator('[data-route-code="R7_RECLAMACION"]');
     await expect(serviceState).toBeVisible();
@@ -41,6 +43,7 @@ test.describe("Auditoría Hipotecaria assisted preview", () => {
     }
 
     await expect(page.getByText("illegal", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Resultado profesional previsto", { exact: true })).toBeVisible();
   });
 
   test("keeps execution event types auditable without showing them as customer copy", async ({ page }) => {
@@ -65,7 +68,9 @@ test.describe("Auditoría Hipotecaria assisted preview", () => {
     }
 
     await expect(page.getByText("SUBMISSION_RECORDED", { exact: true })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Preparar mi evidencia" })).toHaveAttribute("href", "/verificar");
+    await expect(page.getByRole("link", { name: "Ver qué evidencia preparar" }).first()).toHaveAttribute("href", "#evidence-heading");
+    await expect(page.getByRole("link", { name: "Ver qué evidencia preparar" }).last()).toHaveAttribute("href", "#evidence-heading");
+    await expect(page.getByRole("link", { name: "Preparar mi evidencia" })).toHaveCount(0);
   });
 
   test("preserves no-power, no-guarantee and priority-reroute boundaries", async ({ page }) => {
@@ -76,6 +81,7 @@ test.describe("Auditoría Hipotecaria assisted preview", () => {
     await expect(page.getByText("No concede poder judicial.")).toBeVisible();
     await expect(page.getByText("No registra una reclamación como radicada.")).toBeVisible();
     await expect(page.getByText("No garantiza ahorro, corrección o resultado.")).toBeVisible();
+    await expect(page.getByText(/Un servicio real requeriría autorización de datos/)).toBeVisible();
 
     const rerouteBoundary = page.locator('[data-reroute-route-code="R10_EXECUTIVE_DEFENSE"]');
     await expect(rerouteBoundary).toContainText("Si aparece un proceso ejecutivo");
