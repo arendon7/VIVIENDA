@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("keeps assisted execution explicitly preview-only on Home", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByText("Acompañamiento · preview", { exact: true })).toBeVisible();
+  await expect(page.getByText("Acompañamiento · vista previa", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "La ruta asistida aparece solo cuando realmente aporta." }),
   ).toBeVisible();
