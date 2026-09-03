@@ -15,25 +15,33 @@ const primaryRoutes = [
 ] as const;
 
 const forbiddenVisibleTerms = [
-  "Mortgage Twin",
-  "Loan Health",
-  "Opportunity Router",
-  "Case Plan",
-  "Case Timeline",
-  "Event log",
+  "mortgage twin",
+  "loan health",
+  "opportunity router",
+  "case plan",
+  "case timeline",
+  "event log",
   "self-service",
-  "Preview",
-  "score bancario",
-  "Referencia mínima de equity",
-  "Track",
-  "Assisted",
+  "preview",
+  "score",
+  "benchmark",
+  "referencia mínima de equity",
+  "principal modelado",
+  "ltv",
+  "persistencia",
+  "snapshot",
+  "router",
+  "triage",
+  "partner",
+  "track",
+  "assisted",
 ] as const;
 
 test.describe("Casa con Criterio consumer-language firewall", () => {
   for (const route of primaryRoutes) {
     test(`${route} keeps engineering vocabulary out of normal customer copy`, async ({ page }) => {
       await page.goto(route);
-      const visibleText = await page.locator("body").innerText();
+      const visibleText = (await page.locator("body").innerText()).toLowerCase();
 
       for (const term of forbiddenVisibleTerms) {
         expect(visibleText, `${route} should not expose ${term}`).not.toContain(term);
