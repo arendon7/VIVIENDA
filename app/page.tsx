@@ -36,7 +36,7 @@ export default function HomePage() {
           <a className="nav-link" href="/comprar/cuanto-puedo-comprar">Comprar</a>
           <a className="nav-link" href="/ayuda">Resolver</a>
         </nav>
-        <a className="button button-primary cc-header-cta" href="/revisar">Revisar mi vivienda</a>
+        <a className="button button-primary cc-header-cta" href="/revisar">Revisar mi crédito</a>
       </header>
 
       <main id="contenido">
@@ -192,7 +192,7 @@ export default function HomePage() {
               <h2>Decidir con criterio cambia tu futuro financiero.</h2>
               <p>Empieza por entender tu situación y comparar lo que realmente cambia.</p>
             </div>
-            <a className="button cc-button cc-button--accent" href="/revisar">Revisar mi vivienda</a>
+            <a className="button cc-button cc-button--accent" href="/revisar">Revisar mi crédito</a>
           </div>
         </section>
       </main>
