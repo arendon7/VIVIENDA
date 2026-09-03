@@ -10,6 +10,7 @@ import {
   type PaymentPressureUrgency,
 } from "@/domain/payment-pressure/triage";
 import type { PaymentState, ProductType } from "@/domain/opportunity/router";
+import { colombiaTodayIso } from "@/domain/time/colombia-date";
 import styles from "./payment-pressure.module.css";
 
 type InconsistencyChoice = "none" | "charge" | "contract";
@@ -77,14 +78,6 @@ const paymentLabel: Record<PaymentState, string> = Object.fromEntries(paymentCho
 const changeLabel: Record<PaymentPressureChange, string> = Object.fromEntries(changeChoices.map((choice) => [choice.value, choice.label])) as Record<PaymentPressureChange, string>;
 const outlookLabel: Record<NextPaymentOutlook, string> = Object.fromEntries(outlookChoices.map((choice) => [choice.value, choice.label])) as Record<NextPaymentOutlook, string>;
 
-function todayLocalIso() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function RadioChoices<T extends string>({
   name,
   choices,
@@ -151,7 +144,7 @@ export function PaymentPressureTool() {
     if (!productType || !paymentState || !economicChange || !outlook || !inconsistency) return;
 
     setResult(evaluatePaymentPressure({
-      asOfDate: todayLocalIso(),
+      asOfDate: colombiaTodayIso(),
       productType,
       paymentState,
       materialEconomicChange: economicChange,
@@ -215,7 +208,7 @@ export function PaymentPressureTool() {
             <h2>{result.primaryAction.title}</h2>
             <p className="section-copy">{result.primaryAction.explanation}</p>
             {isJudicial ? (
-              <a className="button button-primary" href="/verificar">Revisar el documento que recibí</a>
+              <a className="button button-primary" href="#evidencia">Ver qué documentos preparar</a>
             ) : hasR7 && !isJudicial ? (
               <a className="button button-primary" href="/auditoria-hipotecaria">Revisar la diferencia</a>
             ) : null}
