@@ -30,11 +30,11 @@ test.describe("Mi Vivienda + estado de decisión product integration", () => {
     expect(overflow).toBe(false);
   });
 
-  test("Home keeps the borrower task primary while exposing Mi Vivienda preview", async ({ page }) => {
+  test("Home keeps the borrower task primary while exposing Mi Vivienda", async ({ page }) => {
     await page.goto("/");
 
     await expect(page.getByRole("link", { name: "Revisar mi crédito" }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Ver Mi Vivienda · vista previa" })).toHaveAttribute("href", "/mi-vivienda");
-    await expect(page.getByRole("link", { name: "Ver Mi Vivienda · preview" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Ver Mi Vivienda" })).toHaveAttribute("href", "/mi-vivienda");
+    await expect(page.getByRole("link", { name: /Ver Mi Vivienda ·/ })).toHaveCount(0);
   });
 });
