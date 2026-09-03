@@ -1,0 +1,92 @@
+{
+  "$schema": "https://tr.designtokens.org/format/",
+  "meta": {
+    "name": "VIVIENDA Warm Path",
+    "version": "0.1.0",
+    "status": "provisional-selected",
+    "principle": "Path structure + warm emotional tone + editorial information discipline"
+  },
+  "color": {
+    "canvas": { "$type": "color", "$value": "#F5F4EF" },
+    "surface": { "$type": "color", "$value": "#FFFEFB" },
+    "surfaceMuted": { "$type": "color", "$value": "#E8EFF3" },
+    "surfaceWarm": { "$type": "color", "$value": "#F1EEE6" },
+    "ink": { "$type": "color", "$value": "#10202F" },
+    "inkMuted": { "$type": "color", "$value": "#66727B" },
+    "border": { "$type": "color", "$value": "#D7D8D3" },
+    "borderStrong": { "$type": "color", "$value": "#B9C0C4" },
+    "accent": { "$type": "color", "$value": "#155889" },
+    "accentHover": { "$type": "color", "$value": "#104873" },
+    "accentSoft": { "$type": "color", "$value": "#E4EEF5" },
+    "positive": { "$type": "color", "$value": "#19785A" },
+    "positiveSoft": { "$type": "color", "$value": "#E7F2ED" },
+    "warning": { "$type": "color", "$value": "#A7661C" },
+    "warningSoft": { "$type": "color", "$value": "#F6EEDF" },
+    "danger": { "$type": "color", "$value": "#A4423D" },
+    "dangerSoft": { "$type": "color", "$value": "#F7E9E7" },
+    "focus": { "$type": "color", "$value": "#2A6FA3" }
+  },
+  "space": {
+    "2xs": { "$type": "dimension", "$value": "4px" },
+    "xs": { "$type": "dimension", "$value": "8px" },
+    "sm": { "$type": "dimension", "$value": "12px" },
+    "md": { "$type": "dimension", "$value": "16px" },
+    "lg": { "$type": "dimension", "$value": "24px" },
+    "xl": { "$type": "dimension", "$value": "32px" },
+    "2xl": { "$type": "dimension", "$value": "48px" },
+    "3xl": { "$type": "dimension", "$value": "64px" },
+    "4xl": { "$type": "dimension", "$value": "96px" }
+  },
+  "radius": {
+    "sm": { "$type": "dimension", "$value": "8px" },
+    "md": { "$type": "dimension", "$value": "14px" },
+    "lg": { "$type": "dimension", "$value": "20px" },
+    "xl": { "$type": "dimension", "$value": "28px" },
+    "pill": { "$type": "dimension", "$value": "999px" }
+  },
+  "shadow": {
+    "surface": { "$type": "shadow", "$value": { "color": "#10202F12", "offsetX": "0px", "offsetY": "4px", "blur": "16px", "spread": "0px" } },
+    "elevated": { "$type": "shadow", "$value": { "color": "#10202F1A", "offsetX": "0px", "offsetY": "10px", "blur": "30px", "spread": "-6px" } }
+  },
+  "size": {
+    "contentReadable": { "$type": "dimension", "$value": "720px" },
+    "contentProduct": { "$type": "dimension", "$value": "1120px" },
+    "tapTargetMin": { "$type": "dimension", "$value": "44px" }
+  },
+  "type": {
+    "family": {
+      "sans": { "$type": "fontFamily", "$value": "Inter" }
+    },
+    "size": {
+      "xs": { "$type": "dimension", "$value": "12px" },
+      "sm": { "$type": "dimension", "$value": "14px" },
+      "body": { "$type": "dimension", "$value": "16px" },
+      "bodyLg": { "$type": "dimension", "$value": "18px" },
+      "h3": { "$type": "dimension", "$value": "24px" },
+      "h2": { "$type": "dimension", "$value": "32px" },
+      "h1": { "$type": "dimension", "$value": "44px" },
+      "display": { "$type": "dimension", "$value": "56px" }
+    },
+    "lineHeight": {
+      "tight": { "$type": "number", "$value": 1.08 },
+      "heading": { "$type": "number", "$value": 1.15 },
+      "body": { "$type": "number", "$value": 1.5 }
+    },
+    "weight": {
+      "regular": { "$type": "fontWeight", "$value": 400 },
+      "medium": { "$type": "fontWeight", "$value": 500 },
+      "semibold": { "$type": "fontWeight", "$value": 600 }
+    }
+  },
+  "motion": {
+    "duration": {
+      "fast": { "$type": "duration", "$value": "120ms" },
+      "normal": { "$type": "duration", "$value": "200ms" },
+      "explain": { "$type": "duration", "$value": "320ms" }
+    },
+    "easing": {
+      "standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0, 1] },
+      "exit": { "$type": "cubicBezier", "$value": [0.4, 0, 1, 1] }
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "schema_version": "0.1.0",
+  "currency": "COP",
+  "rounding_policy": "core calculations use full precision; display rounding is external",
+  "vectors": [
+    {
+      "id": "TV-PESOS-ANN-001",
+      "system": "PESOS_CONSTANT_PAYMENT",
+      "input": {
+        "principal": 200000000,
+        "annual_effective_rate": 0.12,
+        "remaining_months": 180
+      },
+      "expected": {
+        "contractual_payment_ex_insurance": 2321974.6796362917,
+        "payoff_month": 180,
+        "total_interest": 217955442.33453253
+      }
+    },
+    {
+      "id": "TV-PESOS-ANN-002",
+      "system": "PESOS_CONSTANT_PAYMENT",
+      "input": {
+        "principal": 200000000,
+        "annual_effective_rate": 0.12,
+        "remaining_months": 180,
+        "extra_principal_monthly": 200000,
+        "strategy": "REDUCE_TERM"
+      },
+      "expected": {
+        "payoff_month": 148,
+        "term_reduction_months": 32,
+        "total_interest": 172874680.52864313,
+        "interest_avoided": 45080761.8058894
+      }
+    },
+    {
+      "id": "TV-PESOS-ANN-003",
+      "system": "PESOS_CONSTANT_PAYMENT",
+      "input": {
+        "principal": 200000000,
+        "annual_effective_rate": 0.12,
+        "remaining_months": 180,
+        "lump_sum": 20000000,
+        "lump_sum_period": 1,
+        "timing": "AFTER_PERIOD_INTEREST_WITH_REGULAR_PAYMENT",
+        "strategy": "REDUCE_TERM"
+      },
+      "expected": {
+        "payoff_month": 142,
+        "term_reduction_months": 38,
+        "total_interest": 147765955.86578947,
+        "interest_avoided": 70189486.46874306
+      }
+    },
+    {
+      "id": "TV-PESOS-ANN-004",
+      "system": "PESOS_CONSTANT_PAYMENT",
+      "input": {
+        "principal": 200000000,
+        "annual_effective_rate": 0.12,
+        "remaining_months": 180,
+        "extra_principal_monthly": 500000,
+        "strategy": "REDUCE_TERM"
+      },
+      "expected": {
+        "payoff_month": 119,
+        "term_reduction_months": 61,
+        "total_interest": 133547164.77603061,
+        "interest_avoided": 84408277.55850191
+      }
+    },
+    {
+      "id": "TV-PESOS-CAP-001",
+      "system": "PESOS_CONSTANT_PRINCIPAL",
+      "input": {
+        "principal": 120000000,
+        "annual_effective_rate": 0.10,
+        "remaining_months": 120
+      },
+      "expected": {
+        "scheduled_principal_monthly": 1000000,
+        "first_period_interest": 956896.8514684517,
+        "first_payment": 1956896.8514684518,
+        "second_payment": 1948922.7110395478,
+        "last_payment": 1007974.1404289037,
+        "payoff_month": 120,
+        "total_interest": 57892259.51384133
+      }
+    },
+    {
+      "id": "TV-UVR-ANN-001",
+      "currency": "UVR",
+      "system": "UVR_CONSTANT_PAYMENT",
+      "input": {
+        "principal_uvr": 1000000,
+        "annual_effective_real_rate": 0.06,
+        "remaining_months": 240
+      },
+      "expected": {
+        "monthly_effective_real_rate": 0.004867550565343048,
+        "payment_uvr": 7072.920660030933,
+        "first_period_interest_uvr": 4867.550565343048,
+        "first_period_principal_uvr": 2205.3700946878844,
+        "balance_after_first_period_uvr": 997794.6299053121,
+        "total_interest_uvr": 697500.9584074233,
+        "payoff_month": 240
+      },
+      "guardrail": "Do not derive a deterministic future COP payment series without an explicit future UVR path assumption."
+    }
+  ]
+}

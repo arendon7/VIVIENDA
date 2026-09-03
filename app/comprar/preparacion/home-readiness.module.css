@@ -1,0 +1,482 @@
+.tool {
+  width: 100%;
+  padding-bottom: 72px;
+}
+
+.embedded {
+  padding-bottom: 0;
+}
+
+.intro {
+  width: min(100%, 860px);
+  padding: clamp(48px, 7vw, 84px) 0 28px;
+}
+
+.formCard {
+  width: min(100%, 820px);
+  padding: clamp(24px, 5vw, 40px);
+}
+
+.embedded .formCard {
+  width: 100%;
+}
+
+.formHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.formHeader > div {
+  min-width: 0;
+}
+
+.formHeader h2 {
+  margin: 4px 0 0;
+}
+
+.fields {
+  display: grid;
+  gap: 18px;
+}
+
+.prefillPanel {
+  margin-bottom: 26px;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+}
+
+.prefillPanel > strong {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.prefillPanel dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.prefillPanel dl > div {
+  min-width: 0;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.prefillPanel dt {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.prefillPanel dd {
+  margin: 4px 0 0;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.prefillPanel p {
+  margin: 14px 0 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.question {
+  border: 0;
+  padding: 0;
+  margin: 28px 0 0;
+  min-width: 0;
+}
+
+.question legend,
+.question > h2 {
+  padding: 0;
+  margin: 0;
+  font-size: clamp(27px, 4vw, 38px);
+  line-height: 1.12;
+  font-weight: 600;
+  letter-spacing: -.035em;
+}
+
+.question > p {
+  margin: 10px 0 22px;
+  color: var(--ink-muted);
+  max-width: 68ch;
+}
+
+.question :global(.radio-card) span {
+  display: grid;
+  gap: 3px;
+}
+
+.question :global(.radio-card) strong {
+  font-weight: 600;
+}
+
+.contextHint {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--positive-soft);
+  color: var(--positive);
+}
+
+.formActions,
+.endActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.error {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.results {
+  display: grid;
+  gap: 0;
+}
+
+.resultHero {
+  width: min(100%, 900px);
+  margin-top: 28px;
+  padding: clamp(26px, 5vw, 44px);
+}
+
+.embedded .resultHero {
+  width: 100%;
+}
+
+.resultTopline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.indexBoundary {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.resultHero h2:focus {
+  outline: 3px solid color-mix(in srgb, var(--focus) 72%, white);
+  outline-offset: 5px;
+}
+
+.scoreBlock {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 20px 0 12px;
+  min-width: 0;
+}
+
+.scoreBlock strong {
+  font-size: clamp(64px, 12vw, 116px);
+  line-height: .9;
+  letter-spacing: -.075em;
+  font-weight: 650;
+}
+
+.scoreBlock span {
+  color: var(--ink-muted);
+  font-size: clamp(22px, 4vw, 34px);
+  font-weight: 600;
+}
+
+.boundaryLine {
+  margin: 20px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.section {
+  padding-top: 44px;
+}
+
+.sectionHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.dimensionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dimensionCard {
+  min-width: 0;
+  padding: 24px;
+}
+
+.dimensionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.dimensionHeader > div {
+  min-width: 0;
+}
+
+.dimensionHeader h3 {
+  margin: 5px 0 0;
+}
+
+.dimensionMax {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.dimensionScore,
+.missingScore {
+  flex: 0 0 auto;
+  font-size: 15px;
+}
+
+.dimensionScore {
+  color: var(--accent);
+}
+
+.missingScore {
+  color: var(--warning);
+}
+
+.dimensionTrack {
+  width: 100%;
+  height: 7px;
+  margin: 18px 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.dimensionTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.dimensionFacts {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.dimensionFacts > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.dimensionFacts dt {
+  color: var(--ink-muted);
+}
+
+.dimensionFacts dd {
+  margin: 0;
+  font-weight: 650;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.dimensionCard > p {
+  color: var(--ink-muted);
+}
+
+.dimensionAction {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-warm);
+}
+
+.dimensionAction strong {
+  color: var(--ink);
+}
+
+.caveat {
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.actionCard {
+  min-width: 0;
+  padding: 24px;
+}
+
+.actionCard > span {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.actionCard h3 {
+  margin-top: 10px;
+}
+
+.actionCard p {
+  color: var(--ink-muted);
+}
+
+.factsPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, .9fr);
+  gap: 28px;
+  margin-top: 44px;
+  padding: clamp(24px, 4vw, 36px);
+}
+
+.factsPanel dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.factsPanel dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.factsPanel dt {
+  color: var(--ink-muted);
+}
+
+.factsPanel dd {
+  margin: 0;
+  font-weight: 650;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.missingPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, .8fr);
+  gap: 28px;
+  margin-top: 20px;
+  padding: clamp(24px, 4vw, 34px);
+  background: var(--warning-soft);
+}
+
+.missingPanel ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.missingPanel li + li {
+  margin-top: 8px;
+}
+
+.boundary {
+  margin-top: 44px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--ink-muted);
+}
+
+.boundary strong {
+  color: var(--ink);
+}
+
+.boundary p {
+  margin: 8px 0 0;
+}
+
+@media (max-width: 900px) {
+  .actionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .dimensionGrid,
+  .factsPanel,
+  .missingPanel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .prefillPanel dl {
+    grid-template-columns: 1fr;
+  }
+
+  .dimensionHeader,
+  .sectionHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dimensionFacts > div,
+  .factsPanel dl > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .dimensionFacts dd,
+  .factsPanel dd {
+    text-align: left;
+  }
+
+  .formActions,
+  .endActions,
+  .formActions :global(.button),
+  .endActions :global(.button) {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .formCard,
+  .resultHero,
+  .dimensionCard,
+  .actionCard,
+  .factsPanel,
+  .missingPanel {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .scoreBlock strong {
+    font-size: clamp(54px, 20vw, 76px);
+  }
+
+  .scoreBlock span {
+    font-size: 22px;
+  }
+}

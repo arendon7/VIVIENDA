@@ -1,0 +1,318 @@
+.panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.formHero,
+.resultHero,
+.scenarioForm,
+.assumptionPanel,
+.comparisonPanel {
+  padding: clamp(1.2rem, 3vw, 2rem);
+}
+
+.formHero h2,
+.resultHero h2,
+.scenarioForm h2,
+.assumptionPanel h2,
+.comparisonPanel h2 {
+  margin: 0.35rem 0 0.6rem;
+}
+
+.resultTopline,
+.quoteTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.resultTopline > span,
+.quoteTopline > span {
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+}
+
+.scenarioForm {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.fieldBlock {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.fieldBlock > label,
+.choiceBlock legend {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.fieldBlock small,
+.choiceBlock small,
+.cardFootnote,
+.inlineAssumption p,
+.structuralCaveat p,
+.preBoundary p {
+  color: var(--muted-foreground);
+  line-height: 1.55;
+}
+
+.inputSuffix {
+  display: flex;
+  align-items: stretch;
+  max-width: 25rem;
+}
+
+.inputSuffix input {
+  min-width: 0;
+  flex: 1;
+  border-radius: 0.8rem 0 0 0.8rem;
+}
+
+.inputSuffix span {
+  display: grid;
+  place-items: center;
+  padding: 0 0.9rem;
+  border: 1px solid var(--border);
+  border-left: 0;
+  border-radius: 0 0.8rem 0.8rem 0;
+  background: var(--surface-subtle);
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.leasingGrid,
+.quoteGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.choiceBlock {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-subtle);
+}
+
+.choiceBlock legend {
+  padding: 0 0.25rem;
+}
+
+.choiceBlock > label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.choiceBlock input[type="radio"] {
+  margin-top: 0.2rem;
+}
+
+.choiceBlock label span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.nestedField {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.25rem;
+}
+
+.nestedField label {
+  font-weight: 650;
+}
+
+.quoteCard {
+  padding: 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.quoteCard h3 {
+  margin: 0.35rem 0;
+}
+
+.metricGrid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.metricGrid > div {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.85rem;
+  border-radius: 0.8rem;
+  background: var(--surface-subtle);
+}
+
+.metricGrid span {
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+}
+
+.metricGrid strong {
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.metricEmphasis {
+  border: 1px solid var(--border-strong);
+  background: var(--surface) !important;
+}
+
+.cardFootnote {
+  margin: 0.85rem 0 0;
+  font-size: 0.86rem;
+}
+
+.comparisonPanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.metricSection {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-subtle);
+}
+
+.metricSection h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+}
+
+.metricResult {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.metricResult strong {
+  font-size: 1.15rem;
+}
+
+.metricResult span {
+  color: var(--muted-foreground);
+}
+
+.issueList {
+  margin: 0.6rem 0 0;
+  padding-left: 1.15rem;
+  color: var(--muted-foreground);
+}
+
+.issueList li + li {
+  margin-top: 0.35rem;
+}
+
+.assumptionPanel,
+.inlineAssumption,
+.structuralCaveat,
+.preBoundary,
+.truthBoundary,
+.explainability {
+  border-radius: 1rem;
+}
+
+.inlineAssumption,
+.structuralCaveat,
+.preBoundary,
+.truthBoundary {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+}
+
+.inlineAssumption p,
+.structuralCaveat p,
+.preBoundary p,
+.truthBoundary p {
+  margin: 0.35rem 0 0;
+}
+
+.truthBoundary {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.truthBoundary strong:not(:first-child) {
+  margin-top: 0.6rem;
+}
+
+.explainability {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.explainability summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.explainability ol {
+  margin-bottom: 0;
+  padding-left: 1.2rem;
+  color: var(--muted-foreground);
+}
+
+.explainability li + li {
+  margin-top: 0.35rem;
+}
+
+.error {
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--danger-border, var(--border));
+  background: var(--danger-subtle, var(--surface-subtle));
+}
+
+.actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .leasingGrid,
+  .quoteGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    display: grid;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+
+  .metricResult {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .inputSuffix {
+    max-width: none;
+  }
+}

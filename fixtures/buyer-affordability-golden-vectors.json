@@ -1,0 +1,133 @@
+[
+  {
+    "id": "c1-basic-non-vis",
+    "input": {
+      "netHouseholdIncomeMonthly": 10000000,
+      "currentMonthlyDebtPayments": 1000000,
+      "availableDownPayment": 100000000,
+      "housingCategory": "non_vis"
+    },
+    "expected": {
+      "precision": "C1",
+      "currentDebtRatio": 0.1,
+      "planningTotalDebtPaymentCap": 3000000,
+      "planningHousingPaymentRoom": 2000000,
+      "propertyCeilingFromDownPayment": 333333333.3333333
+    }
+  },
+  {
+    "id": "c1-existing-debt-exhausts-planning-room",
+    "input": {
+      "netHouseholdIncomeMonthly": 10000000,
+      "currentMonthlyDebtPayments": 4000000,
+      "availableDownPayment": 100000000,
+      "housingCategory": "non_vis"
+    },
+    "expected": {
+      "precision": "C1",
+      "currentDebtRatio": 0.4,
+      "planningTotalDebtPaymentCap": 3000000,
+      "planningHousingPaymentRoom": 0
+    }
+  },
+  {
+    "id": "c2-payment-binding-with-non-credit-costs",
+    "input": {
+      "netHouseholdIncomeMonthly": 10000000,
+      "currentMonthlyDebtPayments": 1000000,
+      "availableDownPayment": 100000000,
+      "housingCategory": "non_vis",
+      "accreditableFamilyIncomeMonthly": 12000000,
+      "financing": {
+        "mode": "pesos_fixed_constant",
+        "annualEffectiveRate": 0.117,
+        "termMonths": 240,
+        "monthlyNonCreditHousingCosts": 300000
+      }
+    },
+    "expected": {
+      "precision": "C2",
+      "regulatoryFirstInstallmentCeiling": 4800000,
+      "modeledCreditPaymentBudget": 1700000,
+      "monthlyRate": 0.009263183504735206,
+      "modeledPrincipal": 163448623.32257652,
+      "propertyCeilingFromCreditAndCash": 263448623.32257652,
+      "propertyCeilingFromDownPayment": 333333333.3333333,
+      "modeledPropertyCeiling": 263448623.32257652,
+      "bindingConstraint": "payment"
+    }
+  },
+  {
+    "id": "c2-down-payment-binding",
+    "input": {
+      "netHouseholdIncomeMonthly": 10000000,
+      "currentMonthlyDebtPayments": 1000000,
+      "availableDownPayment": 50000000,
+      "housingCategory": "non_vis",
+      "accreditableFamilyIncomeMonthly": 12000000,
+      "financing": {
+        "mode": "pesos_fixed_constant",
+        "annualEffectiveRate": 0.117,
+        "termMonths": 240,
+        "monthlyNonCreditHousingCosts": 0
+      }
+    },
+    "expected": {
+      "precision": "C2",
+      "modeledCreditPaymentBudget": 2000000,
+      "modeledPrincipal": 192292498.0265606,
+      "propertyCeilingFromCreditAndCash": 242292498.0265606,
+      "propertyCeilingFromDownPayment": 166666666.66666666,
+      "modeledPropertyCeiling": 166666666.66666666,
+      "bindingConstraint": "down_payment"
+    }
+  },
+  {
+    "id": "c2-unknown-category-keeps-two-scenarios",
+    "input": {
+      "netHouseholdIncomeMonthly": 12000000,
+      "currentMonthlyDebtPayments": 1000000,
+      "availableDownPayment": 80000000,
+      "housingCategory": "unknown",
+      "financing": {
+        "mode": "pesos_fixed_constant",
+        "annualEffectiveRate": 0.1,
+        "termMonths": 240
+      }
+    },
+    "expected": {
+      "precision": "C2",
+      "modeledCreditPaymentBudget": 2600000,
+      "propertyCeilingFromCreditAndCash": 357588109.57402843,
+      "nonVisModeledPropertyCeiling": 266666666.66666663,
+      "nonVisBindingConstraint": "down_payment",
+      "visModeledPropertyCeiling": 357588109.57402843,
+      "visBindingConstraint": "payment"
+    }
+  },
+  {
+    "id": "c2-regulatory-ceiling-can-bind-separately",
+    "input": {
+      "netHouseholdIncomeMonthly": 20000000,
+      "currentMonthlyDebtPayments": 0,
+      "availableDownPayment": 500000000,
+      "housingCategory": "non_vis",
+      "accreditableFamilyIncomeMonthly": 10000000,
+      "financing": {
+        "mode": "pesos_fixed_constant",
+        "annualEffectiveRate": 0.1,
+        "termMonths": 240,
+        "monthlyNonCreditHousingCosts": 0
+      }
+    },
+    "expected": {
+      "planningHousingPaymentRoom": 6000000,
+      "regulatoryFirstInstallmentCeiling": 4000000,
+      "modeledCreditPaymentBudget": 4000000,
+      "modeledPrincipal": 427058630.11388993,
+      "propertyCeilingFromCreditAndCash": 927058630.1138899,
+      "modeledPropertyCeiling": 927058630.1138899,
+      "bindingConstraint": "payment"
+    }
+  }
+]

@@ -1,0 +1,118 @@
+.panel {
+  padding: clamp(24px, 4vw, 36px);
+}
+
+.header,
+.dimensionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.list {
+  margin-top: 28px;
+  display: grid;
+  gap: 12px;
+}
+
+.dimension {
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+}
+
+.dimension:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.dimension h3 {
+  font-size: 18px;
+  letter-spacing: -.02em;
+}
+
+.dimension > p {
+  margin: 10px 0 0;
+  color: var(--ink-muted);
+  max-width: 78ch;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.ready {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.attention {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.professional {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.neutral {
+  background: var(--surface-warm);
+  color: var(--ink-muted);
+}
+
+.nextAction {
+  margin-top: 12px;
+  display: grid;
+  gap: 3px;
+  font-size: 14px;
+}
+
+.nextAction strong {
+  color: var(--ink);
+}
+
+.nextAction span,
+.sourceRoutes {
+  color: var(--ink-muted);
+}
+
+.sourceRoutes {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.notices {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.notices p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.notices p + p {
+  margin-top: 6px;
+}
+
+@media (max-width: 620px) {
+  .header,
+  .dimensionHeader {
+    flex-direction: column;
+  }
+
+  .status {
+    white-space: normal;
+  }
+}
