@@ -56,7 +56,7 @@ test.describe("Home Readiness v0.16", () => {
 
     await completeReadinessQuestions(page);
 
-    await expect(page.getByText("VIVIENDA no inserta una tasa de mercado ni supone una oferta bancaria.")).toBeVisible();
+    await expect(page.getByText("Casa con Criterio no inserta una tasa de mercado ni supone una oferta bancaria.")).toBeVisible();
     await page.getByLabel("Tasa efectiva anual del escenario (%)").fill("11.7");
     await page.getByLabel("Plazo del escenario (años)").fill("20");
     await page.getByLabel("Otros costos mensuales de vivienda (opcional)").fill("300000");
@@ -64,13 +64,17 @@ test.describe("Home Readiness v0.16", () => {
 
     await expect(page.getByText("Índice completo", { exact: true })).toBeVisible();
     await expect(page.getByText("/100", { exact: true })).toBeVisible();
-    await expect(page.getByText("No es DataCrédito, score bancario, preaprobación ni probabilidad de aprobación.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Índice orientativo propio de Casa con Criterio", { exact: true })).toBeVisible();
+    await expect(page.getByText("No es DataCrédito, una calificación bancaria, una preaprobación ni una probabilidad de aprobación.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Referencia mínima de aporte propio", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Los cálculos base se muestran aparte del índice." })).toBeVisible();
 
     const body = (await page.locator("body").innerText()).toLowerCase();
     expect(body).not.toContain("te aprobarán");
     expect(body).not.toContain("probabilidad de éxito");
-    expect(body).not.toContain("tu score bancario");
+    expect(body).not.toContain("score bancario");
+    expect(body).not.toContain("referencia mínima de equity");
+    expect(body).not.toContain("vivienda no inserta una tasa");
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     expect(overflow).toBe(false);
