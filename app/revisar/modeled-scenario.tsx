@@ -91,7 +91,7 @@ export function ModeledScenario({
       <button className="button button-quiet" type="button" onClick={onBack}>← Volver a mi primera lectura</button>
 
       <section className="surface form-card" style={{ marginTop: 20 }} aria-labelledby="model-title">
-        <p className="eyebrow">Subir a C2 · Simulación modelada</p>
+        <p className="eyebrow">Más precisión · C2 · simulación modelada</p>
         <h1 id="model-title" style={{ fontSize: "clamp(32px, 6vw, 46px)" }}>Añade solo los datos que cambian la matemática.</h1>
         <p className="section-copy">No pedimos identidad. Para modelar un crédito en pesos con cuota constante necesitamos tasa EA, cuotas restantes confirmadas y el aporte adicional que quieres probar.</p>
 
@@ -116,7 +116,7 @@ export function ModeledScenario({
 
         <fieldset className="field-group">
           <legend className="field-label">Sistema de amortización</legend>
-          <p className="field-hint">El modelo C2 de este primer slice soporta cuota constante en pesos. Si no estás seguro, no inventamos el resultado.</p>
+          <p className="field-hint">El modelo C2 de esta versión soporta cuota constante en pesos. Si no estás seguro, no inventamos el resultado.</p>
           <div className="choice-list">
             <label className="radio-card">
               <input type="radio" name="system" checked={system === "constant-payment"} onChange={() => setSystem("constant-payment")} />
@@ -135,7 +135,7 @@ export function ModeledScenario({
 
         <div className="field-group">
           <label className="field-label" htmlFor="monthly-extra">Abono adicional mensual que quieres probar</label>
-          <span className="field-hint" id="monthly-extra-hint">Este dinero lo aportarías tú; nunca lo contaremos como “ahorro generado por VIVIENDA”.</span>
+          <span className="field-hint" id="monthly-extra-hint">Este dinero lo aportarías tú; nunca lo contaremos como “ahorro generado por Casa con Criterio”.</span>
           <input className="field-control" id="monthly-extra" type="number" min="1" step="10000" inputMode="numeric" aria-describedby="monthly-extra-hint" value={monthlyExtra} onChange={(event) => setMonthlyExtra(event.target.value)} />
         </div>
       </section>
@@ -143,7 +143,7 @@ export function ModeledScenario({
       {!comparison && modality === "pesos" ? (
         <div className="surface form-card" style={{ marginTop: 16 }} role="status">
           <strong>Completa tasa, cuotas y sistema compatible para activar el modelo.</strong>
-          <p className="section-copy">Si tu sistema es distinto o no lo conoces, el siguiente paso correcto es usar tu extracto como guía para confirmar datos; no aproximar una anualidad como si fuera universal.</p>
+          <p className="section-copy">Si tu sistema es distinto o no lo conoces, el siguiente paso correcto es usar el extracto como guía para confirmar los datos; no aproximar una anualidad como si fuera universal.</p>
         </div>
       ) : null}
 
@@ -160,7 +160,12 @@ export function ModeledScenario({
               { label: "Reducción modelada", value: `${comparison.termReductionMonths} cuotas` },
             ]}
             evidence={
-              <SourceFreshness source="Datos declarados + motor de amortización VIVIENDA" cutoff="Esta sesión">
+              <SourceFreshness
+                source="Datos declarados + motor de amortización Casa con Criterio"
+                sourceClass="calculation"
+                cutoff="Esta sesión"
+                status="current"
+              >
                 <p>Valores nominales proyectados. C2 significa modelo suficiente, no verificación contractual ni aprobación bancaria.</p>
                 {paymentDifference !== null ? <p>La cuota financiera calculada difiere de tu cuota declarada en aproximadamente {formatCop(paymentDifference)}; seguros u otros componentes pueden explicar parte de la diferencia.</p> : null}
               </SourceFreshness>
@@ -176,13 +181,13 @@ export function ModeledScenario({
               <BenefitBreakdown rows={[
                 { label: "Capital adicional que aportarías durante el escenario", value: formatCop(comparison.userExtraPrincipal) },
                 { label: "Intereses futuros nominales que el modelo estima que dejarían de causarse", value: formatCop(comparison.interestAvoided), kind: "positive" },
-                { label: "Valor atribuible a VIVIENDA en esta simulación self-service", value: formatCop(0) },
+                { label: "Valor atribuible a Casa con Criterio en esta simulación autogestionada", value: formatCop(0) },
               ]} />
               <div className="actions">
                 <a className="button button-primary" href="/verificar">Usar mi extracto como guía</a>
                 <button className="button button-secondary" type="button" onClick={onBack}>Cambiar mis datos</button>
               </div>
-              <p className="field-hint">En esta versión, el extracto se usa como referencia local y tú transcribes los campos. C3 sigue reservado para evidencia realmente derivada y reconciliada.</p>
+              <p className="field-hint">El extracto puede servir como referencia local para confirmar campos. C3 solo corresponde a evidencia documental realmente derivada y reconciliada.</p>
             </div>
           </DecisionResult>
         </div>

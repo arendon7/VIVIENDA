@@ -82,8 +82,9 @@ describe("Loan Health v0.21", () => {
     expect(dimension(result, "structure_understanding").sourceRouteCodes).toEqual(["R1_PREPAGO_PLAZO"]);
     expect(dimension(result, "prepayment").status).toBe("ready");
     expect(result.decisionState).toBe("actionable_opportunity");
-    expect(result.notices.join(" ")).toMatch(/R1_PREPAGO_PLAZO C2/);
+    expect(result.notices.join(" ")).toMatch(/alcanzó C2/i);
     expect(result.notices.join(" ")).toMatch(/fuente base permanece en C1/i);
+    expect(result.notices.join(" ")).not.toMatch(/R1_PREPAGO_PLAZO/);
   });
 
   it("does not manufacture route-specific precision when the model is absent", () => {
@@ -107,7 +108,7 @@ describe("Loan Health v0.21", () => {
     expect(dimension(result, "structure_understanding").status).toBe("needs_data");
     expect(dimension(result, "prepayment").status).toBe("explore");
     expect(result.decisionState).toBe("improve_precision");
-    expect(result.notices.join(" ")).not.toMatch(/R1_PREPAGO_PLAZO C2/);
+    expect(result.notices.join(" ")).not.toMatch(/alcanzó C2/i);
   });
 
   it("prioritizes executive or embargo state over ordinary optimization", () => {

@@ -205,22 +205,22 @@ export function OpportunityWorkspace({
     <section className="surface form-card" style={{ marginTop: 20 }} aria-labelledby="opportunity-workspace-title">
       <div className="section-header">
         <div>
-          <p className="eyebrow">Opportunity Router · v0.22</p>
-          <h2 id="opportunity-workspace-title">Entiende primero el estado de decisión; después compara y elige una ruta.</h2>
+          <p className="eyebrow">Radar Vivienda</p>
+          <h2 id="opportunity-workspace-title">Entiende tu situación, descubre qué merece atención y compara las opciones que ya tienen suficiente información.</h2>
           <p className="section-copy">
-            Loan Health resume qué sabemos, qué merece atención y qué ya puede compararse. El Router conserva precisión por decisión y el comparador de prepago usa el mismo capital para no favorecer artificialmente una alternativa.
+            El estado de tu decisión resume qué sabemos, qué merece atención y qué ya puede compararse. Radar Vivienda conserva la precisión de cada opción y, cuando modelamos prepago, usa el mismo capital para no favorecer artificialmente una alternativa.
           </p>
         </div>
         <div className="actions" aria-label="Precisión de esta evaluación">
           <span className="status-chip">{precision} · fuente base</span>
-          {termModelStillBound || choiceModelStillBound ? <span className="material-chip">R1 · C2 modelado</span> : null}
-          {choiceModelStillBound ? <span className="material-chip">R2 · C2 modelado</span> : null}
+          {termModelStillBound || choiceModelStillBound ? <span className="material-chip">Reducir plazo · C2</span> : null}
+          {choiceModelStillBound ? <span className="material-chip">Reducir cuota · C2</span> : null}
         </div>
       </div>
 
       {sourceLabel ? (
         <div className="result-callout" style={{ marginTop: 20 }} role="status">
-          <strong>Partimos de tu Mortgage Twin</strong>
+          <strong>Partimos de Mi Situación</strong>
           <p className="section-copy">
             {sourceLabel} · producto: {productLabels[productType]} · modalidad: {modalityLabels[initialModality]}. Puedes corregir la clasificación del producto abajo si fuera necesario.
           </p>
@@ -231,7 +231,7 @@ export function OpportunityWorkspace({
         <div className="result-callout" style={{ marginTop: 16 }} role="status">
           <strong>Conservamos tu escenario mensual de reducción de plazo</strong>
           <p className="section-copy">
-            Ya modelaste {cop.format(initialTermPrepaymentModel.recurringExtraPrincipal)} adicionales al mes. Ese escenario sigue siendo distinto del comparador de abono único: mientras mantengas el mismo monto y la misma clasificación hipotecaria en pesos, puede conservar C2 solo en R1.
+            Ya modelaste {cop.format(initialTermPrepaymentModel.recurringExtraPrincipal)} adicionales al mes. Ese escenario sigue siendo distinto del comparador de abono único: mientras mantengas el mismo monto y la misma clasificación hipotecaria en pesos, puede conservar C2 solo en la opción de reducir plazo.
           </p>
         </div>
       ) : null}
@@ -240,8 +240,8 @@ export function OpportunityWorkspace({
         <strong>Cómo leer esta evaluación</strong>
         <ul>
           <li><strong>C1</strong> conserva que los hechos base fueron declarados por ti, aunque los hayas transcrito mirando un extracto local.</li>
-          <li><strong>C2 en una ruta</strong> significa que existe un modelo determinístico compatible para esa decisión específica; no verifica el documento ni eleva las demás rutas.</li>
-          <li><strong>R1 y R2 pueden compartir C2</strong> únicamente cuando la comparación realmente modeló ambas instrucciones con el mismo abono parcial.</li>
+          <li><strong>C2 en una opción</strong> significa que existe un modelo determinístico compatible para esa decisión específica; no verifica el documento ni eleva las demás opciones.</li>
+          <li><strong>Las dos opciones de prepago pueden compartir C2</strong> únicamente cuando la comparación realmente modeló ambas instrucciones con el mismo abono parcial.</li>
           <li><strong>Revisión jurídica necesaria</strong> tiene prioridad sobre optimizaciones ordinarias cuando los hechos reportados lo exigen.</li>
         </ul>
       </div>
@@ -288,8 +288,8 @@ export function OpportunityWorkspace({
       <div className="field-group">
         <label className="field-label" htmlFor="router-extra-payment">3. ¿Cuánto capital adicional podrías destinar a prepago?</label>
         <span className="field-hint" id="router-extra-payment-hint">
-          Déjalo vacío si todavía no tienes un monto. Este dato activa la exploración de prepago; el capital que aportes nunca se presenta como ahorro creado por VIVIENDA.
-          {initialTermPrepaymentModel ? " El monto mensual que modelaste previamente ya aparece aquí para preservar ese escenario R1 sin pedirte el mismo dato otra vez." : ""}
+          Déjalo vacío si todavía no tienes un monto. Este dato activa la exploración de prepago; el capital que aportes nunca se presenta como ahorro creado por Casa con Criterio.
+          {initialTermPrepaymentModel ? " El monto mensual que modelaste previamente ya aparece aquí para preservar la opción de reducir plazo sin pedirte el mismo dato otra vez." : ""}
         </span>
         <input
           className="field-control"
@@ -303,7 +303,7 @@ export function OpportunityWorkspace({
           onChange={(event) => setExtraPayment(event.target.value)}
         />
         {initialTermPrepaymentModel && !termModelStillBound ? (
-          <p className="field-hint" role="status">El escenario mensual C2 anterior ya no coincide con estos datos. Ese R1 vuelve a C1 hasta construir otro modelo compatible; una comparación de abono único construida aparte conserva su propia precisión.</p>
+          <p className="field-hint" role="status">El escenario mensual C2 anterior ya no coincide con estos datos. La opción de reducir plazo vuelve a C1 hasta construir otro modelo compatible; una comparación de abono único construida aparte conserva su propia precisión.</p>
         ) : null}
       </div>
 
@@ -318,7 +318,7 @@ export function OpportunityWorkspace({
         ) : productType === "mortgage_housing" && initialModality === "pesos" ? (
           <div className="surface-warning" style={{ marginTop: 20 }} role="status">
             <strong>Para comparar cuota vs. plazo en C2 faltan los datos matemáticos base.</strong>
-            <p>Confirma saldo, tasa EA, cuotas restantes y sistema compatible en el Mortgage Twin. El Router puede seguir orientando en C1 sin inventar esa matemática.</p>
+            <p>Confirma saldo, tasa EA, cuotas restantes y sistema compatible en Mi Situación. Radar Vivienda puede seguir orientando en C1 sin inventar esa matemática.</p>
           </div>
         ) : null}
 
@@ -326,14 +326,14 @@ export function OpportunityWorkspace({
         <legend className="field-label">4. ¿Tu capacidad real de pago cambió materialmente?</legend>
         <label className="confirm-control">
           <input type="checkbox" checked={materialEconomicChange} onChange={(event) => setMaterialEconomicChange(event.target.checked)} />
-          <span>Sí, quiero que el router evalúe la ruta de reestructuración.</span>
+          <span>Sí, quiero que Radar Vivienda evalúe la opción de reestructuración.</span>
         </label>
       </fieldset>
 
       {materialEconomicChange ? (
         <div className="surface-warning" style={{ marginTop: 14 }}>
           <strong>El 40% no se usa como detector automático de ilegalidad.</strong>
-          <p>Estos dos datos sirven para revisar la primera cuota propuesta después de una eventual reestructuración, conforme al rulebook actual.</p>
+          <p>Estos dos datos sirven para revisar la primera cuota propuesta después de una eventual reestructuración, conforme a las reglas aplicables en esta evaluación.</p>
           <div className="field-group" style={{ marginTop: 16 }}>
             <label className="field-label" htmlFor="router-family-income">Ingreso familiar actualmente acreditable</label>
             <input className="field-control" id="router-family-income" inputMode="numeric" min="1" type="number" placeholder="5000000" value={familyIncome} onChange={(event) => setFamilyIncome(event.target.value)} />
@@ -377,8 +377,8 @@ export function OpportunityWorkspace({
       <div style={{ marginTop: 30 }} aria-live="polite">
         <div className="section-header">
           <div>
-            <p className="eyebrow">Rutas detalladas · {asOfDate}</p>
-            <h3>{result.primaryRoute ? "Ahora puedes revisar por qué cada ruta aparece y qué exige." : "Todavía falta clasificar el caso."}</h3>
+            <p className="eyebrow">Oportunidades y rutas · {asOfDate}</p>
+            <h3>{result.primaryRoute ? "Ahora puedes revisar por qué aparece cada opción y qué exige." : "Todavía falta clasificar el caso."}</h3>
           </div>
         </div>
 
@@ -393,27 +393,32 @@ export function OpportunityWorkspace({
 
         {result.routes.length === 0 ? (
           <div className="surface-warning">
-            <strong>No hay una ruta personalizada todavía.</strong>
-            <p>Clasifica el producto y añade únicamente los hechos que conozcas. El router no inventa condiciones faltantes.</p>
+            <strong>No hay una opción personalizada todavía.</strong>
+            <p>Clasifica el producto y añade únicamente los hechos que conozcas. Radar Vivienda no inventa condiciones faltantes.</p>
           </div>
         ) : (
           <div className="extraction-list" style={{ marginTop: 18 }}>
             {result.routes.map((routeItem, index) => (
-              <article className="extraction-row" key={routeItem.routeCode} aria-label={`${index === 0 ? "Ruta prioritaria" : "Ruta alternativa"}: ${routeItem.title}`}>
+              <article
+                className="extraction-row"
+                key={routeItem.routeCode}
+                data-route-code={routeItem.routeCode}
+                aria-label={`${index === 0 ? "Ruta prioritaria" : "Ruta alternativa"}: ${routeItem.title}`}
+              >
                 <div>
                   <div className="extraction-heading">
                     <strong>{index === 0 ? "Prioridad 1 · " : "Alternativa · "}{routeItem.title}</strong>
                     <span className="status-chip">{statusLabels[routeItem.status]}</span>
                     {routeItem.humanReviewRequired ? <span className="material-chip">Revisión humana</span> : null}
                   </div>
-                  <p className="field-hint">{routeItem.routeCode} · precisión {routeItem.precision}{routeItem.precision === "C2" && precision === "C1" ? " solo para esta ruta" : ""}</p>
+                  <p className="field-hint">Precisión {routeItem.precision}{routeItem.precision === "C2" && precision === "C1" ? " solo para esta opción" : ""}</p>
                 </div>
 
                 <div className="extraction-actions" style={{ alignItems: "stretch" }}>
                   <div>
                     <strong>Por qué aparece</strong>
                     <ul>
-                      {routeItem.reasonCodes.map((code) => <li key={code}>{reasonLabels[code] ?? "Existe una condición relevante para esta ruta."}</li>)}
+                      {routeItem.reasonCodes.map((code) => <li key={code}>{reasonLabels[code] ?? "Existe una condición relevante para esta opción."}</li>)}
                     </ul>
                   </div>
 

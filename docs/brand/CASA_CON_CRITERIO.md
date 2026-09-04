@@ -1,0 +1,118 @@
+# Casa con Criterio — Brand System V1
+
+Status: canonical working identity for the VIVIENDA product.
+
+## 1. Masterbrand
+**Casa con Criterio**
+
+Wordmark rule:
+- `CASA` and `CRITERIO` are the dominant words.
+- `con` is smaller and sits to the right of `CASA`, not below it.
+- The approved symbol is a house outline containing two interlocked `C` forms.
+
+## 2. Core lines
+- Brand belief: **Tu vivienda merece criterio.**
+- Commercial line: **Conoce las reglas. Haz las cuentas. Decide con criterio.**
+- Institutional descriptor: **Inteligencia para las decisiones de tu vivienda.**
+
+## 3. Canonical palette
+- Deep navy: `#0B1D2D`
+- Patrimonial ochre: `#C7922F`
+- Soft green: `#6F8F7A`
+- Mist gray: `#BFC7D1`
+- Warm ivory: `#F6F3EC`
+
+## 4. Typography
+- Editorial / display: Lora
+- Interface / numbers: Work Sans
+
+No font files are stored in the repository. The app uses `next/font/google`.
+
+## 5. Visual language
+Casa con Criterio combines Warm Path with an editorial-patrimonial layer:
+- warm mineral backgrounds;
+- strong financial numbers;
+- architectural line patterns;
+- ochre as opportunity/emphasis, never as a guarantee;
+- green only for genuinely favorable or completed states;
+- navy for authority, navigation and primary actions.
+
+## 6. Product vocabulary
+Masterbrand remains single. Product experiences include:
+- **Mi Vivienda** — the longitudinal customer workspace/profile for the home, financing, decisions, documents and future history;
+- **Mi Situación** — the current financial/decision context inside Mi Vivienda or a guided analysis; it is not a synonym for the whole workspace;
+- **Radar Vivienda** — opportunities, issues and next actions worth exploring;
+- **Mis Escenarios** — comparison of consequences;
+- **Comprar con Criterio** — buyer journey;
+- **Resolver con Criterio** — contextual help when payment pressure, inconsistencies or legal urgency change the priority.
+
+Navigation rule:
+- links to `/mi-vivienda` should normally say **Mi Vivienda**;
+- a panel that represents the current known state should normally say **Mi Situación**.
+
+**Casa con Criterio** can also name the editorial/content layer when context makes the distinction clear.
+
+## 7. Consumer-language firewall
+Internal engineering names may remain in code, domain types, tests, logs and technical documentation when they improve traceability, but they are not the default product language.
+
+Primary consumer surfaces use:
+- `Mi Situación` instead of `Mortgage Twin`;
+- `Radar Vivienda` instead of `Opportunity Router`;
+- `Mi Situación · estado de decisión` instead of `Loan Health`;
+- `Mis Escenarios` for consequence comparison;
+- `Plan de acción` instead of `Case Plan`;
+- `Historial del expediente` instead of `Case Timeline` or `Event log`;
+- ordinary-language option names instead of internal route codes such as `R1`, `R2` or `R10`.
+
+Internal route codes remain available through data attributes or engineering contexts where needed for deterministic testing and auditability. They should not be normal visible copy.
+
+The same rule applies to case-state internals. Machine identifiers such as route status values, track values, `CaseEvent` types, idempotency keys and state-machine terms may remain in domain code, logs or `data-*` attributes, but the customer-facing history must show the human event, actor, state and consequence. Technical identity must remain inspectable without forcing the customer to read implementation vocabulary.
+
+The firewall is a translation boundary, not a deletion boundary: a user-facing label may become simpler while the underlying machine identifier remains stable for tests, auditability, replay and deterministic behavior.
+
+Precision levels **C0/C1/C2/C3 remain visible** because they are a product-truth contract, not engineering decoration. Legal article references may also remain visible when the specific rule materially defines a right, deadline, eligibility condition or user decision.
+
+The firewall must never hide uncertainty, source provenance, professional-review requirements or a material limitation merely to make copy feel simpler.
+
+## 8. Commercial voice
+The brand may be commercially provocative when evidence supports the hook.
+
+Examples:
+- `Tu banco ya hizo las cuentas. Ahora haz las tuyas.`
+- `El mismo abono. Dos decisiones.`
+- `¿Qué oportunidad hay escondida en tus números?`
+- `Una tasa menor no siempre gana.`
+
+Pattern:
+**tension → explanation → evidence/model → user decision**.
+
+Never convert a modeled opportunity into a claim of realized savings.
+
+## 9. Product truth rules that branding cannot override
+- C0/C1/C2/C3 precision remains explicit.
+- User-supplied principal is not platform-generated savings.
+- A simulation is not a bank offer or approval.
+- Legal orientation is not automatically a final legal conclusion.
+- Commercial relationships cannot silently alter analysis.
+- Free/DIY routes remain visible where legitimately available.
+
+## 10. Implementation
+Brand assets live in `public/brand/`.
+Brand-specific CSS lives in `styles/casa-criterio.css` and layers over the existing `app/globals.css` Warm Path system.
+
+Shared product chrome lives in `components/brand/ProductChrome.tsx`:
+- `ProductHeader` for consistent masterbrand and route navigation;
+- `ProductFooter` for surface-specific truth boundaries;
+- `ProductIntro` for the route-level commercial/context statement.
+
+Operate-form grammar is centralized in the Casa con Criterio layer:
+- visible focus states;
+- restrained ochre selection state;
+- warm inputs and choice surfaces;
+- legible disabled states;
+- tabular numeric rhythm;
+- mobile product navigation contained within its own horizontal scroll region when necessary.
+
+The shared chrome is now used across the Quick Check, buyer preparation/affordability/financing/quote-comparison flows, payment-pressure triage, reconciliation, verification, Mi Vivienda and Auditoría Hipotecaria.
+
+This branch is a visual/brand integration branch only. It must not weaken product, legal, evidence or calculation contracts.

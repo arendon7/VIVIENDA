@@ -37,37 +37,6 @@
   max-width: 78ch;
 }
 
-.status {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-
-.ready {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.attention {
-  background: var(--warning-soft);
-  color: var(--warning);
-}
-
-.professional {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-
-.neutral {
-  background: var(--surface-warm);
-  color: var(--ink-muted);
-}
-
 .nextAction {
   margin-top: 12px;
   display: grid;
@@ -110,9 +79,5 @@
   .header,
   .dimensionHeader {
     flex-direction: column;
-  }
-
-  .status {
-    white-space: normal;
   }
 }

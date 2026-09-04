@@ -306,13 +306,13 @@ export function ReconciliationTool() {
         {result.opportunityRoutes.length > 0 ? (
           <section className={styles.section} aria-labelledby="reconciliation-routes-heading">
             <div className={styles.sectionHeading}>
-              <p className="eyebrow">Ruta contextual</p>
-              <h2 id="reconciliation-routes-heading">Lo que el motor permite evaluar</h2>
-              <p className="section-copy">Solo aparecen R7 o R10 cuando tus respuestas cumplen sus condiciones. Una ruta candidata no equivale a una infracción probada ni a un resultado garantizado.</p>
+              <p className="eyebrow">Opciones relacionadas</p>
+              <h2 id="reconciliation-routes-heading">Qué opciones aparecen con tus respuestas</h2>
+              <p className="section-copy">Solo mostramos una auditoría o una revisión jurídica prioritaria cuando los hechos que reportaste cumplen sus condiciones. Una opción candidata no equivale a una infracción probada ni a un resultado garantizado.</p>
             </div>
             <div className={styles.routeGrid}>
               {result.opportunityRoutes.map((route) => (
-                <article className={`surface ${styles.routeCard}`} key={route.routeCode}>
+                <article className={`surface ${styles.routeCard}`} key={route.routeCode} data-route-code={route.routeCode}>
                   <div className={styles.routeMeta}>
                     <strong>{routeStatusLabel[route.status]}</strong>
                     <span>{route.precision}</span>
@@ -339,14 +339,19 @@ export function ReconciliationTool() {
         ) : null}
 
         <div className={styles.sourceBlock}>
-          <SourceFreshness source="Información de crédito de vivienda + deber de información" cutoff="26 ago 2026">
+          <SourceFreshness
+            source="Información de crédito de vivienda + deber de información"
+            sourceClass="public"
+            cutoff="26 ago 2026"
+            status="current"
+          >
             <p>Los extractos permiten contrastar campos como tasa, saldo, plazo/cuotas y discriminación del pago. Una diferencia exige comparar fuentes equivalentes antes de concluir que existe un error.</p>
           </SourceFreshness>
         </div>
 
         <section className={styles.boundary} aria-label="Límites de este resultado">
           <strong>Este resultado no concluye que exista un error, ilegalidad, fraude o devolución a tu favor.</strong>
-          <p>Es orientación C0 basada en tus respuestas. Incluso si declaraste dos fuentes, VIVIENDA todavía no ha leído ni reconciliado esos documentos y no concede C2 ni C3 desde este flujo.</p>
+          <p>Es orientación C0 basada en tus respuestas. Incluso si declaraste dos fuentes, Casa con Criterio todavía no ha leído ni reconciliado esos documentos y no concede C2 ni C3 desde este flujo.</p>
           {hasR10 ? <p>Si reportaste un proceso judicial, este flujo tampoco calcula términos ni genera una estrategia de defensa.</p> : null}
         </section>
 

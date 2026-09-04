@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Casa con Criterio">
+  <rect width="256" height="256" rx="42" fill="none"/>
+  <path d="M40 112 L128 42 L216 112 V212 H40 Z" fill="none" stroke="#C7922F" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M126 96 C111 80 89 76 72 88 C52 102 48 131 60 153 C71 174 97 183 119 171" fill="none" stroke="#C7922F" stroke-width="14" stroke-linecap="round"/>
+  <path d="M190 132 C177 118 157 115 142 124 C124 135 120 157 129 174 C138 191 159 198 178 190" fill="none" stroke="#C7922F" stroke-width="14" stroke-linecap="round"/>
+</svg>

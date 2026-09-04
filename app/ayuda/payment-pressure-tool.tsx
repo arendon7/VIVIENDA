@@ -190,7 +190,7 @@ export function PaymentPressureTool() {
           <p className="lede">{result.explanation}</p>
         </section>
 
-        <section className={styles.resultGrid} aria-label="Resumen del triage">
+        <section className={styles.resultGrid} aria-label="Resumen de la situación">
           <article className={`surface ${styles.knownFacts}`}>
             <p className="eyebrow">Lo que sabemos</p>
             <h2>Estado declarado</h2>
@@ -229,7 +229,7 @@ export function PaymentPressureTool() {
                 <span className={styles.evidenceMarker} aria-hidden="true" />
                 <div>
                   <strong>{item.label}</strong>
-                  <small>{item.importance === "required_for_next_step" ? "Necesario para el siguiente paso" : item.importance === "recommended" ? "Recomendado" : "Solo si exploras esa ruta"}</small>
+                  <small>{item.importance === "required_for_next_step" ? "Necesario para el siguiente paso" : item.importance === "recommended" ? "Recomendado" : "Solo si exploras esa opción"}</small>
                 </div>
               </div>
             ))}
@@ -240,14 +240,14 @@ export function PaymentPressureTool() {
           <section className={styles.section} aria-labelledby="routes-heading">
             <div className={styles.sectionHeading}>
               <div>
-                <p className="eyebrow">Rutas que aparecen por tus respuestas</p>
+                <p className="eyebrow">Opciones que aparecen por tus respuestas</p>
                 <h2 id="routes-heading">No todas tienen la misma prioridad.</h2>
-                <p className="section-copy">Mostramos únicamente rutas producidas por el motor de reglas existente. Un resultado candidato no equivale a aprobación ni a resultado jurídico.</p>
+                <p className="section-copy">Mostramos únicamente opciones cuyas condiciones encajan con los hechos que reportaste. Una opción candidata no equivale a aprobación ni a resultado jurídico.</p>
               </div>
             </div>
             <div className={styles.routeGrid}>
               {result.opportunityRoutes.map((route) => (
-                <article className={`surface ${styles.routeCard}`} key={route.routeCode}>
+                <article className={`surface ${styles.routeCard}`} key={route.routeCode} data-route-code={route.routeCode}>
                   <div className={styles.routeMeta}>
                     <strong>{routeStatusLabel[route.status]}</strong>
                     <span>{route.precision}</span>
@@ -272,7 +272,7 @@ export function PaymentPressureTool() {
             <div>
               <p className="eyebrow">Cobranza</p>
               <h2 id="collection-heading">Cobranza no es lo mismo que proceso judicial.</h2>
-              <p className="section-copy">La cobranza puede ser prejudicial, antes de una demanda. Las prácticas de contacto tienen reglas sobre canales autorizados, horarios y periodicidad; este triage no concluye una infracción solo con tu declaración.</p>
+              <p className="section-copy">La cobranza puede ser prejudicial, antes de una demanda. Las prácticas de contacto tienen reglas sobre canales autorizados, horarios y periodicidad; esta orientación no concluye una infracción solo con tu declaración.</p>
             </div>
             <div className={styles.collectionChecklist}>
               <strong>Si la forma de contacto te preocupa</strong>

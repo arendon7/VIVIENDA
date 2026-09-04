@@ -1,22 +1,31 @@
+import { ProductFooter, ProductHeader, ProductIntro } from "@/components/brand/ProductChrome";
 import { ReconciliationTool } from "./reconciliation-tool";
 
 export default function ReconciliationPage() {
   return (
     <>
-      <header className="shell site-header">
-        <a className="brand" href="/">VIVIENDA</a>
-        <nav aria-label="Revisión de diferencias">
-          <a className="nav-link" href="/revisar">Revisar crédito</a>
-          <a className="nav-link" href="/ayuda">Dificultad para pagar</a>
-          <a className="nav-link" href="/mi-vivienda">Mi Vivienda · preview</a>
-        </nav>
-      </header>
+      <ProductHeader
+        ariaLabel="Revisión de diferencias"
+        links={[
+          { href: "/revisar", label: "Revisar crédito" },
+          { href: "/ayuda", label: "Dificultad para pagar" },
+          { href: "/mi-vivienda", label: "Mi Vivienda" },
+        ]}
+      />
       <main id="contenido">
+        <ProductIntro
+          shell
+          eyebrow="Resolver con evidencia"
+          statement="Si algo no cuadra, separa primero lo esperado, lo informado y lo efectivamente aplicado."
+        />
         <ReconciliationTool />
       </main>
-      <footer className="shell site-footer">
-        VIVIENDA · Reconciliación preliminar C0. No concluye error, ilegalidad ni derecho a devolución sin evidencia verificada.
-      </footer>
+      <ProductFooter
+        lines={[
+          "Reconciliación preliminar C0.",
+          "No concluye error, ilegalidad ni derecho a devolución sin evidencia verificada.",
+        ]}
+      />
     </>
   );
 }

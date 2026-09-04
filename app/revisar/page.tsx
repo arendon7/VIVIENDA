@@ -1,13 +1,18 @@
+import { ProductHeader, ProductIntro } from "@/components/brand/ProductChrome";
 import { QuickCheck } from "./quick-check";
 
 export default function RevisarPage() {
   return (
     <>
-      <header className="shell site-header">
-        <a className="brand" href="/">VIVIENDA</a>
-        <a className="nav-link" href="/">Volver al inicio</a>
-      </header>
+      <ProductHeader
+        ariaLabel="Análisis de crédito"
+        links={[{ href: "/", label: "Volver al inicio" }]}
+      />
       <main id="contenido" className="form-shell">
+        <ProductIntro
+          eyebrow="Radar Vivienda · primera lectura"
+          statement="Conoce tus números antes de decidir qué hacer con ellos."
+        />
         <QuickCheck />
       </main>
     </>

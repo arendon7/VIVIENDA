@@ -256,7 +256,7 @@ function buildNextAction(
         return {
           dimensionCode: dimension.code,
           title: "Confirmar la categoría de vivienda objetivo",
-          explanation: "Necesitamos saber si el objetivo es VIS o no VIS para usar la referencia de equity correcta sin adivinarla.",
+          explanation: "Necesitamos saber si el objetivo es VIS o no VIS para usar la referencia de aporte propio correcta sin adivinarla.",
         };
       }
       const gap = minimumEquityReference === null
@@ -288,14 +288,14 @@ function buildNextAction(
         dimensionCode: dimension.code,
         title: dimension.status === "needs_information" ? "Completar el escenario del objetivo" : "Ajustar el objetivo o sus supuestos",
         explanation: dimension.status === "needs_information"
-          ? "Para puntuar el encaje necesitamos categoría conocida, tasa EA y plazo aportados por ti; VIVIENDA no inserta una tasa de mercado silenciosamente."
+          ? "Para puntuar el encaje necesitamos categoría conocida, tasa EA y plazo aportados por ti; Casa con Criterio no inserta una tasa de mercado silenciosamente."
           : "Compara un precio objetivo menor, una cuota inicial mayor o un escenario de tasa/plazo que tú suministres. El modelo no sustituye esos datos por una supuesta oferta de mercado.",
       };
     case "income_continuity":
       return {
         dimensionCode: dimension.code,
         title: dimension.status === "needs_information" ? "Describir la continuidad real de tus ingresos" : "Documentar la historia real de ingresos",
-        explanation: "Usa una historia realista y verificable. VIVIENDA no penaliza por ser independiente o tener ingresos variables; importa la continuidad que puedas describir y soportar.",
+        explanation: "Usa una historia realista y verificable. Casa con Criterio no penaliza por ser independiente o tener ingresos variables; importa la continuidad que puedas describir y soportar.",
       };
   }
 }
@@ -338,7 +338,7 @@ export function evaluateHomeReadiness(input: HomeReadinessInput): HomeReadinessR
     ],
     explanation: "Esta dimensión mira solo las obligaciones recurrentes que ya existen antes de la compra.",
     nextAction: obligationScore < 20 ? "Revisar obligaciones que puedan reducirse o terminar antes de comprar." : null,
-    caveat: "Las bandas son una heurística de planificación de VIVIENDA, no reglas de aprobación bancaria.",
+    caveat: "Las bandas son referencias orientativas de planificación de Casa con Criterio, no reglas de aprobación bancaria.",
   }));
 
   const selectedScenario = input.housingCategory === "unknown"
@@ -356,7 +356,7 @@ export function evaluateHomeReadiness(input: HomeReadinessInput): HomeReadinessR
       facts: [{ label: "Cuota inicial disponible", value: money(input.availableDownPayment) }],
       explanation: "Sin categoría de vivienda no elegimos entre referencias VIS y no VIS para puntuar esta dimensión.",
       nextAction: "Confirmar si el objetivo se analizará como VIS o no VIS.",
-      caveat: "VIVIENDA no usa la alternativa más favorable ni la más conservadora de forma silenciosa.",
+      caveat: "Casa con Criterio no usa la alternativa más favorable ni la más conservadora de forma silenciosa.",
     }));
   } else {
     minimumEquityReference = input.targetPropertyPrice * selectedScenario.minimumEquityRatio;
@@ -368,12 +368,12 @@ export function evaluateHomeReadiness(input: HomeReadinessInput): HomeReadinessR
       reasonCodes: [`down_payment_coverage_${score}`, `housing_category_${input.housingCategory}`],
       facts: [
         { label: "Cuota inicial disponible", value: money(input.availableDownPayment) },
-        { label: "Referencia mínima de equity", value: money(minimumEquityReference) },
+        { label: "Referencia mínima de aporte propio", value: money(minimumEquityReference) },
         { label: "Cobertura de la referencia", value: pct(downPaymentCoverage) },
       ],
-      explanation: "Compara tu cuota inicial con la referencia mínima de equity del escenario, sin asumir que una entidad financiará automáticamente el máximo LTV.",
+      explanation: "Compara tu cuota inicial con la referencia mínima de aporte propio del escenario, sin asumir que una entidad financiará automáticamente el porcentaje máximo permitido sobre el valor de la vivienda.",
       nextAction: score < 20 ? "Aumentar cuota inicial o revisar el precio objetivo para crear más holgura." : null,
-      caveat: "La referencia de equity no incluye costos de cierre y no es garantía de porcentaje financiado.",
+      caveat: "La referencia de aporte propio no incluye costos de cierre y no garantiza qué porcentaje financiará una entidad.",
     }));
   }
 
@@ -408,7 +408,7 @@ export function evaluateHomeReadiness(input: HomeReadinessInput): HomeReadinessR
       facts: [{ label: "Soportes", value: DOCUMENTATION_LABELS.unknown }],
       explanation: "No suponemos que los documentos estén completos ni incompletos sin tu declaración.",
       nextAction: "Revisar qué soportes de ingresos y obligaciones ya tienes organizados.",
-      caveat: "v0.16 no certifica suficiencia documental para una entidad específica.",
+      caveat: "Este índice no certifica suficiencia documental para una entidad específica.",
     }));
   } else {
     const score = DOCUMENTATION_SCORES[input.documentationReadiness];
@@ -419,7 +419,7 @@ export function evaluateHomeReadiness(input: HomeReadinessInput): HomeReadinessR
       facts: [{ label: "Estado declarado", value: DOCUMENTATION_LABELS[input.documentationReadiness] }],
       explanation: "Mide qué tan organizada está la evidencia que soporta los datos usados en tu planificación.",
       nextAction: score < 20 ? "Completar y ordenar soportes apropiados para tus ingresos y obligaciones." : null,
-      caveat: "Los documentos concretos dependen del producto y de la entidad; este índice no reemplaza su checklist.",
+      caveat: "Los documentos concretos dependen del producto y de la entidad; este índice no reemplaza su lista de requisitos.",
     }));
   }
 
@@ -435,7 +435,7 @@ export function evaluateHomeReadiness(input: HomeReadinessInput): HomeReadinessR
       facts: [{ label: "Precio objetivo", value: money(input.targetPropertyPrice) }],
       explanation: "El encaje necesita una categoría concreta para escoger el escenario comparable.",
       nextAction: "Confirmar la categoría de vivienda y completar el escenario de financiación.",
-      caveat: "No mezclamos VIS y no VIS en un único score.",
+      caveat: "No mezclamos VIS y no VIS en un único índice.",
     }));
   } else if (!input.planningFinancing || affordability.precision !== "C2" || selectedScenario.modeledPropertyCeiling === undefined) {
     missingInputs.push("planning_rate_and_term");
@@ -445,7 +445,7 @@ export function evaluateHomeReadiness(input: HomeReadinessInput): HomeReadinessR
       facts: [{ label: "Precio objetivo", value: money(input.targetPropertyPrice) }],
       explanation: "Sin tasa EA y plazo suministrados por ti no calculamos un techo modelado para puntuar el encaje del objetivo.",
       nextAction: "Añadir una tasa EA y plazo de planificación que quieras probar.",
-      caveat: "VIVIENDA no inserta una tasa de mercado ni una supuesta oferta bancaria de forma silenciosa.",
+      caveat: "Casa con Criterio no inserta una tasa de mercado ni una supuesta oferta bancaria de forma silenciosa.",
     }));
   } else {
     modeledPropertyCeiling = selectedScenario.modeledPropertyCeiling;
@@ -461,7 +461,7 @@ export function evaluateHomeReadiness(input: HomeReadinessInput): HomeReadinessR
         { label: "Techo modelado del escenario", value: money(modeledPropertyCeiling) },
         { label: "Relación objetivo / techo", value: Number.isFinite(targetFitRatio) ? pct(targetFitRatio) : "Sin capacidad modelada" },
       ],
-      explanation: "Compara tu objetivo con el techo modelado por Buyer Affordability usando los supuestos de tasa/plazo que tú aportaste.",
+      explanation: "Compara tu objetivo con el techo del cálculo de capacidad de compra usando los supuestos de tasa y plazo que tú aportaste.",
       nextAction: score < 20 ? "Revisar precio objetivo, cuota inicial o un escenario de financiación que tú suministres." : null,
       caveat: "El techo modelado no es una oferta, preaprobación ni promesa de financiación.",
     }));

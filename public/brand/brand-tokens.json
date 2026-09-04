@@ -1,0 +1,27 @@
+{
+  "brand": "Casa con Criterio",
+  "version": "1.0.0",
+  "colors": {
+    "canvas": "#F6F3EC",
+    "surface": "#FFFDF8",
+    "ink": "#0B1D2D",
+    "inkMuted": "#5F6870",
+    "border": "#D9D8D1",
+    "primary": "#0B1D2D",
+    "primaryHover": "#102B43",
+    "accent": "#C7922F",
+    "accentHover": "#B47F21",
+    "positive": "#6F8F7A",
+    "mist": "#BFC7D1"
+  },
+  "typography": {
+    "display": "Lora, Georgia, serif",
+    "ui": "Work Sans, system-ui, sans-serif",
+    "numeric": "Work Sans, system-ui, sans-serif"
+  },
+  "taglines": {
+    "brand": "Tu vivienda merece criterio.",
+    "commercial": "Conoce las reglas. Haz las cuentas. Decide con criterio.",
+    "descriptor": "Inteligencia para las decisiones de tu vivienda."
+  }
+}

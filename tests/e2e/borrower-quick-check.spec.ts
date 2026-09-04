@@ -34,19 +34,19 @@ async function buildGuidedMortgageTwin(page: import("@playwright/test").Page) {
   await page.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).first().check();
   await page.getByRole("radio", { name: "Pesos", exact: true }).first().check();
   await page.getByLabel("Saldo de capital (COP)").fill("180000000");
-  await page.getByRole("button", { name: "Construir mi Mortgage Twin" }).click();
+  await page.getByRole("button", { name: "Organizar mi situación" }).click();
 
-  await expect(page.getByRole("heading", { name: "Tu fotografía declarada ya tiene la base material del snapshot." })).toBeVisible();
-  await expect(page.getByText("Mortgage Twin guiado · C1", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ya organizamos los datos base de tu situación." })).toBeVisible();
+  await expect(page.getByText("Mi Situación · C1", { exact: true })).toBeVisible();
 }
 
 async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
   await buildGuidedMortgageTwin(page);
-  await page.getByRole("button", { name: "Ver mi Loan Health y rutas" }).click();
-  await expect(page.getByRole("heading", { name: "Entiende primero el estado de decisión; después compara y elige una ruta." })).toBeVisible();
+  await page.getByRole("button", { name: "Ver mi situación y oportunidades" }).click();
+  await expect(page.getByRole("heading", { name: "Entiende tu situación, descubre qué merece atención y compara las opciones que ya tienen suficiente información." })).toBeVisible();
 
   const workspace = page.locator('section[aria-labelledby="opportunity-workspace-title"]');
-  await expect(workspace.getByText(/Partimos de tu Mortgage Twin/)).toBeVisible();
+  await expect(workspace.getByText(/Partimos de Mi Situación/)).toBeVisible();
   await expect(workspace.getByRole("radio", { name: "Crédito hipotecario de vivienda" })).toBeChecked();
   return workspace;
 }
@@ -58,7 +58,7 @@ test("keeps the home conceptual Mortgage Twin outside verified C3 and exposes on
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
   await expect(page.locator('a[href="#comprar"]')).toHaveCount(0);
   await expect(page.locator('a[href="#diy"]')).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Revisar mi crédito" })).toHaveAttribute("href", "/revisar");
+  await expect(page.getByRole("link", { name: "Revisar mi crédito" }).first()).toHaveAttribute("href", "/revisar");
   await expect(page.getByRole("link", { name: "Preparar mi ruta" })).toHaveAttribute("href", "/revisar");
 });
 
@@ -74,6 +74,9 @@ test("delivers first useful result without asking identity or contact data", asy
   await expect(
     resultRegion.getByRole("link", { name: "Volver al inicio" }),
   ).toHaveAttribute("href", "/");
+  const provenance = resultRegion.getByRole("complementary", { name: "Fuente y vigencia" });
+  await expect(provenance.getByText("Declarado por el usuario", { exact: true })).toBeVisible();
+  await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
   await expect(page.getByText("Guardar esto para después", { exact: true })).toHaveCount(0);
 
   const forbiddenInputs = ["cédula", "teléfono", "correo", "email"];
@@ -85,7 +88,9 @@ test("delivers first useful result without asking identity or contact data", asy
 test("exposes task progress semantically", async ({ page }) => {
   await page.goto("/revisar");
 
-  const progress = page.getByRole("progressbar", { name: "Progreso del Quick Check" });
+  await expect(page.getByText("Primera revisión", { exact: true })).toBeVisible();
+  await expect(page.getByText("Quick Check", { exact: true })).toHaveCount(0);
+  const progress = page.getByRole("progressbar", { name: "Progreso de la primera revisión" });
   await expect(progress).toHaveAttribute("aria-valuenow", "1");
   await expect(progress).toHaveAttribute("aria-valuemax", "5");
 
@@ -150,7 +155,11 @@ test("upgrades a compatible peso case from C1 to a real C2 modeled scenario", as
   await expect(page.getByText("C2 · Simulación modelada", { exact: true })).toBeVisible();
   await expect(page.getByText("Capital adicional que aportarías durante el escenario")).toBeVisible();
   await expect(page.getByText("Intereses futuros nominales que el modelo estima que dejarían de causarse")).toBeVisible();
-  await expect(page.getByText("Valor atribuible a VIVIENDA en esta simulación self-service")).toBeVisible();
+  await expect(page.getByText("Valor atribuible a Casa con Criterio en esta simulación autogestionada")).toBeVisible();
+  await expect(page.getByText("self-service", { exact: true })).toHaveCount(0);
+  const provenance = page.getByRole("complementary", { name: "Fuente y vigencia" });
+  await expect(provenance.getByText("Cálculo o modelo", { exact: true })).toBeVisible();
+  await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
 });
 
 test("refuses to apply the peso annuity model to UVR", async ({ page }) => {
@@ -178,8 +187,11 @@ test("keeps locally transcribed statement data at C1 and never grants C3", async
   await buildGuidedMortgageTwin(page);
 
   const twin = page.locator('section[aria-labelledby="mortgage-twin-title"]');
-  await expect(twin.getByText("Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
+  await expect(twin.getByText("Datos transcritos por ti desde un extracto local. Casa con Criterio no leyó ni verificó el archivo.", { exact: true })).toBeVisible();
   await expect(twin.getByLabel("Nivel de precisión: Estimación")).toHaveText("C1 · Estimación");
+  const provenance = twin.getByRole("complementary", { name: "Fuente y vigencia" });
+  await expect(provenance.getByText("Declarado por el usuario", { exact: true })).toBeVisible();
+  await expect(provenance.getByText("Vigente para esta lectura", { exact: true })).toBeVisible();
   await expect(page.getByText("C3 · Verificado documentalmente", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Demostración · extracción simulada", { exact: true })).toHaveCount(0);
 });
@@ -233,7 +245,7 @@ test("makes judicial distress primary instead of hiding it behind optimization",
 test("explains the 40 percent rule without turning current payment burden into automatic illegality", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByLabel("Sí, quiero que el router evalúe la ruta de reestructuración.").check();
+  await workspace.getByLabel("Sí, quiero que Radar Vivienda evalúe la opción de reestructuración.").check();
   await workspace.getByLabel("Ingreso familiar actualmente acreditable").fill("5000000");
   await workspace.getByLabel("Primera cuota que propondrías después de reestructurar").fill("2100000");
 
@@ -273,7 +285,7 @@ test("keeps the Article 24 clock relative until real delivery evidence exists", 
   await expect(plan.getByRole("heading", { name: "Plan para activar la cesión del artículo 24" })).toBeVisible();
   await expect(plan.getByText(/Máximo 10 días hábiles después de la entrega comprobada/i)).toBeVisible();
   await expect(plan.getByText(/Sin fecha real de entrega no se calcula una fecha límite/i)).toBeVisible();
-  await expect(plan.getByText(/El trigger todavía no está establecido/i)).toBeVisible();
+  await expect(plan.getByText(/El evento que inicia el plazo todavía no está acreditado/i)).toBeVisible();
   await expect(plan.getByText(/El reloj no se considera iniciado por seleccionar esta ruta o generar el plan/i)).toBeVisible();
 });
 
@@ -297,7 +309,7 @@ test("keeps executive-defense Case Plan behind professional review and contains 
 test("builds an Article 20 seasonal plan for the next window instead of saying file now", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
 
-  await workspace.getByLabel("Sí, quiero que el router evalúe la ruta de reestructuración.").check();
+  await workspace.getByLabel("Sí, quiero que Radar Vivienda evalúe la opción de reestructuración.").check();
 
   const article20 = workspace.getByRole("article", { name: /Ruta alternativa: Preparar la próxima ventana del artículo 20/ });
   await expect(article20).toBeVisible();

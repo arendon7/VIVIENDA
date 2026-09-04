@@ -276,7 +276,7 @@ export function StatementGuidedMortgageTwin() {
           Construye una fotografía más precisa de tu crédito con tu extracto a la vista.
         </h1>
         <p className="section-copy">
-          Selecciona un extracto reciente para tenerlo como referencia local y transcribe solo los datos que cambian el análisis. En esta versión VIVIENDA no sube, lee ni procesa el archivo.
+          Selecciona un extracto reciente para tenerlo como referencia local y transcribe solo los datos que cambian el análisis. En esta versión Casa con Criterio no sube, lee ni procesa el archivo.
         </p>
 
         <div className="privacy-panel">
@@ -287,7 +287,7 @@ export function StatementGuidedMortgageTwin() {
             <li>El archivo permanece local: no lo enviamos a nuestro servidor en esta versión.</li>
             <li>No usamos OCR ni simulamos haber leído el documento.</li>
             <li>Tú mirarás el extracto y transcribirás los campos relevantes.</li>
-            <li>El Mortgage Twin seguirá siendo C1; C3 requiere evidencia realmente derivada y reconciliada.</li>
+            <li>Mi Situación seguirá siendo C1; C3 requiere evidencia realmente derivada y reconciliada.</li>
           </ul>
         </div>
 
@@ -313,7 +313,7 @@ export function StatementGuidedMortgageTwin() {
             <div className="document-file-chip" aria-label="Referencia local seleccionada">
               <strong>Referencia local seleccionada:</strong> <span>{localFileName}</span>
             </div>
-            <p className="field-hint guided-local-note">El nombre se muestra solo en esta sesión. No forma parte del Mortgage Twin ni de analítica genérica.</p>
+            <p className="field-hint guided-local-note">El nombre se muestra solo en esta sesión. No forma parte de Mi Situación ni de analítica genérica.</p>
 
             <div className="section-header guided-form-header">
               <div>
@@ -387,7 +387,7 @@ export function StatementGuidedMortgageTwin() {
                 <span>3</span>
                 <div>
                   <h3 id="guided-model-data-title">Si aparecen claramente, añade los datos que habilitan matemática</h3>
-                  <p>No son necesarios para construir el snapshot C1.</p>
+                  <p>No son necesarios para construir la fotografía C1.</p>
                 </div>
               </div>
               <div className="guided-grid">
@@ -409,7 +409,7 @@ export function StatementGuidedMortgageTwin() {
             </section>
 
             <div className="guided-actions">
-              <button className="button button-primary" type="button" onClick={buildSnapshot}>Construir mi Mortgage Twin</button>
+              <button className="button button-primary" type="button" onClick={buildSnapshot}>Organizar mi situación</button>
               <label className="button button-secondary guided-change-file" htmlFor="statement-file">Cambiar extracto local</label>
             </div>
           </section>
@@ -420,7 +420,7 @@ export function StatementGuidedMortgageTwin() {
                 <section className="surface form-card" aria-labelledby="guided-incomplete-title">
                   <p className="eyebrow">Falta información material</p>
                   <h2 id="guided-incomplete-title" ref={resultHeadingRef} tabIndex={-1}>Todavía falta información para construir una fotografía completa.</h2>
-                  <p className="section-copy">Corrige únicamente estos campos del snapshot; no necesitas completar todavía la parte matemática.</p>
+                  <p className="section-copy">Corrige únicamente estos campos de la fotografía base; no necesitas completar todavía la parte matemática.</p>
                   <ul className="guided-issue-list">
                     {snapshotIssues.map((item) => <li key={`${item.code}-${item.field}`}>{issueCopy[item.code] ?? "Revisa este dato material."}</li>)}
                   </ul>
@@ -428,9 +428,9 @@ export function StatementGuidedMortgageTwin() {
               ) : (
                 <>
                   <section className="surface guided-result-heading" aria-labelledby="guided-ready-title">
-                    <p className="eyebrow">Mortgage Twin guiado · C1</p>
-                    <h2 id="guided-ready-title" ref={resultHeadingRef} tabIndex={-1}>Tu fotografía declarada ya tiene la base material del snapshot.</h2>
-                    <p>Datos transcritos por ti desde un extracto local. VIVIENDA no leyó ni verificó el archivo.</p>
+                    <p className="eyebrow">Mi Situación · C1</p>
+                    <h2 id="guided-ready-title" ref={resultHeadingRef} tabIndex={-1}>Ya organizamos los datos base de tu situación.</h2>
+                    <p>Datos transcritos por ti desde un extracto local. Casa con Criterio no leyó ni verificó el archivo.</p>
                     <p className="field-hint">Referencia declarada · corte {snapshot.cutoffDate} · {snapshot.statementAgeDays} días respecto a esta evaluación. No asignamos un umbral universal de “vigente” o “desactualizado”.</p>
                   </section>
 
@@ -451,7 +451,7 @@ export function StatementGuidedMortgageTwin() {
                     <section className="surface-warning" aria-labelledby="guided-context-issues-title">
                       <strong id="guided-context-issues-title">Hay un dato opcional que conviene revisar.</strong>
                       <ul className="guided-issue-list">{contextIssues.map((item) => <li key={`${item.code}-${item.field}`}>{issueCopy[item.code]}</li>)}</ul>
-                      <p>Esto no invalida el Mortgage Twin ni bloquea un modelo compatible.</p>
+                      <p>Esto no invalida Mi Situación ni bloquea un modelo compatible.</p>
                     </section>
                   ) : null}
 
@@ -459,8 +459,8 @@ export function StatementGuidedMortgageTwin() {
                     <section className="surface form-card guided-model" aria-labelledby="guided-model-title">
                       <p className="eyebrow">Siguiente nivel · C2 opcional</p>
                       <h2 id="guided-model-title">También tenemos los datos para probar un escenario de prepago.</h2>
-                      <p className="section-copy">El snapshot sigue siendo C1. Si defines un abono adicional, el resultado matemático será C2 y conservará que los datos base fueron transcritos por ti.</p>
-                      <Field label="Abono adicional mensual que quieres probar (COP)" hint="Es dinero que aportarías tú; no es una recomendación ni valor generado por VIVIENDA.">
+                      <p className="section-copy">La fotografía base sigue siendo C1. Si defines un abono adicional, el resultado matemático será C2 y conservará que los datos base fueron transcritos por ti.</p>
+                      <Field label="Abono adicional mensual que quieres probar (COP)" hint="Es dinero que aportarías tú; no es una recomendación ni valor generado por Casa con Criterio.">
                         <input
                           className="field-control"
                           type="number"
@@ -481,13 +481,13 @@ export function StatementGuidedMortgageTwin() {
                     </section>
                   ) : assessment.modelReadiness === "not_applicable" ? (
                     <section className="surface-warning" role="status">
-                      <strong>{snapshot.productType === "housing_leasing" ? "Este snapshot corresponde a leasing habitacional." : "No vamos a aplicar una fórmula de cuota constante en pesos a este crédito UVR."}</strong>
-                      <p>{snapshot.productType === "housing_leasing" ? "No aplicamos automáticamente el modelo de prepago de crédito hipotecario. La estructura contractual y la opción de compra deben conservarse separadas." : "El Mortgage Twin C1 sí es útil. Un escenario UVR exige una trayectoria explícita y un modelo compatible; esta versión no lo inventa desde el extracto."}</p>
+                      <strong>{snapshot.productType === "housing_leasing" ? "Esta situación corresponde a leasing habitacional." : "No vamos a aplicar una fórmula de cuota constante en pesos a este crédito UVR."}</strong>
+                      <p>{snapshot.productType === "housing_leasing" ? "No aplicamos automáticamente el modelo de prepago de crédito hipotecario. La estructura contractual y la opción de compra deben conservarse separadas." : "Mi Situación C1 sí es útil. Un escenario UVR exige una trayectoria explícita y un modelo compatible; esta versión no lo inventa desde el extracto."}</p>
                     </section>
                   ) : (
                     <section className="surface guided-model-missing" aria-labelledby="guided-model-missing-title">
                       <p className="eyebrow">Modelo opcional</p>
-                      <h2 id="guided-model-missing-title">Tu Mortgage Twin ya está listo; para modelar un prepago faltan datos.</h2>
+                      <h2 id="guided-model-missing-title">Mi Situación ya está lista; para modelar un prepago faltan datos.</h2>
                       <ul className="guided-issue-list">{modelIssues.map((item) => <li key={`${item.code}-${item.field}`}>{issueCopy[item.code] ?? "Este dato todavía no habilita el modelo."}</li>)}</ul>
                       <p className="field-hint">Completa esos campos arriba solo si aparecen claramente en tu extracto.</p>
                     </section>
@@ -516,12 +516,12 @@ export function StatementGuidedMortgageTwin() {
 
                   <section className="surface guided-next-decisions" aria-labelledby="guided-next-decisions-title">
                     <p className="eyebrow">Siguiente decisión</p>
-                    <h2 id="guided-next-decisions-title">Entiende primero qué merece atención y después compara la ruta adecuada.</h2>
+                    <h2 id="guided-next-decisions-title">Entiende primero qué merece atención y después compara la opción adecuada.</h2>
                     <p className="section-copy">
-                      Loan Health usará este Mortgage Twin como fuente C1. El escenario mensual heredado puede conservar C2 solo en reducción de plazo. Si construyes la comparación con un mismo abono único, reducción de plazo y reducción de cuota podrán ganar C2 por separado; las demás rutas seguirán en C1 hasta que tengan soporte propio.
+                      Radar Vivienda usará Mi Situación como fuente C1. El escenario mensual heredado puede conservar C2 solo en reducción de plazo. Si construyes la comparación con un mismo abono único, reducción de plazo y reducción de cuota podrán ganar C2 por separado; las demás opciones seguirán en C1 hasta que tengan soporte propio.
                     </p>
                     <button className="button button-primary" type="button" onClick={openOpportunities} aria-expanded={showOpportunities} aria-controls="guided-opportunity-router">
-                      Ver mi Loan Health y rutas
+                      Ver mi situación y oportunidades
                     </button>
                   </section>
 
@@ -531,7 +531,7 @@ export function StatementGuidedMortgageTwin() {
                         precision="C1"
                         initialProductType={snapshot.productType}
                         initialModality={snapshot.modality}
-                        sourceLabel={`Mortgage Twin C1 · corte ${snapshot.cutoffDate}`}
+                        sourceLabel={`Mi Situación C1 · corte ${snapshot.cutoffDate}`}
                         {...(modelResult
                           ? { initialTermPrepaymentModel: { recurringExtraPrincipal: Number(monthlyExtra) } }
                           : {})}

@@ -365,7 +365,7 @@ export function HomeReadinessTool({ initialFacts, embedded = false, onEditBase }
         <section className={styles.intro}>
           <p className="eyebrow">Preparación para comprar</p>
           <h1>¿Qué tan preparado está hoy tu plan de compra?</h1>
-          <p className="lede">Construye un perfil explicable en cinco dimensiones y descubre qué conviene mejorar primero, sin convertirlo en un supuesto score bancario.</p>
+          <p className="lede">Construye un perfil explicable en cinco dimensiones y descubre qué conviene mejorar primero, sin presentarlo como una supuesta calificación bancaria.</p>
           <p className="trust-line">No necesitas nombre, cédula, correo, teléfono ni consulta a centrales para ver tu preparación.</p>
         </section>
       ) : null}
@@ -464,7 +464,7 @@ export function HomeReadinessTool({ initialFacts, embedded = false, onEditBase }
           {stage === "financing" ? (
             <div className={styles.question}>
               <h2 id="readiness-step-heading">Para medir el encaje de tu objetivo necesitamos un escenario que tú elijas.</h2>
-              <p>VIVIENDA no inserta una tasa de mercado ni supone una oferta bancaria. Usa una tasa y plazo que quieras probar.</p>
+              <p>Casa con Criterio no inserta una tasa de mercado ni supone una oferta bancaria. Usa una tasa y plazo que quieras probar.</p>
               {hasPrefilledFinancing ? <p className={styles.contextHint}>Ya cargamos el escenario que modelaste antes. Puedes usarlo o editarlo.</p> : null}
               <div className={styles.fields}>
                 <div className="field-group">
@@ -519,13 +519,13 @@ export function HomeReadinessTool({ initialFacts, embedded = false, onEditBase }
             </div>
             {resultIsComplete ? (
               <>
-                <p className={styles.indexBoundary}>Índice orientativo propio de VIVIENDA</p>
+                <p className={styles.indexBoundary}>Índice orientativo propio de Casa con Criterio</p>
                 <h2 ref={resultHeadingRef} tabIndex={-1} id="readiness-result-heading">{bandLabel[result.band!]}</h2>
                 <div className={styles.scoreBlock}>
                   <strong>{result.totalScore}</strong><span>/100</span>
                 </div>
                 <p className="section-copy">{bandExplanation[result.band!]}</p>
-                <p className={styles.boundaryLine}>No es DataCrédito, score bancario, preaprobación ni probabilidad de aprobación.</p>
+                <p className={styles.boundaryLine}>No es DataCrédito, una calificación bancaria, una preaprobación ni una probabilidad de aprobación.</p>
               </>
             ) : (
               <>
@@ -573,14 +573,14 @@ export function HomeReadinessTool({ initialFacts, embedded = false, onEditBase }
             <div>
               <p className="eyebrow">Capacidad y objetivo</p>
               <h2 id="facts-heading">Los cálculos base se muestran aparte del índice.</h2>
-              <p className="section-copy">Estos datos provienen del mismo motor de capacidad de compra; el índice no vuelve a contarlos como dimensiones adicionales.</p>
+              <p className="section-copy">Estos datos provienen del mismo cálculo de capacidad de compra; el índice no vuelve a contarlos como dimensiones adicionales.</p>
             </div>
             <dl>
               <div><dt>Carga actual declarada</dt><dd>{percent.format(result.affordabilityFacts.currentDebtRatio)}</dd></div>
               <div><dt>Espacio mensual de planificación</dt><dd>{money(result.affordabilityFacts.planningHousingPaymentRoom)}</dd></div>
               <div><dt>Precio objetivo</dt><dd>{money(financialInput.targetPropertyPrice)}</dd></div>
               <div><dt>Cuota inicial disponible</dt><dd>{money(financialInput.availableDownPayment)}</dd></div>
-              {result.affordabilityFacts.minimumEquityReference !== null ? <div><dt>Referencia mínima de equity</dt><dd>{money(result.affordabilityFacts.minimumEquityReference)}</dd></div> : null}
+              {result.affordabilityFacts.minimumEquityReference !== null ? <div><dt>Referencia mínima de aporte propio</dt><dd>{money(result.affordabilityFacts.minimumEquityReference)}</dd></div> : null}
               {result.affordabilityFacts.modeledPropertyCeiling !== null ? <div><dt>Techo modelado</dt><dd>{money(result.affordabilityFacts.modeledPropertyCeiling)}</dd></div> : null}
               {result.affordabilityFacts.bindingConstraint ? <div><dt>Límite dominante</dt><dd>{result.affordabilityFacts.bindingConstraint === "payment" ? "Capacidad mensual" : result.affordabilityFacts.bindingConstraint === "down_payment" ? "Cuota inicial" : "Ambos"}</dd></div> : null}
             </dl>
@@ -602,8 +602,8 @@ export function HomeReadinessTool({ initialFacts, embedded = false, onEditBase }
           ) : null}
 
           <section className={styles.boundary} aria-label="Límites del Índice de Preparación Hipotecaria">
-            <strong>Índice orientativo propio de VIVIENDA.</strong>
-            <p>No es DataCrédito, score bancario, preaprobación, elegibilidad bancaria ni probabilidad de aprobación. No consulta centrales de riesgo ni usa una tasa de mercado automática.</p>
+            <strong>Índice orientativo propio de Casa con Criterio.</strong>
+            <p>No es DataCrédito, una calificación bancaria, una preaprobación, elegibilidad bancaria ni probabilidad de aprobación. No consulta centrales de riesgo ni usa una tasa de mercado automática.</p>
             <p>La metodología usa cinco dimensiones transparentes de 20 puntos. Los datos son declarados por ti y el total permanece C1, incluso cuando el escenario financiero base usa tasa y plazo aportados por ti.</p>
           </section>
 

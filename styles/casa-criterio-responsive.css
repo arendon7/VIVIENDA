@@ -1,0 +1,34 @@
+/* Casa con Criterio — responsive navigation hardening.
+   Keeps primary customer routes available on compact screens without changing route semantics.
+*/
+
+@media (max-width: 980px) {
+  .cc-site-header:not(.cc-product-header) {
+    flex-wrap: wrap;
+    padding-block: 12px;
+  }
+
+  .cc-site-header .cc-main-nav {
+    display: flex;
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 18px;
+    overflow-x: auto;
+    padding: 2px 0 6px;
+    scrollbar-width: thin;
+    overscroll-behavior-inline: contain;
+  }
+
+  .cc-main-nav .nav-link {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 560px) {
+  .cc-site-header .cc-main-nav {
+    display: flex;
+  }
+}

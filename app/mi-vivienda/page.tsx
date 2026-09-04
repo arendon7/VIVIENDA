@@ -1,3 +1,4 @@
+import { ProductFooter, ProductHeader } from "@/components/brand/ProductChrome";
 import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
 import {
   FinancialNumber,
@@ -31,24 +32,24 @@ const demoLoanHealth = evaluateLoanHealth({
 export default function MiViviendaPage() {
   return (
     <>
-      <header className="shell site-header">
-        <a className="brand" href="/">VIVIENDA</a>
-        <nav aria-label="Mi Vivienda">
-          <a className="nav-link" href="/revisar">Revisar crédito</a>
-          <a className="nav-link" href="/verificar">Extracto como guía</a>
-        </nav>
-      </header>
+      <ProductHeader
+        ariaLabel="Mi Vivienda"
+        links={[
+          { href: "/revisar", label: "Revisar crédito" },
+          { href: "/verificar", label: "Extracto como guía" },
+        ]}
+      />
 
       <main id="contenido" className={`shell ${styles.main}`}>
         <section className={styles.previewNotice} aria-label="Estado de esta vista">
-          <strong>Preview de producto · sin cuenta ni persistencia activa</strong>
-          <span>Los valores visibles son de demostración. Esta superficie no afirma que haya datos guardados, sincronizados ni verificados.</span>
+          <strong>Vista previa del producto · sin cuenta ni información guardada</strong>
+          <span>Los valores visibles son de demostración. Esta vista no afirma que haya datos guardados, sincronizados ni verificados.</span>
         </section>
 
         <section className={styles.hero} aria-labelledby="mi-vivienda-title">
           <div>
             <p className="eyebrow">Mi Vivienda</p>
-            <h1 id="mi-vivienda-title" className={styles.title}>Tu crédito, tus decisiones y lo que falta verificar.</h1>
+            <h1 id="mi-vivienda-title" className={`${styles.title} cc-display`}>Tu crédito, tus decisiones y lo que falta verificar.</h1>
             <p className="lede">
               Un lugar para entender el estado actual, comparar acciones y avanzar con más precisión sin confundir simulación, oferta externa o conclusión jurídica.
             </p>
@@ -62,7 +63,7 @@ export default function MiViviendaPage() {
               <PrecisionBadge level="C2" />
             </div>
             <p className="section-copy">
-              Hay suficiente información confirmada para modelar el escenario soportado. Verificar documentalmente sigue siendo un paso distinto y necesario para C3.
+              Hay suficiente información confirmada para modelar el escenario soportado. La verificación documental sigue siendo un paso distinto y necesario para C3.
             </p>
             <a className="button button-primary" href="/revisar">Comparar una decisión</a>
           </div>
@@ -72,8 +73,8 @@ export default function MiViviendaPage() {
           <article className={`surface ${styles.twin}`}>
             <div className={styles.sectionHeading}>
               <div>
-                <p className="eyebrow">Mortgage Twin</p>
-                <h2 id="twin-heading">Estado actual conocido</h2>
+                <p className="eyebrow">Mi Situación</p>
+                <h2 id="twin-heading" className="cc-display">Estado actual conocido</h2>
               </div>
               <span className={styles.demoTag}>Datos de ejemplo</span>
             </div>
@@ -82,32 +83,37 @@ export default function MiViviendaPage() {
               <FinancialNumber label="Saldo" value="$180.000.000" detail="Declarado / ejemplo" />
               <FinancialNumber label="Cuota" value="$2.100.000" detail="Declarado / ejemplo" />
               <FinancialNumber label="Modalidad" value="Pesos" detail="Confirmada para la simulación" />
-              <FinancialNumber label="Plazo restante" value="17 años" detail="Confirmado para la demo" />
-              <FinancialNumber label="Tasa" value="11,7 % EA" detail="Confirmada para la demo" />
+              <FinancialNumber label="Plazo restante" value="17 años" detail="Confirmado para el ejemplo" />
+              <FinancialNumber label="Tasa" value="11,7 % EA" detail="Confirmada para el ejemplo" />
               <FinancialNumber label="Sistema" value="Cuota constante" detail="Caso soportado en C2" />
             </dl>
 
-            <SourceFreshness source="Valores de demostración de Mi Vivienda" cutoff="Beta 0.22 candidate">
-              <p>La superficie conserva provenance explícito. No representa un crédito real guardado ni verificado documentalmente.</p>
+            <SourceFreshness
+              source="Valores de demostración de Casa con Criterio"
+              sourceClass="calculation"
+              cutoff="Datos ilustrativos"
+              status="current"
+            >
+              <p>La lectura conserva la fuente y el contexto de los datos. No representa un crédito real guardado ni verificado documentalmente.</p>
             </SourceFreshness>
           </article>
 
           <aside className={`surface ${styles.nextAction}`} aria-labelledby="next-action-heading">
             <p className="eyebrow">Siguiente mejor acción</p>
-            <h2 id="next-action-heading">Compara el prepago antes de buscar una solución externa.</h2>
+            <h2 id="next-action-heading" className="cc-display">Compara el prepago antes de buscar una solución externa.</h2>
             <p className="section-copy">
-              El ejemplo ya tiene precisión C2 para el motor soportado y declara capacidad de abono. Primero conviene comparar reducción de plazo frente a reducción de cuota.
+              El ejemplo ya tiene precisión C2 para el modelo soportado y declara capacidad de abono. Primero conviene comparar reducción de plazo frente a reducción de cuota.
             </p>
             <ol className={styles.steps}>
               <li><span>1</span><div><strong>Simular</strong><p>Comparar la misma aportación bajo dos objetivos distintos.</p></div></li>
               <li><span>2</span><div><strong>Entender el efecto</strong><p>Separar capital aportado por ti de intereses futuros modelados.</p></div></li>
-              <li><span>3</span><div><strong>Verificar si hace falta</strong><p>Subir a C3 antes de una decisión que requiera precisión documental.</p></div></li>
+              <li><span>3</span><div><strong>Verificar si hace falta</strong><p>Llegar a C3 antes de una decisión que requiera precisión documental.</p></div></li>
             </ol>
             <a className="button button-primary" href="/revisar">Simular prepago</a>
           </aside>
         </section>
 
-        <section className={styles.section} aria-label="Loan Health">
+        <section className={styles.section} aria-label="Estado de decisión">
           <LoanHealthPanel result={demoLoanHealth} />
         </section>
 
@@ -115,13 +121,13 @@ export default function MiViviendaPage() {
           <div className={`surface ${styles.precisionPanel}`}>
             <div className={styles.sectionHeading}>
               <div>
-                <p className="eyebrow">Ruta de precisión</p>
-                <h2 id="precision-heading">Más datos no siempre significa más verdad.</h2>
+                <p className="eyebrow">Niveles de precisión</p>
+                <h2 id="precision-heading" className="cc-display">Más datos no siempre significa más verdad.</h2>
               </div>
             </div>
             <ol className={styles.precisionPath}>
               <li><PrecisionBadge level="C1" /><strong>Declarado</strong><span>Primera lectura con datos del usuario.</span></li>
-              <li className={styles.activePrecision}><PrecisionBadge level="C2" /><strong>Modelado</strong><span>Supuestos suficientes para el motor compatible.</span></li>
+              <li className={styles.activePrecision}><PrecisionBadge level="C2" /><strong>Modelado</strong><span>Supuestos suficientes para el modelo compatible.</span></li>
               <li><PrecisionBadge level="C3" /><strong>Verificado</strong><span>Solo con evidencia documental real y reconciliada.</span></li>
             </ol>
           </div>
@@ -130,30 +136,33 @@ export default function MiViviendaPage() {
         <section className={styles.section} aria-labelledby="workspace-heading">
           <div className={styles.sectionHeading}>
             <div>
-              <p className="eyebrow">Workspace</p>
-              <h2 id="workspace-heading">El resto aparece cuando aporta a una decisión.</h2>
+              <p className="eyebrow">Herramientas</p>
+              <h2 id="workspace-heading" className="cc-display">El resto aparece cuando aporta a una decisión.</h2>
             </div>
           </div>
           <div className={styles.workspaceGrid}>
             <article className={`surface ${styles.workspaceItem}`}><strong>Simulaciones</strong><p>Escenarios comparables con supuestos visibles.</p><a href="/revisar">Abrir simulador</a></article>
-            <article className={`surface ${styles.workspaceItem}`}><strong>Documentos</strong><p>La infraestructura segura existe provider-ready, pero el vault persistente aún no está activo.</p><a href="/verificar">Usar extracto como guía</a></article>
-            <article className={`surface ${styles.workspaceItem}`}><strong>Casos</strong><p>Un Case solo debe existir después de elegir una ejecución real; preparar una ruta no crea representación ni radicación.</p><span>Se habilitará en contexto</span></article>
+            <article className={`surface ${styles.workspaceItem}`}><strong>Documentos</strong><p>En esta Beta puedes usar tu extracto como referencia local para confirmar campos manualmente. El archivo personal persistente y la verificación documental no están activos.</p><a href="/verificar">Usar extracto como guía</a></article>
+            <article className={`surface ${styles.workspaceItem}`}><strong>Planes y casos</strong><p>Un expediente solo debe existir después de elegir una ejecución real; preparar una opción no crea representación ni radicación.</p><span>Se habilitará en contexto</span></article>
           </div>
         </section>
 
         <section className={styles.endState}>
           <div>
             <p className="eyebrow">Continuar</p>
-            <h2>¿Quieres trabajar sobre un crédito real?</h2>
-            <p className="section-copy">Empieza por el Quick Check. La primera lectura no requiere cédula, teléfono, correo ni extracto.</p>
+            <h2 className="cc-display">¿Quieres trabajar sobre un crédito real?</h2>
+            <p className="section-copy">Empieza por la revisión inicial. La primera lectura no requiere cédula, teléfono, correo ni extracto.</p>
           </div>
           <a className="button button-primary" href="/revisar">Revisar mi crédito</a>
         </section>
       </main>
 
-      <footer className="shell site-footer">
-        VIVIENDA · Beta 0.22 candidate · Loan Health cualitativo, simulaciones y rutas con precisión explícita.
-      </footer>
+      <ProductFooter
+        lines={[
+          "Mi Vivienda · vista previa del producto con precisión explícita.",
+          "Simulaciones, estado de decisión y opciones sin confundir orientación, oferta ni verificación.",
+        ]}
+      />
     </>
   );
 }

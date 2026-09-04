@@ -71,6 +71,10 @@ test.describe("Inconsistency Reconciliation v0.15", () => {
     await expect(page.getByText("Auditar y documentar una posible reclamación")).toBeVisible();
     await expect(page.getByText("Instrucción/comprobante del pago")).toBeVisible();
     await expect(page.getByText("Extracto donde se vea la aplicación efectiva")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Qué opciones aparecen con tus respuestas" })).toBeVisible();
+    await expect(page.locator('[data-route-code="R7_RECLAMACION"]')).toBeVisible();
+    await expect(page.getByText("R7", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("R7_RECLAMACION", { exact: true })).toHaveCount(0);
   });
 
   test("one-source insurance concern stays in evidence comparison", async ({ page }) => {
@@ -94,7 +98,7 @@ test.describe("Inconsistency Reconciliation v0.15", () => {
     await expect(page.getByText("Saldo/plazo de la segunda fuente con fecha de corte comparable")).toBeVisible();
   });
 
-  test("judicial state keeps R10 ahead of an ordinary mismatch without pretending to ingest court documents", async ({ page }) => {
+  test("judicial state keeps R10 ahead of an ordinary mismatch", async ({ page }) => {
     await completeReconciliation(page, {
       kind: "El extracto parece decir algo distinto a lo pactado",
       judicial: "Sí; recibí un documento de juzgado o sé que hay un proceso",
@@ -106,6 +110,9 @@ test.describe("Inconsistency Reconciliation v0.15", () => {
     await expect(page.getByText("Revisión jurídica prioritaria del proceso")).toBeVisible();
     await expect(page.getByRole("link", { name: "Auditar la diferencia" })).toHaveCount(0);
     await expect(page.getByLabel("Límites de este resultado")).toContainText(/calcula términos ni genera una estrategia de defensa/);
+    await expect(page.locator('[data-route-code="R10_EXECUTIVE_DEFENSE"]')).toBeVisible();
+    await expect(page.getByText("R10", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("R10_EXECUTIVE_DEFENSE", { exact: true })).toHaveCount(0);
   });
 
   test("unknown product is classified before mortgage-specific escalation", async ({ page }) => {

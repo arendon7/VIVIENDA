@@ -84,7 +84,7 @@ function structureDimension(
       label: "Estructura del crédito",
       status: "needs_data",
       explanation: "Todavía estamos en orientación: faltan datos materiales para construir una lectura del crédito.",
-      nextAction: "Completar un Quick Check con los datos mínimos del crédito.",
+      nextAction: "Completar una revisión inicial con los datos mínimos del crédito.",
       sourceRouteCodes: [],
     };
   }
@@ -94,8 +94,8 @@ function structureDimension(
       code: "structure_understanding",
       label: "Estructura del crédito",
       status: "explore",
-      explanation: "La fotografía de origen sigue siendo C1 porque los datos fueron declarados. Una o más rutas tienen precisión superior por soporte específico de esa decisión, sin elevar las demás rutas ni verificar el documento.",
-      nextAction: "Usar la precisión superior solo en la ruta que la obtuvo y conservar C1 para las demás decisiones hasta que tengan soporte propio.",
+      explanation: "La fotografía de origen sigue siendo C1 porque los datos fueron declarados. Una o más opciones tienen precisión superior por soporte específico de esa decisión, sin elevar las demás opciones ni verificar el documento.",
+      nextAction: "Usar la precisión superior solo en la opción que la obtuvo y conservar C1 para las demás decisiones hasta que tengan soporte propio.",
       sourceRouteCodes: routeSpecificPrecision.map((route) => route.routeCode),
     };
   }
@@ -126,8 +126,8 @@ function structureDimension(
     code: "structure_understanding",
     label: "Estructura del crédito",
     status: "ready",
-    explanation: "Los campos materiales del snapshot alcanzaron C3 mediante evidencia documental real y reconciliación completa.",
-    nextAction: "Mantener la fecha de corte y provenance visibles al comparar nuevas decisiones.",
+    explanation: "Los campos materiales del estado actual alcanzaron C3 mediante evidencia documental real y reconciliación completa.",
+    nextAction: "Mantener la fecha de corte, la fuente y la vigencia visibles al comparar nuevas decisiones.",
     sourceRouteCodes: [],
   };
 }
@@ -143,7 +143,7 @@ function prepaymentDimension(input: LoanHealthInput): LoanHealthDimension {
       code: "prepayment",
       label: "Prepago",
       status: "needs_data",
-      explanation: "Primero necesitamos confirmar la naturaleza del producto antes de aplicar la ruta especial de prepago de vivienda.",
+      explanation: "Primero necesitamos confirmar la naturaleza del producto antes de aplicar la opción especial de prepago de vivienda.",
       nextAction: "Clasificar el producto con contrato o extracto.",
       sourceRouteCodes: [],
     };
@@ -154,7 +154,7 @@ function prepaymentDimension(input: LoanHealthInput): LoanHealthDimension {
       code: "prepayment",
       label: "Prepago",
       status: "not_applicable",
-      explanation: "El rulebook actual no activó la ruta de prepago hipotecario de vivienda para este tipo de producto.",
+      explanation: "Las reglas actuales no activaron la opción de prepago hipotecario de vivienda para este tipo de producto.",
       nextAction: "Usar la regla contractual aplicable al producto antes de recomendar una acción.",
       sourceRouteCodes: [],
     };
@@ -165,7 +165,7 @@ function prepaymentDimension(input: LoanHealthInput): LoanHealthDimension {
       code: "prepayment",
       label: "Prepago",
       status: "explore",
-      explanation: "No hay una ruta de prepago activada con los datos actuales. Puede explorarse si contemplas un abono adicional.",
+      explanation: "No hay una opción de prepago activada con los datos actuales. Puede explorarse si contemplas un abono adicional.",
       nextAction: "Indicar si existe capacidad o intención de realizar un abono adicional.",
       sourceRouteCodes: [],
     };
@@ -178,8 +178,8 @@ function prepaymentDimension(input: LoanHealthInput): LoanHealthDimension {
     label: "Prepago",
     status: ready ? "ready" : "explore",
     explanation: ready
-      ? "Existe al menos una ruta de prepago accionable con los datos actuales; reducción de plazo y reducción de cuota siguen siendo decisiones distintas y pueden tener precisiones diferentes."
-      : "Existe una ruta de prepago, pero todavía hay bloqueos de precisión o información antes de cuantificar correctamente el efecto.",
+      ? "Existe al menos una opción de prepago accionable con los datos actuales; reducción de plazo y reducción de cuota siguen siendo decisiones distintas y pueden tener precisiones diferentes."
+      : "Existe una opción de prepago, pero todavía hay bloqueos de precisión o información antes de cuantificar correctamente el efecto.",
     nextAction: ready
       ? "Comparar los dos objetivos y cuantificar por separado cualquier alternativa que todavía no tenga un modelo compatible."
       : "Resolver los bloqueos del modelo antes de mostrar un beneficio monetario exacto.",
@@ -196,11 +196,11 @@ function transferDimension(input: LoanHealthInput): LoanHealthDimension {
       label: "Traslado / compra de cartera",
       status: input.productType === "unknown" ? "needs_data" : "not_applicable",
       explanation: input.productType === "unknown"
-        ? "Falta clasificar el producto antes de evaluar esta ruta."
-        : "El rulebook actual no activó una ruta de cesión para este producto.",
+        ? "Falta clasificar el producto antes de evaluar esta opción."
+        : "Las reglas actuales no activaron una opción de cesión para este producto.",
       nextAction: input.productType === "unknown"
         ? "Clasificar el producto."
-        : "No mostrar matching bancario para esta dimensión.",
+        : "No mostrar comparación bancaria para esta dimensión.",
       sourceRouteCodes: [],
     };
   }
@@ -212,8 +212,8 @@ function transferDimension(input: LoanHealthInput): LoanHealthDimension {
     label: "Traslado / compra de cartera",
     status: ready ? "ready" : "explore",
     explanation: ready
-      ? "Existe una oferta vinculante reportada que permite preparar el siguiente paso de la ruta de cesión."
-      : "La ruta merece comparación, pero todavía no existe una base para presentarla como compatibilidad, oferta o aprobación bancaria.",
+      ? "Existe una oferta vinculante reportada que permite preparar el siguiente paso de la opción de cesión."
+      : "La opción merece comparación, pero todavía no existe una base para presentarla como compatibilidad, oferta o aprobación bancaria.",
     nextAction: route.nextAction,
     sourceRouteCodes: [route.routeCode],
   };
@@ -228,9 +228,9 @@ function restructuringDimension(input: LoanHealthInput): LoanHealthDimension {
       label: "Reestructuración anual",
       status: input.productType === "unknown" ? "needs_data" : "not_applicable",
       explanation: input.productType === "unknown"
-        ? "Falta clasificar el producto antes de evaluar la ruta especial."
-        : "La ruta especial del artículo 20 no fue activada para este producto en el rulebook actual.",
-      nextAction: input.productType === "unknown" ? "Clasificar el producto." : "No forzar esta ruta fuera de su ámbito.",
+        ? "Falta clasificar el producto antes de evaluar la opción especial."
+        : "La opción especial del artículo 20 no fue activada para este producto con las reglas actuales.",
+      nextAction: input.productType === "unknown" ? "Clasificar el producto." : "No forzar esta opción fuera de su ámbito.",
       sourceRouteCodes: [],
     };
   }
@@ -247,7 +247,7 @@ function restructuringDimension(input: LoanHealthInput): LoanHealthDimension {
     code: "restructuring",
     label: "Reestructuración anual",
     status: statusMap[route.status],
-    explanation: route.caveat ?? "La dimensión conserva el estado y límites definidos por el Opportunity Router.",
+    explanation: route.caveat ?? "Esta dimensión conserva el estado y los límites definidos por la evaluación previa.",
     nextAction: route.nextAction,
     sourceRouteCodes: [route.routeCode],
   };
@@ -284,7 +284,7 @@ function proceduralDimension(paymentState: PaymentState): LoanHealthDimension {
         code: "procedural_state",
         label: "Mora / proceso",
         status: "no_flag_reported",
-        explanation: "El estado informado es al día; no se reportó una etapa de mora o proceso en este snapshot.",
+        explanation: "El estado informado es al día; no se reportó una etapa de mora o proceso en el estado actual.",
         nextAction: "Actualizar este dato si cambia la situación de pago o recibes una comunicación formal.",
         sourceRouteCodes: [],
       };
@@ -295,8 +295,8 @@ function proceduralDimension(paymentState: PaymentState): LoanHealthDimension {
         code: "procedural_state",
         label: "Mora / proceso",
         status: "attention",
-        explanation: "El estado informado requiere atención temprana; Loan Health no calcula términos ni asume que ya exista un proceso judicial.",
-        nextAction: "Organizar comunicaciones, saldo de mora y capacidad de pago para definir la siguiente ruta.",
+        explanation: "El estado informado requiere atención temprana; esta lectura no calcula términos ni asume que ya exista un proceso judicial.",
+        nextAction: "Organizar comunicaciones, saldo de mora y capacidad de pago para definir la siguiente opción.",
         sourceRouteCodes: [],
       };
     case "executive":
@@ -373,7 +373,7 @@ export function evaluateLoanHealth(input: LoanHealthInput): LoanHealthResult {
 
   const overall = overallDecisionState(input.precision, dimensions);
   const routeSpecificNotice = routeSpecificPrecision.length > 0
-    ? `La fuente base permanece en ${input.precision}. ${routeSpecificPrecision.map((route) => `${route.routeCode} ${route.precision}`).join(" · ")} tiene precisión superior solo dentro de su propia ruta; esto no verifica el documento ni eleva las demás decisiones.`
+    ? `La fuente base permanece en ${input.precision}. ${routeSpecificPrecision.length === 1 ? "Una opción específica" : `${routeSpecificPrecision.length} opciones específicas`} alcanzó ${[...new Set(routeSpecificPrecision.map((route) => route.precision))].join(" / ")} solo dentro de su propio análisis; esto no verifica el documento ni eleva las demás decisiones.`
     : null;
 
   return {
@@ -382,8 +382,8 @@ export function evaluateLoanHealth(input: LoanHealthInput): LoanHealthResult {
     headline: overall.headline,
     dimensions,
     notices: [
-      "Loan Health v0.21 es una evaluación cualitativa de decisiones, no un score crediticio ni de riesgo.",
-      "Las rutas conservan la precisión y el fundamento del Opportunity Router; esta capa no crea nuevas conclusiones jurídicas.",
+      "Este estado de decisión es una evaluación cualitativa, no una calificación crediticia ni de riesgo.",
+      "Las opciones conservan la precisión y el fundamento de la evaluación previa; esta capa no crea nuevas conclusiones jurídicas.",
       ...(routeSpecificNotice ? [routeSpecificNotice] : []),
     ],
   };
