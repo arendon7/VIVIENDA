@@ -81,7 +81,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.number == 31
     needs: e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     env:
       E2E_BASE_URL: https://vivienda-git-brand-casa-con-criterio-v1-nnnn25.vercel.app
     steps:
@@ -98,24 +98,59 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Wait for Vercel Preview
+      - name: Verify Vercel Preview identity
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 60); do
-            status="$(curl --location --silent --show-error --output /tmp/vivienda-preview.html --write-out '%{http_code}' "$E2E_BASE_URL/" || true)"
-            echo "Preview probe $attempt/60 -> HTTP $status"
-            if [ "$status" = "200" ]; then
-              exit 0
+
+          status="$(curl --location --silent --show-error \
+            --dump-header /tmp/vivienda-preview.headers \
+            --output /tmp/vivienda-preview.html \
+            --write-out '%{http_code}' \
+            "$E2E_BASE_URL/" || true)"
+
+          echo "Root HTTP $status"
+          echo "=== selected response headers ==="
+          grep -E -i '^(content-type|server|x-vercel|x-robots-tag|cache-control|location):' /tmp/vivienda-preview.headers || true
+
+          title="$(tr '\n' ' ' < /tmp/vivienda-preview.html | sed -n 's:.*<title>\([^<]*\)</title>.*:\1:p' | head -n 1)"
+          echo "HTML title: ${title:-<none>}"
+
+          if [ "$status" != "200" ]; then
+            echo "::error::Preview root did not return HTTP 200."
+            exit 1
+          fi
+
+          if ! grep -Fq "Casa con Criterio" /tmp/vivienda-preview.html; then
+            echo "::error::HTTP 200 does not contain the Casa con Criterio application identity."
+            echo "=== public HTML classification ==="
+            if grep -Eqi 'vercel.*(security|authentication|checkpoint|protection)|deployment protection|authentication required' /tmp/vivienda-preview.html; then
+              echo "Detected a Vercel protection/authentication interstitial."
+            elif grep -Fqi "VIVIENDA" /tmp/vivienda-preview.html; then
+              echo "Detected VIVIENDA text without the current Casa con Criterio masterbrand; alias may be serving an older build."
+            else
+              echo "HTML does not match the current application or known Vercel protection markers."
             fi
-            if [ "$status" = "401" ] || [ "$status" = "403" ]; then
-              echo "::error::Vercel Preview is protected or inaccessible to GitHub Actions (HTTP $status)."
-              exit 1
-            fi
-            sleep 10
-          done
-          echo "::error::Vercel Preview did not become ready within the polling window."
-          exit 1
+            echo "=== HTML diagnostic prefix (public response, first 1200 bytes) ==="
+            head -c 1200 /tmp/vivienda-preview.html | tr '\n' ' '
+            echo
+            exit 1
+          fi
+
+          manifest_status="$(curl --location --silent --show-error \
+            --dump-header /tmp/vivienda-manifest.headers \
+            --output /tmp/vivienda-manifest.json \
+            --write-out '%{http_code}' \
+            "$E2E_BASE_URL/manifest.webmanifest" || true)"
+          echo "Manifest HTTP $manifest_status"
+          grep -E -i '^(content-type|x-vercel|x-robots-tag|cache-control|location):' /tmp/vivienda-manifest.headers || true
+
+          if [ "$manifest_status" != "200" ]; then
+            echo "::error::Manifest did not return HTTP 200."
+            exit 1
+          fi
+
+          node -e 'const fs=require("fs"); const m=JSON.parse(fs.readFileSync("/tmp/vivienda-manifest.json","utf8")); if(m.name!=="Casa con Criterio") { console.error(`::error::Unexpected manifest identity: ${m.name ?? "<missing>"}`); process.exit(1); } console.log(`Manifest identity: ${m.name}`);'
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
