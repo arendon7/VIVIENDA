@@ -76,3 +76,58 @@ jobs:
           path: test-results
           if-no-files-found: ignore
           retention-days: 3
+
+  remote-preview-e2e:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 31
+    needs: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      E2E_BASE_URL: https://vivienda-git-brand-casa-con-criterio-v1-nnnn25.vercel.app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.12.0
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Wait for Vercel Preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            status="$(curl --location --silent --show-error --output /tmp/vivienda-preview.html --write-out '%{http_code}' "$E2E_BASE_URL/" || true)"
+            echo "Preview probe $attempt/60 -> HTTP $status"
+            if [ "$status" = "200" ]; then
+              exit 0
+            fi
+            if [ "$status" = "401" ] || [ "$status" = "403" ]; then
+              echo "::error::Vercel Preview is protected or inaccessible to GitHub Actions (HTTP $status)."
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "::error::Vercel Preview did not become ready within the polling window."
+          exit 1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Remote Preview E2E
+        run: npm run test:e2e
+
+      - name: Upload remote Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-remote-preview-diagnostics
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 3
