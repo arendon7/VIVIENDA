@@ -3,12 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { CasePlanWorkspace } from "@/components/vivienda/case-plan-workspace";
 import { DecisionBriefPanel } from "@/components/vivienda/decision-brief-panel";
+import { DecisionRevalidationPanel } from "@/components/vivienda/decision-revalidation-panel";
 import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
 import {
   PrepaymentChoiceComparison,
   type PrepaymentChoiceModelInput,
 } from "@/components/vivienda/prepayment-choice-comparison";
 import { createDecisionObject } from "@/domain/decision-object/evaluator";
+import {
+  captureDecisionBasis,
+  revalidateDecisionBasis,
+  type DecisionBasisSnapshot,
+} from "@/domain/decision-object/revalidation";
 import { evaluateLoanHealth } from "@/domain/loan-health/evaluator";
 import { evaluateIntegratedOpportunityRoutes } from "@/domain/loan-health/integration";
 import type {
@@ -125,6 +131,7 @@ export function OpportunityWorkspace({
   const [paymentState, setPaymentState] = useState<PaymentState>("current");
   const [auditIssue, setAuditIssue] = useState(false);
   const [selectedRouteCode, setSelectedRouteCode] = useState<OpportunityRouteCode | null>(null);
+  const [decisionBasis, setDecisionBasis] = useState<DecisionBasisSnapshot | null>(null);
   const [casePlanOpen, setCasePlanOpen] = useState(false);
   const asOfDate = bogotaToday();
   const extraPaymentCapacity = optionalPositive(extraPayment);
@@ -200,13 +207,6 @@ export function OpportunityWorkspace({
     [paymentState, precision, productType, result],
   );
 
-  useEffect(() => {
-    if (selectedRouteCode && !result.routes.some((route) => route.routeCode === selectedRouteCode)) {
-      setSelectedRouteCode(null);
-      setCasePlanOpen(false);
-    }
-  }, [result, selectedRouteCode]);
-
   const selectedRoute = selectedRouteCode
     ? result.routes.find((route) => route.routeCode === selectedRouteCode) ?? null
     : null;
@@ -216,9 +216,41 @@ export function OpportunityWorkspace({
     ...(selectedRoute ? { selectedRouteCode: selectedRoute.routeCode } : {}),
   });
 
-  const governingRoute = decision.governingRouteCode
-    ? result.routes.find((route) => route.routeCode === decision.governingRouteCode) ?? null
+  const revalidation = useMemo(
+    () => decisionBasis ? revalidateDecisionBasis(decisionBasis, result) : null,
+    [decisionBasis, result],
+  );
+  const revalidationStatus = revalidation?.status ?? null;
+  const revalidationReasonsKey = revalidation?.reasons.join("|") ?? "";
+
+  useEffect(() => {
+    if (revalidationStatus && revalidationStatus !== "current") {
+      setCasePlanOpen(false);
+    }
+  }, [revalidationReasonsKey, revalidationStatus]);
+
+  const decisionForReview = revalidation?.decision ?? (selectedRoute ? decision : null);
+  const governingRoute = decisionForReview?.governingRouteCode
+    ? result.routes.find((route) => route.routeCode === decisionForReview.governingRouteCode) ?? null
     : null;
+  const decisionCanContinue = Boolean(
+    decisionBasis
+      && revalidation?.status === "current"
+      && selectedRoute
+      && governingRoute,
+  );
+
+  function clearDecisionSelection() {
+    setSelectedRouteCode(null);
+    setDecisionBasis(null);
+    setCasePlanOpen(false);
+  }
+
+  function acceptCurrentDecisionBasis() {
+    if (revalidation?.status !== "review_required" || !revalidation.decision) return;
+    setDecisionBasis(captureDecisionBasis(revalidation.decision));
+    setCasePlanOpen(false);
+  }
 
   return (
     <section className="surface form-card" style={{ marginTop: 20 }} aria-labelledby="opportunity-workspace-title">
@@ -277,8 +309,7 @@ export function OpportunityWorkspace({
                 onChange={() => {
                   setProductType(value);
                   setChoiceModeledAmount(null);
-                  setSelectedRouteCode(null);
-                  setCasePlanOpen(false);
+                  clearDecisionSelection();
                 }}
               />
               <span>{productLabels[value]}</span>
@@ -479,7 +510,12 @@ export function OpportunityWorkspace({
                       type="button"
                       aria-pressed={selectedRouteCode === routeItem.routeCode}
                       onClick={() => {
+                        const nextDecision = createDecisionObject({
+                          routerResult: result,
+                          selectedRouteCode: routeItem.routeCode,
+                        });
                         setSelectedRouteCode(routeItem.routeCode);
+                        setDecisionBasis(captureDecisionBasis(nextDecision));
                         setCasePlanOpen(false);
                       }}
                     >
@@ -493,33 +529,45 @@ export function OpportunityWorkspace({
         )}
       </div>
 
-      {selectedRoute ? (
+      {decisionBasis && revalidation?.status === "selection_invalid" ? (
         <div data-decision-workspace="selected-route">
-          <DecisionBriefPanel decision={decision} />
-          <div className="actions" style={{ marginTop: 16 }} aria-label="Continuar desde Mi Decisión">
-            <button
-              className="button button-primary"
-              type="button"
-              disabled={!governingRoute}
-              onClick={() => setCasePlanOpen(true)}
-            >
-              {decision.requiresProfessionalReview ? "Preparar revisión prioritaria" : "Continuar al plan de esta ruta"}
-            </button>
-            <button
-              className="button button-secondary"
-              type="button"
-              onClick={() => {
-                setSelectedRouteCode(null);
-                setCasePlanOpen(false);
-              }}
-            >
-              Elegir otra ruta
-            </button>
-          </div>
+          <DecisionRevalidationPanel
+            revalidation={revalidation}
+            onAcceptCurrentBasis={acceptCurrentDecisionBasis}
+            onChooseAnotherRoute={clearDecisionSelection}
+          />
+        </div>
+      ) : selectedRoute && decisionForReview && decisionBasis && revalidation ? (
+        <div data-decision-workspace="selected-route">
+          <DecisionBriefPanel decision={decisionForReview} />
+          <DecisionRevalidationPanel
+            revalidation={revalidation}
+            onAcceptCurrentBasis={acceptCurrentDecisionBasis}
+            onChooseAnotherRoute={clearDecisionSelection}
+          />
+          {revalidation.status === "current" ? (
+            <div className="actions" style={{ marginTop: 16 }} aria-label="Continuar desde Mi Decisión">
+              <button
+                className="button button-primary"
+                type="button"
+                disabled={!decisionCanContinue}
+                onClick={() => setCasePlanOpen(true)}
+              >
+                {decisionForReview.requiresProfessionalReview ? "Preparar revisión prioritaria" : "Continuar al plan de esta ruta"}
+              </button>
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={clearDecisionSelection}
+              >
+                Elegir otra ruta
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
-      {casePlanOpen && governingRoute ? (
+      {casePlanOpen && decisionCanContinue && governingRoute ? (
         <CasePlanWorkspace
           route={governingRoute}
           asOfDate={asOfDate}
