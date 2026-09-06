@@ -106,22 +106,14 @@ function findR7(result: OpportunityRouterResult): OpportunityRoute | undefined {
   return result.routes.find((route) => route.routeCode === "R7_RECLAMACION");
 }
 
-export function buildMortgageAuditBlueprint(
-  routerResult: OpportunityRouterResult,
+export function buildMortgageAuditBlueprintForGovernedRoute(
+  route: OpportunityRoute,
   asOfDate: string,
 ): MortgageAuditExecutionBlueprint {
-  if (routerResult.primaryRoute?.routeCode === "R10_EXECUTIVE_DEFENSE") {
-    throw new MortgageAuditBlueprintError(
-      "higher_priority_route_requires_reroute",
-      "Existe una ruta procesal prioritaria R10; no se debe continuar una auditoría R7 ordinaria sin re-rutear el caso.",
-    );
-  }
-
-  const route = findR7(routerResult);
-  if (!route) {
+  if (route.routeCode !== "R7_RECLAMACION") {
     throw new MortgageAuditBlueprintError(
       "r7_not_available",
-      "La Auditoría Hipotecaria v0.12 requiere una inconsistencia concreta clasificada por R7.",
+      "La Auditoría Hipotecaria v0.12 requiere una ruta gobernante R7 concreta.",
     );
   }
 
@@ -153,4 +145,26 @@ export function buildMortgageAuditBlueprint(
       "Cualquier radicación posterior debe registrarse únicamente cuando exista una actuación real y evidencia/referencia verificable.",
     ],
   };
+}
+
+export function buildMortgageAuditBlueprint(
+  routerResult: OpportunityRouterResult,
+  asOfDate: string,
+): MortgageAuditExecutionBlueprint {
+  if (routerResult.primaryRoute?.routeCode === "R10_EXECUTIVE_DEFENSE") {
+    throw new MortgageAuditBlueprintError(
+      "higher_priority_route_requires_reroute",
+      "Existe una ruta procesal prioritaria R10; no se debe continuar una auditoría R7 ordinaria sin re-rutear el caso.",
+    );
+  }
+
+  const route = findR7(routerResult);
+  if (!route) {
+    throw new MortgageAuditBlueprintError(
+      "r7_not_available",
+      "La Auditoría Hipotecaria v0.12 requiere una inconsistencia concreta clasificada por R7.",
+    );
+  }
+
+  return buildMortgageAuditBlueprintForGovernedRoute(route, asOfDate);
 }
