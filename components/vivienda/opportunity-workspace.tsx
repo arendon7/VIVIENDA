@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CasePlanWorkspace } from "@/components/vivienda/case-plan-workspace";
+import { DecisionBriefPanel } from "@/components/vivienda/decision-brief-panel";
 import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
 import {
   PrepaymentChoiceComparison,
   type PrepaymentChoiceModelInput,
 } from "@/components/vivienda/prepayment-choice-comparison";
+import { createDecisionObject } from "@/domain/decision-object/evaluator";
 import { evaluateLoanHealth } from "@/domain/loan-health/evaluator";
 import { evaluateIntegratedOpportunityRoutes } from "@/domain/loan-health/integration";
 import type {
@@ -123,6 +125,7 @@ export function OpportunityWorkspace({
   const [paymentState, setPaymentState] = useState<PaymentState>("current");
   const [auditIssue, setAuditIssue] = useState(false);
   const [selectedRouteCode, setSelectedRouteCode] = useState<OpportunityRouteCode | null>(null);
+  const [casePlanOpen, setCasePlanOpen] = useState(false);
   const asOfDate = bogotaToday();
   const extraPaymentCapacity = optionalPositive(extraPayment);
 
@@ -197,8 +200,24 @@ export function OpportunityWorkspace({
     [paymentState, precision, productType, result],
   );
 
+  useEffect(() => {
+    if (selectedRouteCode && !result.routes.some((route) => route.routeCode === selectedRouteCode)) {
+      setSelectedRouteCode(null);
+      setCasePlanOpen(false);
+    }
+  }, [result, selectedRouteCode]);
+
   const selectedRoute = selectedRouteCode
     ? result.routes.find((route) => route.routeCode === selectedRouteCode) ?? null
+    : null;
+
+  const decision = createDecisionObject({
+    routerResult: result,
+    ...(selectedRoute ? { selectedRouteCode: selectedRoute.routeCode } : {}),
+  });
+
+  const governingRoute = decision.governingRouteCode
+    ? result.routes.find((route) => route.routeCode === decision.governingRouteCode) ?? null
     : null;
 
   return (
@@ -259,6 +278,7 @@ export function OpportunityWorkspace({
                   setProductType(value);
                   setChoiceModeledAmount(null);
                   setSelectedRouteCode(null);
+                  setCasePlanOpen(false);
                 }}
               />
               <span>{productLabels[value]}</span>
@@ -458,7 +478,10 @@ export function OpportunityWorkspace({
                       className="button button-primary"
                       type="button"
                       aria-pressed={selectedRouteCode === routeItem.routeCode}
-                      onClick={() => setSelectedRouteCode(routeItem.routeCode)}
+                      onClick={() => {
+                        setSelectedRouteCode(routeItem.routeCode);
+                        setCasePlanOpen(false);
+                      }}
                     >
                       Preparar esta ruta
                     </button>
@@ -471,10 +494,36 @@ export function OpportunityWorkspace({
       </div>
 
       {selectedRoute ? (
+        <div data-decision-workspace="selected-route">
+          <DecisionBriefPanel decision={decision} />
+          <div className="actions" style={{ marginTop: 16 }} aria-label="Continuar desde Mi Decisión">
+            <button
+              className="button button-primary"
+              type="button"
+              disabled={!governingRoute}
+              onClick={() => setCasePlanOpen(true)}
+            >
+              {decision.requiresProfessionalReview ? "Preparar revisión prioritaria" : "Continuar al plan de esta ruta"}
+            </button>
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={() => {
+                setSelectedRouteCode(null);
+                setCasePlanOpen(false);
+              }}
+            >
+              Elegir otra ruta
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {casePlanOpen && governingRoute ? (
         <CasePlanWorkspace
-          route={selectedRoute}
+          route={governingRoute}
           asOfDate={asOfDate}
-          onClose={() => setSelectedRouteCode(null)}
+          onClose={() => setCasePlanOpen(false)}
         />
       ) : null}
     </section>
