@@ -13,14 +13,14 @@ const statusLabels = {
 } as const;
 
 const selfServiceLabels = {
-  available: "Autogestión disponible para preparar la instrucción; esta preview no la envía ni la ejecuta ante el banco.",
+  available: "Autogestión disponible para preparar la instrucción; esta vista no la envía ni la ejecuta ante el banco.",
   preparation_only: "Puedes preparar la ruta; el resultado o actuación final depende de terceros o revisión adicional.",
   not_appropriate: "No es apropiada como autogestión ordinaria con los hechos actuales.",
 } as const;
 
 const assistedLabels = {
-  mortgage_audit_preview: "Auditoría Hipotecaria asistida: blueprint de preview disponible.",
-  not_productized: "No existe un servicio asistido productizado para esta ruta en esta preview.",
+  mortgage_audit_preview: "Auditoría Hipotecaria: modalidad asistida definida para esta versión de demostración.",
+  not_productized: "No existe un servicio asistido habilitado para contratar para esta ruta en esta versión.",
 } as const;
 
 function effortSummary(profile: DecisionActionProfile): string {
@@ -50,9 +50,9 @@ function costSummary(profile: DecisionActionProfile): string {
   }
 
   if (profile.cost.assistedServicePricing === "not_quoted_preview") {
-    parts.push("servicio asistido sin precio final cotizado en esta preview");
+    parts.push("servicio asistido sin precio final cotizado en esta versión");
   } else if (profile.cost.assistedServicePricing === "not_available_in_preview") {
-    parts.push("servicio asistido no productizado ni cotizado aquí");
+    parts.push("servicio asistido no habilitado ni cotizado aquí");
   } else {
     parts.push("no se modela una tarifa asistida para esta ruta");
   }
