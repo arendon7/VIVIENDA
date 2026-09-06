@@ -61,6 +61,14 @@ async function continueFromDecision(
   await decision.getByRole("button", {
     name: professionalReview ? "Preparar revisión prioritaria" : "Continuar al plan de esta ruta",
   }).click();
+
+  const executionGate = workspace.locator("[data-execution-intent-gate]");
+  await expect(executionGate).toBeVisible();
+  await expect(workspace.locator('section[aria-labelledby="case-plan-title"]')).toHaveCount(0);
+  await executionGate.getByRole("button", {
+    name: professionalReview ? "Preparar revisión profesional" : "Prepararlo por mi cuenta",
+  }).click();
+  await expect(executionGate).toHaveCount(0);
 }
 
 test("keeps the home conceptual Mortgage Twin outside verified C3 and exposes only real routes", async ({ page }) => {
