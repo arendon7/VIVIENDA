@@ -63,7 +63,7 @@ function costSummary(profile: DecisionActionProfile): string {
 
 export function DecisionBriefPanel({
   decision,
-  actionProfiles = [],
+  actionProfiles,
 }: {
   decision: DecisionObject;
   actionProfiles?: DecisionActionProfile[];
@@ -72,7 +72,8 @@ export function DecisionBriefPanel({
   const governing = decision.governingRouteCode
     ? decision.options.find((option) => option.routeCode === decision.governingRouteCode) ?? null
     : null;
-  const actionProfileByRoute = new Map(actionProfiles.map((profile) => [profile.routeCode, profile]));
+  const resolvedActionProfiles = actionProfiles ?? decision.actionProfiles;
+  const actionProfileByRoute = new Map(resolvedActionProfiles.map((profile) => [profile.routeCode, profile]));
 
   return (
     <section
@@ -186,7 +187,7 @@ export function DecisionBriefPanel({
         <summary>Qué significa —y qué no significa— esta vista</summary>
         <ul>
           {brief.disclosures.map((disclosure) => <li key={disclosure}>{disclosure}</li>)}
-          {actionProfiles.flatMap((profile) => profile.disclosures).filter((disclosure, index, list) => list.indexOf(disclosure) === index).map((disclosure) => (
+          {resolvedActionProfiles.flatMap((profile) => profile.disclosures).filter((disclosure, index, list) => list.indexOf(disclosure) === index).map((disclosure) => (
             <li key={disclosure}>{disclosure}</li>
           ))}
         </ul>
