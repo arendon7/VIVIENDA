@@ -34,6 +34,39 @@ async function openR7AssistedPlan(page: import("@playwright/test").Page) {
   return plan;
 }
 
+async function openR7SelfPreparedPlan(page: import("@playwright/test").Page) {
+  await page.goto("/verificar");
+  await page.getByLabel("Seleccionar extracto local").setInputFiles({
+    name: "self-readiness-local.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4 local-reference-only"),
+  });
+  await page.getByLabel("Fecha de corte del extracto").fill("2026-08-15");
+  await page.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).first().check();
+  await page.getByRole("radio", { name: "Pesos", exact: true }).first().check();
+  await page.getByLabel("Saldo de capital (COP)").fill("180000000");
+  await page.getByRole("button", { name: "Organizar mi situación" }).click();
+  await page.getByRole("button", { name: "Ver mi situación y oportunidades" }).click();
+
+  const workspace = page.locator('section[aria-labelledby="opportunity-workspace-title"]');
+  await workspace.getByLabel("Sí, quiero priorizar auditoría/reclamación.").check();
+
+  const r7 = workspace.locator('article[data-route-code="R7_RECLAMACION"]');
+  await expect(r7).toBeVisible();
+  await r7.getByRole("button", { name: "Preparar esta ruta" }).click();
+
+  const decision = workspace.locator('[data-decision-workspace="selected-route"]');
+  await decision.getByRole("button", { name: "Preparar revisión prioritaria" }).click();
+
+  const gate = workspace.locator("[data-execution-intent-gate]");
+  await expect(gate.getByRole("button", { name: "Prepararlo por mi cuenta", exact: true })).toBeVisible();
+  await gate.getByRole("button", { name: "Prepararlo por mi cuenta", exact: true }).click();
+
+  const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+  await expect(plan).toBeVisible();
+  return plan;
+}
+
 test.describe("R7 assisted execution readiness", () => {
   test("shows the real setup order while keeping every operational capability pending", async ({ page }) => {
     const plan = await openR7AssistedPlan(page);
@@ -72,29 +105,8 @@ test.describe("R7 assisted execution readiness", () => {
   });
 
   test("keeps readiness exclusive to the assisted choice", async ({ page }) => {
-    await page.goto("/verificar");
-    await page.getByLabel("Seleccionar extracto local").setInputFiles({
-      name: "self-readiness-local.pdf",
-      mimeType: "application/pdf",
-      buffer: Buffer.from("%PDF-1.4 local-reference-only"),
-    });
-    await page.getByLabel("Fecha de corte del extracto").fill("2026-08-15");
-    await page.getByRole("radio", { name: "Crédito hipotecario de vivienda" }).first().check();
-    await page.getByRole("radio", { name: "Pesos", exact: true }).first().check();
-    await page.getByLabel("Saldo de capital (COP)").fill("180000000");
-    await page.getByRole("button", { name: "Organizar mi situación" }).click();
-    await page.getByRole("button", { name: "Ver mi situación y oportunidades" }).click();
-
-    const workspace = page.locator('section[aria-labelledby="opportunity-workspace-title"]');
-    const r1 = workspace.locator('article[data-route-code="R1_PREPAGO_PLAZO"]');
-    await r1.getByRole("button", { name: "Preparar esta ruta" }).click();
-    const decision = workspace.locator('[data-decision-workspace="selected-route"]');
-    await decision.getByRole("button", { name: "Continuar al plan de esta ruta" }).click();
-    const gate = workspace.locator("[data-execution-intent-gate]");
-    await gate.getByRole("button", { name: "Prepararlo por mi cuenta", exact: true }).click();
-
-    const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
-    await expect(plan).toBeVisible();
+    const plan = await openR7SelfPreparedPlan(page);
+    await expect(plan.getByText("Autogestión", { exact: true })).toBeVisible();
     await expect(plan.locator("[data-assisted-execution-readiness]")).toHaveCount(0);
   });
 });
