@@ -1,10 +1,12 @@
 import { ProductFooter, ProductHeader } from "@/components/brand/ProductChrome";
+import { DecisionBriefPanel } from "@/components/vivienda/decision-brief-panel";
 import { LoanHealthPanel } from "@/components/vivienda/loan-health-panel";
 import {
   FinancialNumber,
   PrecisionBadge,
   SourceFreshness,
 } from "@/components/vivienda/signature-components";
+import { createDecisionObject } from "@/domain/decision-object/evaluator";
 import { evaluateLoanHealth } from "@/domain/loan-health/evaluator";
 import {
   evaluateOpportunityRoutes,
@@ -22,11 +24,17 @@ const demoRouterInput: OpportunityRouterInput = {
   wantsFinishSooner: true,
 };
 
+const demoRouterResult = evaluateOpportunityRoutes(demoRouterInput);
+
 const demoLoanHealth = evaluateLoanHealth({
   precision: demoRouterInput.precision,
   productType: demoRouterInput.productType,
   paymentState: demoRouterInput.paymentState,
-  routerResult: evaluateOpportunityRoutes(demoRouterInput),
+  routerResult: demoRouterResult,
+});
+
+const demoDecision = createDecisionObject({
+  routerResult: demoRouterResult,
 });
 
 export default function MiViviendaPage() {
@@ -115,6 +123,10 @@ export default function MiViviendaPage() {
 
         <section className={styles.section} aria-label="Estado de decisión">
           <LoanHealthPanel result={demoLoanHealth} />
+        </section>
+
+        <section className={styles.section} aria-label="Mi Decisión">
+          <DecisionBriefPanel decision={demoDecision} />
         </section>
 
         <section className={styles.section} aria-labelledby="precision-heading">
