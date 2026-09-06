@@ -60,7 +60,7 @@ export class AssistedExecutionReadinessError extends Error {
 }
 
 const stepLabels: Partial<Record<CaseEventType, string>> = {
-  CASE_CREATED: "Abrir el expediente asistido",
+  CASE_CREATED: "Abrir el expediente de acompañamiento",
   DATA_AUTHORIZATION_RECORDED: "Registrar autorización de datos",
   SERVICE_AGREEMENT_ACCEPTED: "Aceptar el alcance del servicio",
   EVIDENCE_REQUESTED: "Definir la evidencia necesaria",
@@ -70,8 +70,23 @@ const stepLabels: Partial<Record<CaseEventType, string>> = {
   PROFESSIONAL_REVIEW_COMPLETED: "Completar la revisión profesional",
 };
 
+const stepPurposes: Partial<Record<CaseEventType, string>> = {
+  CASE_CREATED: "Crear un espacio trazable para esta auditoría sin afirmar todavía contratación, poder ni radicación.",
+  DATA_AUTHORIZATION_RECORDED: "Registrar la autorización necesaria antes de conservar evidencia documental.",
+  SERVICE_AGREEMENT_ACCEPTED: "Registrar de forma separada la aceptación del alcance del servicio; esto no concede facultad para representar.",
+  EVIDENCE_REQUESTED: "Precisar únicamente los documentos necesarios para entender la diferencia reportada.",
+  EVIDENCE_ATTACHED: "Incorporar documentos solo después de que exista autorización para conservarlos.",
+  EVIDENCE_VERIFIED: "Confirmar que la evidencia corresponde al hecho concreto que se analizará.",
+  PROFESSIONAL_REVIEW_REQUESTED: "Solicitar la revisión profesional una vez exista un paquete de evidencia verificado.",
+  PROFESSIONAL_REVIEW_COMPLETED: "Registrar la revisión profesional con hechos, evidencia, incertidumbres y siguiente ruta.",
+};
+
 function labelFor(eventType: CaseEventType): string {
   return stepLabels[eventType] ?? "Registrar el siguiente hecho del expediente";
+}
+
+function purposeFor(eventType: CaseEventType): string {
+  return stepPurposes[eventType] ?? "Registrar el siguiente paso real con trazabilidad suficiente.";
 }
 
 function assertSelection(selection: ExecutionIntentSelection) {
@@ -113,7 +128,7 @@ function fromBlueprint(
   const steps = blueprint.executionSteps.map((step, index): AssistedExecutionReadinessStep => ({
     eventType: step.eventType,
     label: labelFor(step.eventType),
-    purpose: step.purpose,
+    purpose: purposeFor(step.eventType),
     state: index === 0 ? "next_real_step" : "blocked_until_previous",
     occursInThisPreview: false,
   }));
