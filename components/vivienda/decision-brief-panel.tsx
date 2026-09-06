@@ -13,7 +13,7 @@ const statusLabels = {
 } as const;
 
 const selfServiceLabels = {
-  available: "Autogestión disponible para preparar/ejecutar la instrucción soportada.",
+  available: "Autogestión disponible para preparar la instrucción; esta preview no la envía ni la ejecuta ante el banco.",
   preparation_only: "Puedes preparar la ruta; el resultado o actuación final depende de terceros o revisión adicional.",
   not_appropriate: "No es apropiada como autogestión ordinaria con los hechos actuales.",
 } as const;
