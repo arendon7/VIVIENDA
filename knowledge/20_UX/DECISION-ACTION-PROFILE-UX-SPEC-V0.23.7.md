@@ -48,7 +48,7 @@ Where a route depends on an unresolved external trigger, state that dependency e
 
 ### Self-service available
 
-Explain that the supported route can be prepared/executed through the self-service instruction path, subject to its existing truth boundaries.
+Explain that the supported route can be prepared as a self-service instruction. The preview does **not** send, execute or file the instruction with the bank or any third party.
 
 ### Preparation only
 
@@ -122,4 +122,5 @@ Do not encode route meaning only through color or icons.
 - visible effort is objective, not scored;
 - no numeric price is invented;
 - route precision remains visible and independent;
+- self-service copy never implies that the preview sends or executes a bank instruction;
 - existing decision/revalidation CTA behavior remains unchanged.
