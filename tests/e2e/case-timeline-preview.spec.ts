@@ -21,6 +21,18 @@ async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
   return workspace;
 }
 
+async function continueFromDecision(
+  workspace: import("@playwright/test").Locator,
+  professionalReview = false,
+) {
+  const decision = workspace.locator('[data-decision-workspace="selected-route"]');
+  await expect(decision).toBeVisible();
+  await expect(workspace.locator('section[aria-labelledby="case-plan-title"]')).toHaveCount(0);
+  await decision.getByRole("button", {
+    name: professionalReview ? "Preparar revisión prioritaria" : "Continuar al plan de esta ruta",
+  }).click();
+}
+
 async function openTermPrepaymentTimeline(page: import("@playwright/test").Page) {
   const workspace = await openOpportunityWorkspace(page);
   await workspace.getByRole("radio", { name: "Terminar antes" }).check();
@@ -30,6 +42,7 @@ async function openTermPrepaymentTimeline(page: import("@playwright/test").Page)
     name: /Ruta prioritaria: Usar abonos adicionales para reducir plazo/,
   });
   await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
+  await continueFromDecision(workspace);
 
   const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
   await plan.getByRole("button", { name: "Ver expediente local de demostración" }).click();
@@ -114,6 +127,7 @@ test("a legal route can request professional review but cannot auto-complete law
     name: /Ruta prioritaria: Revisión jurídica prioritaria del proceso/,
   });
   await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
+  await continueFromDecision(workspace, true);
 
   const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
   await plan.getByRole("button", { name: "Ver expediente local de demostración" }).click();

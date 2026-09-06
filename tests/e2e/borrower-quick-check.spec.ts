@@ -51,6 +51,18 @@ async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
   return workspace;
 }
 
+async function continueFromDecision(
+  workspace: import("@playwright/test").Locator,
+  professionalReview = false,
+) {
+  const decision = workspace.locator('[data-decision-workspace="selected-route"]');
+  await expect(decision).toBeVisible();
+  await expect(workspace.locator('section[aria-labelledby="case-plan-title"]')).toHaveCount(0);
+  await decision.getByRole("button", {
+    name: professionalReview ? "Preparar revisión prioritaria" : "Continuar al plan de esta ruta",
+  }).click();
+}
+
 test("keeps the home conceptual Mortgage Twin outside verified C3 and exposes only real routes", async ({ page }) => {
   await page.goto("/");
 
@@ -263,6 +275,7 @@ test("builds an unknown-product Case Plan without pretending to save or open a m
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Primero necesitamos clasificar el producto/ });
   await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
+  await continueFromDecision(workspace);
 
   const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
   await expect(plan.getByRole("heading", { name: /Clasificar el producto antes de escoger una ruta jurídica/ })).toBeVisible();
@@ -280,6 +293,7 @@ test("keeps the Article 24 clock relative until real delivery evidence exists", 
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Activar la cesión con oferta vinculante/ });
   await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
+  await continueFromDecision(workspace);
 
   const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
   await expect(plan.getByRole("heading", { name: "Plan para activar la cesión del artículo 24" })).toBeVisible();
@@ -296,6 +310,7 @@ test("keeps executive-defense Case Plan behind professional review and contains 
 
   const primary = workspace.getByRole("article", { name: /Ruta prioritaria: Revisión jurídica prioritaria del proceso/ });
   await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
+  await continueFromDecision(workspace, true);
 
   const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
   await expect(plan.getByRole("heading", { name: "Plan de preparación para revisión jurídica prioritaria" })).toBeVisible();
@@ -314,6 +329,7 @@ test("builds an Article 20 seasonal plan for the next window instead of saying f
   const article20 = workspace.getByRole("article", { name: /Ruta alternativa: Preparar la próxima ventana del artículo 20/ });
   await expect(article20).toBeVisible();
   await article20.getByRole("button", { name: "Preparar esta ruta" }).click();
+  await continueFromDecision(workspace);
 
   const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
   await expect(plan.getByRole("heading", { name: "Plan de preparación para la próxima ventana del artículo 20" })).toBeVisible();
