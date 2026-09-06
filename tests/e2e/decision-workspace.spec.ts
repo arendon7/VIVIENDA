@@ -83,8 +83,8 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     const r10Profile = decisionWorkspace.locator('[data-decision-action-profile="R10_EXECUTIVE_DEFENSE"]');
     await expect(r10Profile).toBeVisible();
     await expect(r10Profile.getByText(/No es apropiada como autogestión ordinaria/i)).toBeVisible();
-    await expect(r10Profile.getByText(/No existe un servicio asistido productizado/i)).toBeVisible();
-    await expect(r10Profile.getByText(/servicio asistido no productizado ni cotizado aquí/i)).toBeVisible();
+    await expect(r10Profile.getByText(/No existe un servicio asistido habilitado para contratar/i)).toBeVisible();
+    await expect(r10Profile.getByText(/servicio asistido no habilitado ni cotizado aquí/i)).toBeVisible();
 
     await expect(decisionWorkspace.getByRole("button", { name: "Preparar revisión prioritaria" })).toBeVisible();
     await expect(decisionWorkspace.getByRole("button", { name: "Continuar al plan de esta ruta" })).toHaveCount(0);
@@ -96,7 +96,7 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     await expect(workspace.getByText("Revisión jurídica", { exact: true }).first()).toBeVisible();
   });
 
-  test("shows R7 assisted audit only as an unquoted preview blueprint", async ({ page }) => {
+  test("shows R7 assisted audit only as an unquoted demonstration option", async ({ page }) => {
     const workspace = await openModeledRadar(page);
     await workspace.getByLabel("Sí, quiero priorizar auditoría/reclamación.").check();
 
@@ -107,8 +107,8 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     const decisionWorkspace = workspace.locator('[data-decision-workspace="selected-route"]');
     const r7Profile = decisionWorkspace.locator('[data-decision-action-profile="R7_RECLAMACION"]');
     await expect(r7Profile).toBeVisible();
-    await expect(r7Profile.getByText(/Auditoría Hipotecaria asistida: blueprint de preview disponible/i)).toBeVisible();
-    await expect(r7Profile.getByText(/servicio asistido sin precio final cotizado en esta preview/i)).toBeVisible();
+    await expect(r7Profile.getByText(/Auditoría Hipotecaria: modalidad asistida definida para esta versión de demostración/i)).toBeVisible();
+    await expect(r7Profile.getByText(/servicio asistido sin precio final cotizado en esta versión/i)).toBeVisible();
     await expect(r7Profile.getByText(/Esta ruta exige revisión profesional/i)).toBeVisible();
     await expect(r7Profile.getByText(/costos externos no modelados/i)).toBeVisible();
     await expect(r7Profile.getByText(/precio.*COP|\$\s?[0-9]/i)).toHaveCount(0);
