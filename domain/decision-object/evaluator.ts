@@ -1,3 +1,7 @@
+import {
+  buildDecisionActionProfiles,
+  type DecisionActionProfile,
+} from "@/domain/decision-object/action-profile";
 import type {
   OpportunityPrecision,
   OpportunityRoute,
@@ -39,6 +43,7 @@ export type DecisionObject = {
   asOfDate: string;
   state: DecisionState;
   options: DecisionOption[];
+  actionProfiles: DecisionActionProfile[];
   primaryRouteCode: OpportunityRouteCode | null;
   selectedRouteCode: OpportunityRouteCode | null;
   governingRouteCode: OpportunityRouteCode | null;
@@ -153,6 +158,7 @@ export function createDecisionObject(input: DecisionObjectInput): DecisionObject
     asOfDate: routerResult.asOfDate,
     state,
     options: routerResult.routes.map(optionFromRoute),
+    actionProfiles: buildDecisionActionProfiles(routerResult),
     primaryRouteCode: primary?.routeCode ?? null,
     selectedRouteCode: selected?.routeCode ?? null,
     governingRouteCode: governing?.routeCode ?? null,
