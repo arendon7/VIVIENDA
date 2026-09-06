@@ -17,6 +17,7 @@ test.describe("Mi Vivienda + estado de decisión product integration", () => {
     await expect(decisionBrief.getByRole("heading", { name: "Opciones listas para revisar" })).toBeVisible();
     await expect(decisionBrief.getByText("C2 · ruta que gobierna")).toBeVisible();
     await expect(decisionBrief.getByText("Usar abonos adicionales para reducir plazo").first()).toBeVisible();
+    await decisionBrief.getByText("Qué significa —y qué no significa— esta vista").click();
     await expect(decisionBrief.getByText("no una aprobación bancaria", { exact: false })).toBeVisible();
 
     await expect(page.getByText("Loan Health · estado de decisión", { exact: true })).toHaveCount(0);
