@@ -23,14 +23,24 @@ async function openOpportunityWorkspace(page: import("@playwright/test").Page) {
 
 async function continueFromDecision(
   workspace: import("@playwright/test").Locator,
-  professionalReview = false,
+  mode: "self" | "assisted" | "legal" = "self",
 ) {
   const decision = workspace.locator('[data-decision-workspace="selected-route"]');
   await expect(decision).toBeVisible();
   await expect(workspace.locator('section[aria-labelledby="case-plan-title"]')).toHaveCount(0);
   await decision.getByRole("button", {
-    name: professionalReview ? "Preparar revisión prioritaria" : "Continuar al plan de esta ruta",
+    name: mode === "self" ? "Continuar al plan de esta ruta" : "Preparar revisión prioritaria",
   }).click();
+
+  const gate = workspace.locator("[data-execution-intent-gate]");
+  await expect(gate).toBeVisible();
+  const optionName = mode === "self"
+    ? "Prepararlo por mi cuenta"
+    : mode === "assisted"
+      ? "Revisarlo con acompañamiento"
+      : "Preparar revisión profesional";
+  await gate.getByRole("button", { name: optionName, exact: true }).click();
+  await expect(workspace.locator('section[aria-labelledby="case-plan-title"]')).toBeVisible();
 }
 
 async function openTermPrepaymentTimeline(page: import("@playwright/test").Page) {
@@ -42,7 +52,7 @@ async function openTermPrepaymentTimeline(page: import("@playwright/test").Page)
     name: /Ruta prioritaria: Usar abonos adicionales para reducir plazo/,
   });
   await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
-  await continueFromDecision(workspace);
+  await continueFromDecision(workspace, "self");
 
   const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
   await plan.getByRole("button", { name: "Ver expediente local de demostración" }).click();
@@ -82,6 +92,7 @@ test("starts the local case history at version one without claiming persistence 
   await expect(firstEvent).toHaveAttribute("data-event-type", "CASE_CREATED");
   await expect(timeline.getByText("CASE_CREATED", { exact: true })).toHaveCount(0);
   await expect(timeline.getByRole("button", { name: /radicar|enviar al banco|registrar respuesta/i })).toHaveCount(0);
+  await expect(timeline.getByRole("button", { name: "Simular aceptación del servicio" })).toHaveCount(0);
 });
 
 test("data authorization increments the history but grants neither service nor legal authority", async ({ page }) => {
@@ -119,7 +130,32 @@ test("attaching evidence derives collecting-evidence state without inventing ver
   await expect(timeline.getByText("Evidencia verificada", { exact: true })).toHaveCount(0);
 });
 
-test("a legal route can request professional review but cannot auto-complete lawyer work", async ({ page }) => {
+test("R7 assisted choice creates an assisted demo origin without accepting service automatically", async ({ page }) => {
+  const workspace = await openOpportunityWorkspace(page);
+  await workspace.getByLabel("Sí, quiero priorizar auditoría/reclamación.").check();
+
+  const r7 = workspace.locator('article[data-route-code="R7_RECLAMACION"]');
+  await r7.getByRole("button", { name: "Preparar esta ruta" }).click();
+  await continueFromDecision(workspace, "assisted");
+
+  const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+  await plan.getByRole("button", { name: "Ver expediente local de demostración" }).click();
+  const timeline = plan.locator('section[aria-labelledby="case-timeline-title"]');
+
+  const origin = timeline.locator("[data-case-origin]");
+  await expect(origin).toHaveAttribute("data-route-code", "R7_RECLAMACION");
+  await expect(origin).toHaveAttribute("data-track", "assisted");
+  const accompaniment = origin.getByText("Tipo de acompañamiento", { exact: true }).locator("..");
+  await expect(accompaniment.getByText("Acompañamiento", { exact: true })).toBeVisible();
+  await expect(capabilityRow(timeline, "Servicio aceptado").getByText("No", { exact: true })).toBeVisible();
+  await expect(timeline.getByRole("button", { name: "Simular aceptación del servicio" })).toBeVisible();
+
+  await timeline.getByRole("button", { name: "Simular aceptación del servicio" }).click();
+  await expect(capabilityRow(timeline, "Servicio aceptado").getByText("Sí", { exact: true })).toBeVisible();
+  await expect(capabilityRow(timeline, "Facultad extrajudicial").getByText("No", { exact: true })).toBeVisible();
+});
+
+test("a legal route can request professional review but cannot imply service acceptance or auto-complete lawyer work", async ({ page }) => {
   const workspace = await openOpportunityWorkspace(page);
   await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("embargo_or_auction");
 
@@ -127,7 +163,7 @@ test("a legal route can request professional review but cannot auto-complete law
     name: /Ruta prioritaria: Revisión jurídica prioritaria del proceso/,
   });
   await primary.getByRole("button", { name: "Preparar esta ruta" }).click();
-  await continueFromDecision(workspace, true);
+  await continueFromDecision(workspace, "legal");
 
   const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
   await plan.getByRole("button", { name: "Ver expediente local de demostración" }).click();
@@ -138,6 +174,8 @@ test("a legal route can request professional review but cannot auto-complete law
   const accompaniment = origin.getByText("Tipo de acompañamiento", { exact: true }).locator("..");
   await expect(accompaniment.getByText("Revisión jurídica", { exact: true })).toBeVisible();
   await expect(timeline.getByText("legal", { exact: true })).toHaveCount(0);
+  await expect(capabilityRow(timeline, "Servicio aceptado").getByText("No", { exact: true })).toBeVisible();
+  await expect(timeline.getByRole("button", { name: "Simular aceptación del servicio" })).toHaveCount(0);
   await expect(capabilityRow(timeline, "Revisión profesional").getByText("No", { exact: true })).toBeVisible();
 
   await timeline.getByRole("button", { name: "Simular solicitud de revisión" }).click();

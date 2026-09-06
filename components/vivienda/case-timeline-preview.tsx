@@ -78,15 +78,11 @@ const eventLabels: Record<CaseEvent["type"], string> = {
   CASE_CANCELLED: "Expediente cancelado",
 };
 
-function trackFor(route: OpportunityRoute): CaseTrack {
-  return route.humanReviewRequired || route.status === "legal_review" ? "legal" : "self_service";
-}
-
 function fixedTimestamp(asOfDate: string) {
   return `${asOfDate}T12:00:00-05:00`;
 }
 
-function startHistory(route: OpportunityRoute, asOfDate: string): CaseEvent[] {
+function startHistory(route: OpportunityRoute, asOfDate: string, caseTrack: CaseTrack): CaseEvent[] {
   const caseId = `demo-${route.routeCode.toLowerCase()}`;
   const timestamp = fixedTimestamp(asOfDate);
   return appendCaseEvent({
@@ -104,7 +100,7 @@ function startHistory(route: OpportunityRoute, asOfDate: string): CaseEvent[] {
         routeCode: route.routeCode,
         routeStatus: route.status,
         precision: route.precision,
-        track: trackFor(route),
+        track: caseTrack,
       },
     },
   }).history;
@@ -114,8 +110,16 @@ function capabilityLabel(active: boolean) {
   return active ? "Sí" : "No";
 }
 
-export function CaseTimelinePreview({ route, asOfDate }: { route: OpportunityRoute; asOfDate: string }) {
-  const [history, setHistory] = useState<CaseEvent[]>(() => startHistory(route, asOfDate));
+export function CaseTimelinePreview({
+  route,
+  asOfDate,
+  caseTrack,
+}: {
+  route: OpportunityRoute;
+  asOfDate: string;
+  caseTrack: CaseTrack;
+}) {
+  const [history, setHistory] = useState<CaseEvent[]>(() => startHistory(route, asOfDate, caseTrack));
   const projection = useMemo(() => replayCaseHistory(history), [history]);
   const caseId = projection.caseId;
   const timestamp = fixedTimestamp(asOfDate);
@@ -282,7 +286,7 @@ export function CaseTimelinePreview({ route, asOfDate }: { route: OpportunityRou
               Simular solicitud de revisión
             </button>
           ) : null}
-          {projection.origin.track !== "self_service" && !c.serviceAgreementAccepted ? (
+          {projection.origin.track === "assisted" && !c.serviceAgreementAccepted ? (
             <button className="button button-secondary" type="button" onClick={simulateServiceAcceptance}>
               Simular aceptación del servicio
             </button>

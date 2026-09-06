@@ -1,9 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { buildCasePlan, type CasePlanActor, type CasePlanPhaseState, type CasePlanTaskState } from "@/domain/case-plan/planner";
-import type { OpportunityRoute } from "@/domain/opportunity/router";
 import { CaseTimelinePreview } from "@/components/vivienda/case-timeline-preview";
+import { ExecutionIntentPanel } from "@/components/vivienda/execution-intent-panel";
+import { buildCasePlan, type CasePlanActor, type CasePlanPhaseState, type CasePlanTaskState } from "@/domain/case-plan/planner";
+import { buildDecisionActionProfile } from "@/domain/decision-object/action-profile";
+import {
+  resolveExecutionIntents,
+  selectExecutionIntent,
+  type ExecutionIntentCode,
+  type ExecutionIntentSelection,
+} from "@/domain/execution-intent/resolver";
+import type { OpportunityRoute } from "@/domain/opportunity/router";
 
 const actorLabels: Record<CasePlanActor, string> = {
   user: "Tú",
@@ -32,6 +40,12 @@ const routeStatusLabels: Record<OpportunityRoute["status"], string> = {
   legal_review: "Revisión jurídica",
 };
 
+const trackLabels: Record<ExecutionIntentSelection["caseTrack"], string> = {
+  self_service: "Autogestión",
+  assisted: "Acompañamiento",
+  legal: "Revisión profesional",
+};
+
 export function CasePlanWorkspace({
   route,
   asOfDate,
@@ -41,8 +55,30 @@ export function CasePlanWorkspace({
   asOfDate: string;
   onClose: () => void;
 }) {
-  const plan = buildCasePlan(route, asOfDate);
+  const actionProfile = buildDecisionActionProfile(route, asOfDate);
+  const executionResolution = resolveExecutionIntents(route, actionProfile);
+  const [executionSelection, setExecutionSelection] = useState<ExecutionIntentSelection | null>(null);
   const [showTimeline, setShowTimeline] = useState(false);
+  const plan = buildCasePlan(route, asOfDate);
+
+  function chooseExecutionIntent(intentCode: ExecutionIntentCode) {
+    setExecutionSelection(selectExecutionIntent(executionResolution, intentCode));
+    setShowTimeline(false);
+  }
+
+  if (!executionSelection) {
+    return (
+      <ExecutionIntentPanel
+        resolution={executionResolution}
+        onSelect={chooseExecutionIntent}
+        onClose={onClose}
+      />
+    );
+  }
+
+  const selectedOption = executionResolution.options.find(
+    (option) => option.code === executionSelection.intentCode,
+  );
 
   return (
     <section className="surface result-frame" style={{ marginTop: 24 }} aria-labelledby="case-plan-title">
@@ -55,7 +91,16 @@ export function CasePlanWorkspace({
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <span className="status-chip">{routeStatusLabels[plan.routeStatus]}</span>
           <span className="status-chip">{plan.precision} · precisión heredada</span>
+          <span className="material-chip">{trackLabels[executionSelection.caseTrack]}</span>
         </div>
+      </div>
+
+      <div className="result-callout" style={{ marginTop: 18 }} data-selected-execution-intent={executionSelection.intentCode}>
+        <strong>Forma elegida para organizar este plan</strong>
+        <p className="section-copy">{selectedOption?.title ?? trackLabels[executionSelection.caseTrack]}.</p>
+        <p className="field-hint">
+          Esta elección sigue siendo local: no crea expediente, no registra autorización, no contrata un servicio y no ejecuta actuaciones ante terceros.
+        </p>
       </div>
 
       <div className="surface-warning" role="status" style={{ marginTop: 20 }}>
@@ -140,9 +185,25 @@ export function CasePlanWorkspace({
         </div>
       </div>
 
-      {showTimeline ? <CaseTimelinePreview route={route} asOfDate={asOfDate} /> : null}
+      {showTimeline ? (
+        <CaseTimelinePreview
+          route={route}
+          asOfDate={asOfDate}
+          caseTrack={executionSelection.caseTrack}
+        />
+      ) : null}
 
       <div className="actions" style={{ marginTop: 24 }}>
+        <button
+          className="button button-secondary"
+          type="button"
+          onClick={() => {
+            setExecutionSelection(null);
+            setShowTimeline(false);
+          }}
+        >
+          Cambiar forma de avanzar
+        </button>
         <button className="button button-secondary" type="button" onClick={onClose}>Volver a oportunidades</button>
       </div>
     </section>
