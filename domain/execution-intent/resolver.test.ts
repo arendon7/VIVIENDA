@@ -33,6 +33,16 @@ function resolve(routeValue: OpportunityRoute) {
   );
 }
 
+function intent(
+  resolution: ReturnType<typeof resolveExecutionIntents>,
+  code: "prepare_self" | "assisted_mortgage_audit" | "professional_review",
+) {
+  const option = resolution.options.find((item) => item.code === code);
+  expect(option, `Expected execution intent ${code}`).toBeDefined();
+  if (!option) throw new Error(`Missing execution intent ${code}`);
+  return option;
+}
+
 describe("Execution Intent v0.23.8", () => {
   it("requires an explicit self-preparation choice for an ordinary prepayment route", () => {
     const r1 = route({
@@ -47,7 +57,7 @@ describe("Execution Intent v0.23.8", () => {
     expect(resolution.requiresExplicitUserChoice).toBe(true);
     expect(resolution.selectedIntent).toBeNull();
     expect(resolution.options.map((item) => item.code)).toEqual(["prepare_self"]);
-    expect(resolution.options[0].caseTrack).toBe("self_service");
+    expect(intent(resolution, "prepare_self").caseTrack).toBe("self_service");
 
     const selection = selectExecutionIntent(resolution, "prepare_self");
     expect(selection.caseTrack).toBe("self_service");
@@ -106,8 +116,9 @@ describe("Execution Intent v0.23.8", () => {
     const resolution = resolve(r3);
 
     expect(resolution.options).toHaveLength(1);
-    expect(resolution.options[0].code).toBe("professional_review");
-    expect(resolution.options[0].caseTrack).toBe("legal");
+    const legal = intent(resolution, "professional_review");
+    expect(legal.code).toBe("professional_review");
+    expect(legal.caseTrack).toBe("legal");
   });
 
   it("fails closed when selecting an unavailable assisted mode", () => {
