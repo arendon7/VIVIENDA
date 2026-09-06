@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { AssistedExecutionReadinessPanel } from "@/components/vivienda/assisted-execution-readiness-panel";
 import { CaseTimelinePreview } from "@/components/vivienda/case-timeline-preview";
 import { ExecutionIntentPanel } from "@/components/vivienda/execution-intent-panel";
+import { buildAssistedExecutionReadinessForGovernedRoute } from "@/domain/assisted-execution/readiness";
 import { buildCasePlan, type CasePlanActor, type CasePlanPhaseState, type CasePlanTaskState } from "@/domain/case-plan/planner";
 import { buildDecisionActionProfile } from "@/domain/decision-object/action-profile";
 import {
@@ -79,6 +81,9 @@ export function CasePlanWorkspace({
   const selectedOption = executionResolution.options.find(
     (option) => option.code === executionSelection.intentCode,
   );
+  const assistedReadiness = executionSelection.intentCode === "assisted_mortgage_audit"
+    ? buildAssistedExecutionReadinessForGovernedRoute(executionSelection, route, asOfDate)
+    : null;
 
   return (
     <section className="surface result-frame" style={{ marginTop: 24 }} aria-labelledby="case-plan-title">
@@ -107,6 +112,8 @@ export function CasePlanWorkspace({
         <strong>Vista local de planificación.</strong>
         <p>Este plan todavía no crea un expediente ni guarda tu información. Si sales o recargas, esta selección puede perderse.</p>
       </div>
+
+      {assistedReadiness ? <AssistedExecutionReadinessPanel readiness={assistedReadiness} /> : null}
 
       <div className="result-callout" style={{ marginTop: 18 }}>
         <strong>Próximo evento relevante</strong>
