@@ -27,8 +27,19 @@ async function openModeledRadar(page: import("@playwright/test").Page) {
   return workspace;
 }
 
+async function chooseHowToProceed(
+  workspace: import("@playwright/test").Locator,
+  optionName: "Prepararlo por mi cuenta" | "Revisarlo con acompañamiento" | "Preparar revisión profesional",
+) {
+  const gate = workspace.locator("[data-execution-intent-gate]");
+  await expect(gate).toBeVisible();
+  await expect(workspace.locator('section[aria-labelledby="case-plan-title"]')).toHaveCount(0);
+  await gate.getByRole("button", { name: optionName, exact: true }).click();
+  await expect(gate).toHaveCount(0);
+}
+
 test.describe("Radar → Mi Decisión → Plan", () => {
-  test("requires an explicit decision review before opening Case Plan", async ({ page }) => {
+  test("requires decision review and an explicit execution choice before opening Case Plan", async ({ page }) => {
     const workspace = await openModeledRadar(page);
     const r1 = workspace.locator('article[data-route-code="R1_PREPAGO_PLAZO"]');
 
@@ -53,16 +64,25 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     await expect(workspace.getByText("Plan de acción · vista local", { exact: true })).toHaveCount(0);
 
     await decisionWorkspace.getByRole("button", { name: "Continuar al plan de esta ruta" }).click();
+    const gate = workspace.locator("[data-execution-intent-gate]");
+    await expect(gate.getByRole("heading", { name: "Elige cómo quieres preparar el siguiente paso." })).toBeVisible();
+    await expect(gate.getByRole("button", { name: "Prepararlo por mi cuenta", exact: true })).toBeVisible();
+    await expect(gate.getByRole("button", { name: "Revisarlo con acompañamiento", exact: true })).toHaveCount(0);
 
-    await expect(workspace.getByText("Plan de acción · vista local", { exact: true })).toBeVisible();
-    await expect(workspace.getByText("C2 · precisión heredada", { exact: true })).toBeVisible();
+    await chooseHowToProceed(workspace, "Prepararlo por mi cuenta");
+
+    const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+    await expect(plan).toBeVisible();
+    await expect(plan.getByText("C2 · precisión heredada", { exact: true })).toBeVisible();
+    await expect(plan.getByText("Autogestión", { exact: true })).toBeVisible();
+    await expect(plan.locator('[data-selected-execution-intent="prepare_self"]')).toBeVisible();
 
     await workspace.getByRole("button", { name: "Volver a oportunidades" }).click();
     await expect(workspace.getByText("Plan de acción · vista local", { exact: true })).toHaveCount(0);
     await expect(decisionWorkspace).toBeVisible();
   });
 
-  test("lets R10 govern even when the user marked a modeled optimization", async ({ page }) => {
+  test("lets R10 govern and requires professional-review execution mode", async ({ page }) => {
     const workspace = await openModeledRadar(page);
     await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("executive");
 
@@ -86,17 +106,21 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     await expect(r10Profile.getByText(/No existe un servicio asistido habilitado para contratar/i)).toBeVisible();
     await expect(r10Profile.getByText(/servicio asistido no habilitado ni cotizado aquí/i)).toBeVisible();
 
-    await expect(decisionWorkspace.getByRole("button", { name: "Preparar revisión prioritaria" })).toBeVisible();
-    await expect(decisionWorkspace.getByRole("button", { name: "Continuar al plan de esta ruta" })).toHaveCount(0);
-
     await decisionWorkspace.getByRole("button", { name: "Preparar revisión prioritaria" }).click();
+    const gate = workspace.locator("[data-execution-intent-gate]");
+    await expect(gate.getByRole("button", { name: "Preparar revisión profesional", exact: true })).toBeVisible();
+    await expect(gate.getByRole("button", { name: "Prepararlo por mi cuenta", exact: true })).toHaveCount(0);
+    await expect(gate.getByRole("button", { name: "Revisarlo con acompañamiento", exact: true })).toHaveCount(0);
 
-    await expect(workspace.getByText("Plan de acción · vista local", { exact: true })).toBeVisible();
-    await expect(workspace.getByText("C1 · precisión heredada", { exact: true })).toBeVisible();
-    await expect(workspace.getByText("Revisión jurídica", { exact: true }).first()).toBeVisible();
+    await chooseHowToProceed(workspace, "Preparar revisión profesional");
+
+    const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+    await expect(plan.getByText("C1 · precisión heredada", { exact: true })).toBeVisible();
+    await expect(plan.getByText("Revisión profesional", { exact: true }).first()).toBeVisible();
+    await expect(plan.locator('[data-selected-execution-intent="professional_review"]')).toBeVisible();
   });
 
-  test("shows R7 assisted audit only as an unquoted demonstration option", async ({ page }) => {
+  test("shows R7 assisted audit as an explicit unquoted execution choice", async ({ page }) => {
     const workspace = await openModeledRadar(page);
     await workspace.getByLabel("Sí, quiero priorizar auditoría/reclamación.").check();
 
@@ -112,6 +136,18 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     await expect(r7Profile.getByText(/Esta ruta exige revisión profesional/i)).toBeVisible();
     await expect(r7Profile.getByText(/costos externos no modelados/i)).toBeVisible();
     await expect(r7Profile.getByText(/precio.*COP|\$\s?[0-9]/i)).toHaveCount(0);
+
+    await decisionWorkspace.getByRole("button", { name: "Preparar revisión prioritaria" }).click();
+    const gate = workspace.locator("[data-execution-intent-gate]");
+    await expect(gate.getByRole("button", { name: "Prepararlo por mi cuenta", exact: true })).toBeVisible();
+    await expect(gate.getByRole("button", { name: "Revisarlo con acompañamiento", exact: true })).toBeVisible();
+    await expect(gate.getByRole("button", { name: "Preparar revisión profesional", exact: true })).toHaveCount(0);
+
+    await chooseHowToProceed(workspace, "Revisarlo con acompañamiento");
+
+    const plan = workspace.locator('section[aria-labelledby="case-plan-title"]');
+    await expect(plan.getByText("Acompañamiento", { exact: true })).toBeVisible();
+    await expect(plan.locator('[data-selected-execution-intent="assisted_mortgage_audit"]')).toBeVisible();
   });
 
   test("requires a new review when a selected modeled route loses C2", async ({ page }) => {
@@ -135,35 +171,38 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     await revalidation.getByRole("button", { name: "Revisé los cambios · usar fundamento actual" }).click();
 
     await expect(decisionWorkspace.locator('[data-decision-revalidation="review_required"]')).toHaveCount(0);
-    await expect(decisionWorkspace.getByRole("button", { name: "Continuar al plan de esta ruta" })).toBeVisible();
     await decisionWorkspace.getByRole("button", { name: "Continuar al plan de esta ruta" }).click();
+    await chooseHowToProceed(workspace, "Prepararlo por mi cuenta");
     await expect(workspace.getByText("C1 · precisión heredada", { exact: true })).toBeVisible();
   });
 
-  test("closes an open ordinary plan and requires re-review when R10 appears later", async ({ page }) => {
+  test("closes an open plan and requires a new execution choice when R10 appears later", async ({ page }) => {
     const workspace = await openModeledRadar(page);
     const r1 = workspace.locator('article[data-route-code="R1_PREPAGO_PLAZO"]');
     await r1.getByRole("button", { name: "Preparar esta ruta" }).click();
 
     const decisionWorkspace = workspace.locator('[data-decision-workspace="selected-route"]');
     await decisionWorkspace.getByRole("button", { name: "Continuar al plan de esta ruta" }).click();
+    await chooseHowToProceed(workspace, "Prepararlo por mi cuenta");
     await expect(workspace.getByText("C2 · precisión heredada", { exact: true })).toBeVisible();
 
     await workspace.getByLabel("6. ¿Cuál es el estado de pago/cobranza?").selectOption("executive");
 
     await expect(workspace.getByText("Plan de acción · vista local", { exact: true })).toHaveCount(0);
+    await expect(workspace.locator("[data-execution-intent-gate]")).toHaveCount(0);
     const revalidation = decisionWorkspace.locator('[data-decision-revalidation="review_required"]');
     await expect(revalidation).toBeVisible();
     await expect(revalidation.getByText(/Cambió la ruta que debe gobernar/i)).toBeVisible();
     await expect(decisionWorkspace.locator('[data-decision-state="professional_review_required"]')).toBeVisible();
     await expect(decisionWorkspace.getByText("C1 · ruta que gobierna", { exact: true })).toBeVisible();
-    await expect(decisionWorkspace.getByRole("button", { name: "Preparar revisión prioritaria" })).toHaveCount(0);
 
     await revalidation.getByRole("button", { name: "Revisé los cambios · usar fundamento actual" }).click();
 
-    await expect(decisionWorkspace.getByRole("button", { name: "Preparar revisión prioritaria" })).toBeVisible();
     await decisionWorkspace.getByRole("button", { name: "Preparar revisión prioritaria" }).click();
+    const gate = workspace.locator("[data-execution-intent-gate]");
+    await expect(gate.getByRole("button", { name: "Preparar revisión profesional", exact: true })).toBeVisible();
+    await chooseHowToProceed(workspace, "Preparar revisión profesional");
     await expect(workspace.getByText("C1 · precisión heredada", { exact: true })).toBeVisible();
-    await expect(workspace.getByText("Revisión jurídica", { exact: true }).first()).toBeVisible();
+    await expect(workspace.locator('[data-selected-execution-intent="professional_review"]')).toBeVisible();
   });
 });
