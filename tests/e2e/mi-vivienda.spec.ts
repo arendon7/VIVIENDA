@@ -10,6 +10,16 @@ test.describe("Mi Vivienda + estado de decisión product integration", () => {
     await expect(page.getByText("Mi Situación · estado de decisión")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Existe al menos una acción concreta que puedes comparar con los datos actuales." })).toBeVisible();
     await expect(page.getByText("No es una calificación crediticia ni de riesgo.", { exact: false })).toBeVisible();
+
+    const decisionBrief = page.locator('[data-decision-state="ready_for_choice"]');
+    await expect(decisionBrief).toBeVisible();
+    await expect(decisionBrief.getByText("Mi Decisión · vista previa local")).toBeVisible();
+    await expect(decisionBrief.getByRole("heading", { name: "Opciones listas para revisar" })).toBeVisible();
+    await expect(decisionBrief.getByText("C2 · ruta que gobierna")).toBeVisible();
+    await expect(decisionBrief.getByText("Usar abonos adicionales para reducir plazo").first()).toBeVisible();
+    await decisionBrief.getByText("Qué significa —y qué no significa— esta vista").click();
+    await expect(decisionBrief.getByText("no una aprobación bancaria", { exact: false })).toBeVisible();
+
     await expect(page.getByText("Loan Health · estado de decisión", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Preview de producto · sin cuenta ni persistencia activa", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Preview v0.11", { exact: true })).toHaveCount(0);
