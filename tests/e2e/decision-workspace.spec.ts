@@ -40,6 +40,16 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     await expect(decisionWorkspace.locator('[data-decision-state="selection_recorded_local"]')).toBeVisible();
     await expect(decisionWorkspace.getByRole("heading", { name: "Preferencia registrada en esta vista previa" })).toBeVisible();
     await expect(decisionWorkspace.getByText("C2 · ruta que gobierna", { exact: true })).toBeVisible();
+
+    const actionProfile = decisionWorkspace.locator('[data-decision-action-profile="R1_PREPAGO_PLAZO"]');
+    await expect(actionProfile).toBeVisible();
+    await expect(actionProfile.getByText("Efecto esperado", { exact: true })).toBeVisible();
+    await expect(actionProfile.getByText(/Buscar una reducción del plazo restante/i)).toBeVisible();
+    await expect(actionProfile.getByText("Esfuerzo visible del plan", { exact: true })).toBeVisible();
+    await expect(actionProfile.getByText(/Autogestión disponible/i)).toBeVisible();
+    await expect(actionProfile.getByText(/capital adicional lo aporta el usuario y no es una tarifa/i)).toBeVisible();
+    await expect(actionProfile.getByText(/costos externos no modelados/i)).toBeVisible();
+
     await expect(workspace.getByText("Plan de acción · vista local", { exact: true })).toHaveCount(0);
 
     await decisionWorkspace.getByRole("button", { name: "Continuar al plan de esta ruta" }).click();
@@ -69,6 +79,13 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     await expect(decision.getByRole("heading", { name: "Revisión profesional prioritaria" })).toBeVisible();
     await expect(decision.getByText("C1 · ruta que gobierna", { exact: true })).toBeVisible();
     await expect(decision.getByText(/no desplaza la revisión jurídica prioritaria/i)).toBeVisible();
+
+    const r10Profile = decisionWorkspace.locator('[data-decision-action-profile="R10_EXECUTIVE_DEFENSE"]');
+    await expect(r10Profile).toBeVisible();
+    await expect(r10Profile.getByText(/No es apropiada como autogestión ordinaria/i)).toBeVisible();
+    await expect(r10Profile.getByText(/No existe un servicio asistido habilitado para contratar/i)).toBeVisible();
+    await expect(r10Profile.getByText(/servicio asistido no habilitado ni cotizado aquí/i)).toBeVisible();
+
     await expect(decisionWorkspace.getByRole("button", { name: "Preparar revisión prioritaria" })).toBeVisible();
     await expect(decisionWorkspace.getByRole("button", { name: "Continuar al plan de esta ruta" })).toHaveCount(0);
 
@@ -77,6 +94,24 @@ test.describe("Radar → Mi Decisión → Plan", () => {
     await expect(workspace.getByText("Plan de acción · vista local", { exact: true })).toBeVisible();
     await expect(workspace.getByText("C1 · precisión heredada", { exact: true })).toBeVisible();
     await expect(workspace.getByText("Revisión jurídica", { exact: true }).first()).toBeVisible();
+  });
+
+  test("shows R7 assisted audit only as an unquoted demonstration option", async ({ page }) => {
+    const workspace = await openModeledRadar(page);
+    await workspace.getByLabel("Sí, quiero priorizar auditoría/reclamación.").check();
+
+    const r7 = workspace.locator('article[data-route-code="R7_RECLAMACION"]');
+    await expect(r7).toBeVisible();
+    await r7.getByRole("button", { name: "Preparar esta ruta" }).click();
+
+    const decisionWorkspace = workspace.locator('[data-decision-workspace="selected-route"]');
+    const r7Profile = decisionWorkspace.locator('[data-decision-action-profile="R7_RECLAMACION"]');
+    await expect(r7Profile).toBeVisible();
+    await expect(r7Profile.getByText(/Auditoría Hipotecaria: modalidad asistida definida para esta versión de demostración/i)).toBeVisible();
+    await expect(r7Profile.getByText(/servicio asistido sin precio final cotizado en esta versión/i)).toBeVisible();
+    await expect(r7Profile.getByText(/Esta ruta exige revisión profesional/i)).toBeVisible();
+    await expect(r7Profile.getByText(/costos externos no modelados/i)).toBeVisible();
+    await expect(r7Profile.getByText(/precio.*COP|\$\s?[0-9]/i)).toHaveCount(0);
   });
 
   test("requires a new review when a selected modeled route loses C2", async ({ page }) => {
