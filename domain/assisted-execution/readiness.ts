@@ -1,10 +1,11 @@
 import {
   buildMortgageAuditBlueprint,
+  buildMortgageAuditBlueprintForGovernedRoute,
   type MortgageAuditExecutionBlueprint,
 } from "@/domain/assisted-execution/mortgage-audit";
 import type { CaseEventType } from "@/domain/case-state/machine";
 import type { ExecutionIntentSelection } from "@/domain/execution-intent/resolver";
-import type { OpportunityRouterResult } from "@/domain/opportunity/router";
+import type { OpportunityRoute, OpportunityRouterResult } from "@/domain/opportunity/router";
 
 export type AssistedExecutionReadinessStepState =
   | "next_real_step"
@@ -73,11 +74,7 @@ function labelFor(eventType: CaseEventType): string {
   return stepLabels[eventType] ?? "Registrar el siguiente hecho del expediente";
 }
 
-export function buildAssistedExecutionReadiness(
-  selection: ExecutionIntentSelection,
-  routerResult: OpportunityRouterResult,
-  asOfDate: string,
-): AssistedExecutionReadiness {
+function assertSelection(selection: ExecutionIntentSelection) {
   if (selection.intentCode !== "assisted_mortgage_audit") {
     throw new AssistedExecutionReadinessError(
       "unsupported_execution_intent",
@@ -98,8 +95,13 @@ export function buildAssistedExecutionReadiness(
       "La modalidad de Auditoría Hipotecaria debe conservar el track assisted.",
     );
   }
+}
 
-  const blueprint = buildMortgageAuditBlueprint(routerResult, asOfDate);
+function fromBlueprint(
+  selection: ExecutionIntentSelection,
+  blueprint: MortgageAuditExecutionBlueprint,
+): AssistedExecutionReadiness {
+  assertSelection(selection);
 
   if (blueprint.routeCode !== selection.routeCode) {
     throw new AssistedExecutionReadinessError(
@@ -143,4 +145,33 @@ export function buildAssistedExecutionReadiness(
       ...blueprint.notices,
     ],
   };
+}
+
+export function buildAssistedExecutionReadiness(
+  selection: ExecutionIntentSelection,
+  routerResult: OpportunityRouterResult,
+  asOfDate: string,
+): AssistedExecutionReadiness {
+  assertSelection(selection);
+  return fromBlueprint(selection, buildMortgageAuditBlueprint(routerResult, asOfDate));
+}
+
+export function buildAssistedExecutionReadinessForGovernedRoute(
+  selection: ExecutionIntentSelection,
+  governedRoute: OpportunityRoute,
+  asOfDate: string,
+): AssistedExecutionReadiness {
+  assertSelection(selection);
+
+  if (governedRoute.routeCode !== selection.routeCode) {
+    throw new AssistedExecutionReadinessError(
+      "selection_route_mismatch",
+      "La ruta gobernante debe coincidir con la modalidad asistida seleccionada.",
+    );
+  }
+
+  return fromBlueprint(
+    selection,
+    buildMortgageAuditBlueprintForGovernedRoute(governedRoute, asOfDate),
+  );
 }
