@@ -60,7 +60,7 @@ test.describe("R7 local evidence readiness", () => {
 
     await currentItems.first().getByRole("button", { name: "Me falta", exact: true }).click();
     await expect(inventory).toHaveAttribute("data-evidence-preparation-state", "needs_collection");
-    await expect(inventory.getByText(/Reúne los? 1 soporte/i)).toBeVisible();
+    await expect(inventory.getByText(/Reúne el 1 soporte/i)).toBeVisible();
 
     await currentItems.first().getByRole("button", { name: "Lo tengo", exact: true }).click();
     await expect(inventory).toHaveAttribute("data-evidence-preparation-state", "declared_ready_for_future_intake");
