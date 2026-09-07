@@ -110,8 +110,10 @@ function nextActionFor(
   switch (state) {
     case "needs_classification":
       return `Indica si tienes o te falta cada soporte actual. Quedan ${summary.currentUndeclaredItems} por clasificar.`;
-    case "needs_collection":
-      return `Reúne los ${summary.currentMissingItems} soporte${summary.currentMissingItems === 1 ? "" : "s"} actual${summary.currentMissingItems === 1 ? "" : "es"} que declaraste como faltante${summary.currentMissingItems === 1 ? "" : "s"}.`;
+    case "needs_collection": {
+      const article = summary.currentMissingItems === 1 ? "el" : "los";
+      return `Reúne ${article} ${summary.currentMissingItems} soporte${summary.currentMissingItems === 1 ? "" : "s"} actual${summary.currentMissingItems === 1 ? "" : "es"} que declaraste como faltante${summary.currentMissingItems === 1 ? "" : "s"}.`;
+    }
     case "declared_ready_for_future_intake":
       return "Declaraste disponibles los soportes actuales. Un futuro ingreso documental todavía deberá autorizar, cargar y verificar cada evidencia por separado.";
   }
