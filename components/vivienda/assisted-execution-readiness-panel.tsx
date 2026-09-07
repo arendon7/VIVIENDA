@@ -67,16 +67,6 @@ export function AssistedExecutionReadinessPanel({
         </div>
       </div>
 
-      <div className="surface" style={{ marginTop: 22, padding: 18 }}>
-        <p className="eyebrow">Documentos que orientan la auditoría</p>
-        <p className="field-hint">
-          Esta lista viene de la ruta R7 actual. Mostrarla no significa que los documentos hayan sido cargados, conservados o verificados.
-        </p>
-        <ul>
-          {readiness.evidenceChecklist.map((item) => <li key={item}>{item}</li>)}
-        </ul>
-      </div>
-
       <div className="surface-warning" style={{ marginTop: 20 }}>
         <strong>Límites del acompañamiento mostrado</strong>
         <ul>{readiness.notices.map((notice) => <li key={notice}>{notice}</li>)}</ul>
