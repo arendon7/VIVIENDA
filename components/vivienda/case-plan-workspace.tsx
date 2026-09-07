@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AssistedEvidenceReadinessPanel } from "@/components/vivienda/assisted-evidence-readiness-panel";
 import { AssistedExecutionReadinessPanel } from "@/components/vivienda/assisted-execution-readiness-panel";
 import { CaseTimelinePreview } from "@/components/vivienda/case-timeline-preview";
 import { ExecutionIntentPanel } from "@/components/vivienda/execution-intent-panel";
@@ -113,7 +114,12 @@ export function CasePlanWorkspace({
         <p>Este plan todavía no crea un expediente ni guarda tu información. Si sales o recargas, esta selección puede perderse.</p>
       </div>
 
-      {assistedReadiness ? <AssistedExecutionReadinessPanel readiness={assistedReadiness} /> : null}
+      {assistedReadiness ? (
+        <>
+          <AssistedExecutionReadinessPanel readiness={assistedReadiness} />
+          <AssistedEvidenceReadinessPanel route={route} asOfDate={asOfDate} />
+        </>
+      ) : null}
 
       <div className="result-callout" style={{ marginTop: 18 }}>
         <strong>Próximo evento relevante</strong>
@@ -159,18 +165,20 @@ export function CasePlanWorkspace({
         </div>
       </div>
 
-      <div className="surface" style={{ marginTop: 24, padding: 20 }}>
-        <p className="eyebrow">Evidencia y documentos</p>
-        <h3>Qué conviene tener a mano</h3>
-        <p className="field-hint">Esta lista no significa que los documentos estén cargados o guardados en Casa con Criterio.</p>
-        <ul>
-          {plan.evidenceChecklist.map((item) => (
-            <li key={`${item.kind}-${item.label}`}>
-              <strong>{item.kind === "known_required" ? "Requerido por esta opción" : item.kind === "conditional" ? "Si ocurre el evento" : "Recomendado"}:</strong> {item.label}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {!assistedReadiness ? (
+        <div className="surface" style={{ marginTop: 24, padding: 20 }}>
+          <p className="eyebrow">Evidencia y documentos</p>
+          <h3>Qué conviene tener a mano</h3>
+          <p className="field-hint">Esta lista no significa que los documentos estén cargados o guardados en Casa con Criterio.</p>
+          <ul>
+            {plan.evidenceChecklist.map((item) => (
+              <li key={`${item.kind}-${item.label}`}>
+                <strong>{item.kind === "known_required" ? "Requerido por esta opción" : item.kind === "conditional" ? "Si ocurre el evento" : "Recomendado"}:</strong> {item.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {plan.warnings.length > 0 ? (
         <div className="surface-warning" style={{ marginTop: 20 }}>
