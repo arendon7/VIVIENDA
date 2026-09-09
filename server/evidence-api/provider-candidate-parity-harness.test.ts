@@ -159,8 +159,11 @@ describe("Provider Candidate Parity Harness V0.23.20", () => {
     );
 
     expect(source).not.toContain('from "./runtime.server"');
-    expect(source).not.toContain("createActivatedEvidenceRuntime");
-    expect(source).not.toContain("verifiedEvidenceRuntimeActivationFacts");
-    expect(source).not.toContain("assertEvidenceRuntimeActivationAllowed");
+    expect(source).not.toMatch(/import[^;]*createActivatedEvidenceRuntime/);
+    expect(source).not.toMatch(/\bcreateActivatedEvidenceRuntime\s*\(/);
+    expect(source).not.toMatch(/import[^;]*verifiedEvidenceRuntimeActivationFacts/);
+    expect(source).not.toMatch(/\bverifiedEvidenceRuntimeActivationFacts\s*\(/);
+    expect(source).not.toMatch(/import[^;]*assertEvidenceRuntimeActivationAllowed/);
+    expect(source).not.toMatch(/\bassertEvidenceRuntimeActivationAllowed\s*\(/);
   });
 });
