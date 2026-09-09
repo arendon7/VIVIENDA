@@ -152,18 +152,17 @@ describe("Provider Candidate Parity Harness V0.23.20", () => {
     ]);
   });
 
-  it("does not import activation/runtime factories into the provider candidate harness", () => {
+  it("does not import activation/runtime modules into the provider candidate harness", () => {
     const source = readFileSync(
       join(process.cwd(), "server/evidence-api/provider-candidate-parity-harness.ts"),
       "utf8",
     );
 
-    expect(source).not.toContain('from "./runtime.server"');
-    expect(source).not.toMatch(/import[^;]*createActivatedEvidenceRuntime/);
-    expect(source).not.toMatch(/\bcreateActivatedEvidenceRuntime\s*\(/);
-    expect(source).not.toMatch(/import[^;]*verifiedEvidenceRuntimeActivationFacts/);
-    expect(source).not.toMatch(/\bverifiedEvidenceRuntimeActivationFacts\s*\(/);
-    expect(source).not.toMatch(/import[^;]*assertEvidenceRuntimeActivationAllowed/);
-    expect(source).not.toMatch(/\bassertEvidenceRuntimeActivationAllowed\s*\(/);
+    expect(source).not.toMatch(/from\s+["']\.\/runtime\.server["']/);
+    expect(source).not.toMatch(/from\s+["']\.\/activated-runtime["']/);
+    expect(source).not.toMatch(/from\s+["']\.\/activation-preflight["']/);
+    expect(source).not.toMatch(
+      /import\s*\(\s*["']\.\/(?:runtime\.server|activated-runtime|activation-preflight)["']\s*\)/,
+    );
   });
 });
