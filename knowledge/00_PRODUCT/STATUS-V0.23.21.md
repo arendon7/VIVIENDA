@@ -18,7 +18,7 @@ Freeze padre V0.23.20:
 
 Head funcional/documental previo a este STATUS:
 
-`fcc65098024c3e82e9b3e2239e17b420cf28ca18`
+`bd11cb96dcd58d4d068763eeb0a15a856601f273`
 
 ## Pregunta de arquitectura
 
@@ -45,7 +45,7 @@ Cada probe usa un lease:
 - owner/intruder sintéticos y distintos;
 - TTL máximo de 30 minutos.
 
-Una misma sesión rechaza reutilización de fixture ID, namespace u otras identidades entre probes.
+Una misma sesión rechaza reutilización de fixture ID, namespace o cualquier identidad entre probes, incluso si un `subjectRef` cambia de rol owner ↔ intruder.
 
 ## Cleanup fail-closed
 
@@ -59,6 +59,8 @@ Después de cada probe se exige evidencia explícita de:
 El cleanup se ejecuta incluso cuando el probe falla.
 
 Un cleanup incompleto o una excepción del proveedor produce un error sanitizado `fixture_cleanup_failed`.
+
+El control conserva explícitamente el hecho de rechazo para que incluso un `throw undefined` siga siendo tratado como fallo después del cleanup.
 
 ## Separación de autoridad
 
@@ -85,27 +87,24 @@ Regla:
 
 ## Cobertura nueva
 
-Nueve tests verifican:
+Diez tests verifican:
 
 1. bloqueo antes de allocation si DEV no está calificado;
 2. ejecución válida con cleanup;
 3. rechazo de lease no sintético/TTL inválido;
-4. no reutilización entre probes;
+4. no reutilización de fixture/namespace/identidad entre probes, incluso cross-role;
 5. cleanup tras error del probe;
-6. fail-closed ante residuo;
-7. sanitización de errores de cleanup;
-8. cero activation facts;
-9. aislamiento del runtime/activation.
+6. `throw undefined` permanece como rechazo;
+7. fail-closed ante residuo;
+8. sanitización de errores de cleanup;
+9. cero activation facts;
+10. aislamiento del runtime/activation.
 
 ## CI
 
-El head documental previo al STATUS inició GitHub Actions run:
+Los pushes funcionales/documentales previos confirmaron TypeScript PASS antes de ser reemplazados por nuevos commits bajo la política de concurrencia del workflow; esas cancelaciones no se consideran evidencia de freeze.
 
-`34404824441`
-
-Ese run estaba pendiente al momento de crear este STATUS y no se usa como evidencia de freeze.
-
-El commit generado por este STATUS debe ejecutar un nuevo gate y solo podrá convertirse en freeze si confirma:
+El commit generado por este STATUS debe ejecutar un gate limpio y solo podrá convertirse en freeze si confirma:
 
 - TypeScript PASS;
 - Domain tests PASS;
