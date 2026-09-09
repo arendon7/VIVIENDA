@@ -128,8 +128,14 @@ describe("Provider Candidate Fixture Lifecycle V0.23.21", () => {
     expect(lifecycle.cleaned).toEqual(["fx_fixture_002"]);
   });
 
-  it("prevents fixture, namespace or identity reuse across parity probes", async () => {
-    const lifecycle = new RecordingLifecycle((scope) => fixture(scope, "shared"));
+  it("prevents fixture, namespace or identity reuse across parity probes, including cross-role reuse", async () => {
+    const first = fixture("happy_path", "first");
+    const lifecycle = new RecordingLifecycle((scope, call) => {
+      if (call === 1) return first;
+      return fixture(scope, "second", {
+        intruderSubjectRef: first.ownerSubjectRef,
+      });
+    });
     const session = new ProviderCandidateFixtureSession(qualifiedDev(), lifecycle, () => NOW);
 
     await session.run("happy_path", async () => "first");
@@ -140,7 +146,7 @@ describe("Provider Candidate Fixture Lifecycle V0.23.21", () => {
       code: "fixture_reuse_detected",
       scope: "cross_case_access",
     });
-    expect(lifecycle.cleaned).toEqual(["fx_fixture_shared", "fx_fixture_shared"]);
+    expect(lifecycle.cleaned).toEqual(["fx_fixture_first", "fx_fixture_second"]);
   });
 
   it("always cleans the fixture when probe execution fails", async () => {
@@ -153,6 +159,24 @@ describe("Provider Candidate Fixture Lifecycle V0.23.21", () => {
       }),
     ).rejects.toThrow("probe failed");
     expect(lifecycle.cleaned).toEqual(["fx_fixture_003"]);
+  });
+
+  it("preserves a rejection even when a probe throws undefined and still cleans the fixture", async () => {
+    const lifecycle = new RecordingLifecycle((scope) => fixture(scope, "undefined"));
+    const session = new ProviderCandidateFixtureSession(qualifiedDev(), lifecycle, () => NOW);
+    let rejected = false;
+
+    try {
+      await session.run("missing_data_authorization", async () => {
+        throw undefined;
+      });
+    } catch (error) {
+      rejected = true;
+      expect(error).toBeUndefined();
+    }
+
+    expect(rejected).toBe(true);
+    expect(lifecycle.cleaned).toEqual(["fx_fixture_undefined"]);
   });
 
   it("fails closed when cleanup cannot prove zero database, storage, registry and identity residue", async () => {
