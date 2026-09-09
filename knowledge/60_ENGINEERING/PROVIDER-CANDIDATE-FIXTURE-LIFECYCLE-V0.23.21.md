@@ -67,8 +67,9 @@ La sesión mantiene un set interno de identificadores ya consumidos. Se rechaza 
 
 1. fixture ID;
 2. namespace;
-3. owner subjectRef;
-4. intruder subjectRef.
+3. cualquier `subjectRef`, independientemente de si previamente actuó como owner o intruder.
+
+La identidad queda bloqueada por valor, no por rol. Por tanto, una identidad usada como owner en un probe tampoco puede reaparecer como intruder en otro.
 
 La intención es que una futura instancia de candidato utilice **una sesión por certificación V0.23.20**, no una sesión por probe. Así la barrera detecta reuse entre happy path y escenarios adversariales.
 
@@ -89,6 +90,8 @@ También debe coincidir el `fixtureId` y scope del lease original.
 
 Cualquier desviación produce `fixture_cleanup_failed`.
 
+La sesión conserva por separado el hecho de que la ejecución rechazó. Esto evita que un rechazo JavaScript cuyo valor sea `undefined` pueda confundirse con una ejecución satisfactoria; después del cleanup el rechazo original se preserva.
+
 ## Error contract
 
 Códigos:
@@ -108,12 +111,13 @@ Las excepciones de allocation/cleanup no se encadenan ni exponen como `cause`; e
 1. DEV no calificado bloquea antes de allocation;
 2. lease sintético válido ejecuta y limpia;
 3. identidad no sintética / TTL inválido bloquean y aun intentan cleanup;
-4. reuse entre probes se rechaza;
+4. reuse entre probes se rechaza, incluso si una identidad cambia de owner a intruder;
 5. una excepción durante el probe no evita cleanup;
-6. residuo de Storage bloquea la certificación;
-7. error del proveedor durante cleanup se sanitiza;
-8. se producen cero activation facts;
-9. el módulo permanece aislado de runtime/activation.
+6. un `throw undefined` sigue siendo rechazo y no éxito;
+7. residuo de Storage bloquea la certificación;
+8. error del proveedor durante cleanup se sanitiza;
+9. se producen cero activation facts;
+10. el módulo permanece aislado de runtime/activation.
 
 ## Integración futura con Supabase
 
