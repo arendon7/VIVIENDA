@@ -150,8 +150,8 @@ export class ProviderCandidateFixtureSession {
     const identifiers = [
       `fixture:${lease.fixtureId}`,
       `namespace:${lease.namespace}`,
-      `owner:${lease.ownerSubjectRef}`,
-      `intruder:${lease.intruderSubjectRef}`,
+      `subject:${lease.ownerSubjectRef}`,
+      `subject:${lease.intruderSubjectRef}`,
     ];
 
     if (identifiers.some((identifier) => this.consumedIdentifiers.has(identifier))) {
@@ -192,17 +192,19 @@ export class ProviderCandidateFixtureSession {
     }
 
     let result: T | undefined;
+    let executionFailed = false;
     let executionError: unknown;
 
     try {
       result = await execute(lease);
     } catch (error) {
+      executionFailed = true;
       executionError = error;
     }
 
     await this.cleanupOrFail(lease);
 
-    if (executionError !== undefined) throw executionError;
+    if (executionFailed) throw executionError;
     return result as T;
   }
 }
