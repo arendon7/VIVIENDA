@@ -45,11 +45,11 @@ Esto permite certificar la lógica destructiva sin disponer todavía de un proye
 Por fixture:
 
 ```text
-fixtureId        = fx_<token>
-namespace        = vivienda_dev_<token>
-ownerSubjectRef  = sub_synthetic_<token>_owner
+fixtureId          = fx_<token>
+namespace          = vivienda_dev_<token>
+ownerSubjectRef    = sub_synthetic_<token>_owner
 intruderSubjectRef = sub_synthetic_<token>_intruder
-storagePrefix    = quarantine/upl_vivienda_dev_<token>_
+storagePrefix      = quarantine/upl_vivienda_dev_<token>_
 ```
 
 Token permitido:
@@ -68,7 +68,8 @@ El generador por defecto usa 12 bytes aleatorios codificados en hex.
 
 ```text
 build lease
-→ collision gate
+→ historical collision gate
+→ consume fixtureId
 → create owner Auth
 → bind owner identity
 → create intruder Auth
@@ -94,13 +95,24 @@ purgeFixtureDatabase(namespace, subjects)
 → sanitized allocation_failed
 ```
 
-El rollback es best-effort para reducir residuo, pero nunca transforma el fallo original en PASS.
+El rollback es best-effort para reducir residuo, pero nunca transforma el fallo original en PASS. El `fixtureId` permanece consumido después de un allocation fallido para impedir que un posible namespace parcialmente contaminado sea reutilizado.
 
-## Collision safety
+## Historical collision safety
 
-La colisión de `fixtureId` contra un fixture activo se verifica antes de `createSyntheticAuthUser`.
+La lifecycle mantiene dos estados distintos:
 
-Esto evita que un token repetido pueda tocar identidad, Case o Storage de un probe todavía activo.
+- `activeFixtures`: fixtures que todavía admiten cleanup/retry;
+- `consumedFixtureIds`: todos los IDs que alguna vez pasaron el collision gate.
+
+El gate consulta `consumedFixtureIds` **antes** de `createSyntheticAuthUser` y consume el ID antes del primer provider I/O.
+
+Por tanto un token repetido se rechaza:
+
+- mientras el fixture está activo;
+- después de cleanup exitoso;
+- después de allocation parcial fallido.
+
+Esto hace que cada namespace sea single-use durante toda la vida de la instancia del adapter y alinea la implementación Supabase con la prohibición de reuse V0.23.21 antes de que el proveedor sea tocado.
 
 ## Storage deletion boundary
 
@@ -159,7 +171,7 @@ registryResidueAbsent = registryRows == 0
 identityResidueAbsent = identityRows == 0 && authUsers == 0
 ```
 
-El fixture solo se elimina del registry activo cuando los cinco conteos son cero y no hubo errores operacionales.
+El fixture solo se elimina de `activeFixtures` cuando los cinco conteos son cero y no hubo errores operacionales. El `fixtureId` permanece en `consumedFixtureIds`.
 
 ## Retry semantics
 
@@ -246,6 +258,8 @@ La implementación concreta del AdminPort debe mantener esas llamadas en un ento
 13. sanitización;
 14. cero activation facts / import isolation.
 
+`supabase-provider-fixture-reuse.test.ts` congela adicionalmente que un `fixtureId` no puede reutilizarse después de un cleanup completamente exitoso y que la segunda tentativa genera cero provider calls.
+
 `supabase-provider-fixture-support.test.ts` cubre estáticamente:
 
 1. ubicación fuera de migrations;
@@ -269,6 +283,7 @@ Ese código todavía deberá permanecer desconectado hasta:
 
 ## Invariantes
 
+- fixture/namespace single-use por lifecycle;
 - no credentials en source;
 - no provider I/O en tests;
 - no reuse de proyecto existente;
