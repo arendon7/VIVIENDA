@@ -90,7 +90,7 @@ class FakeSupabaseDevClient implements SupabaseDevFixtureClient {
   }
 }
 
-function control(client = new FakeSupabaseDevClient()) {
+function makeControlPlane(client = new FakeSupabaseDevClient()) {
   return {
     client,
     control: new SupabaseDevFixtureAdminControlPlane(
@@ -135,7 +135,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("creates only the exact synthetic fixture identity and auto-confirms the email", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
 
     await expect(
       control.createSyntheticAuthUser({
@@ -158,7 +158,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("rejects mismatched namespace, subject or email before Auth Admin I/O", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
 
     await expect(
       control.createSyntheticAuthUser({
@@ -172,7 +172,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("sanitizes Auth provider errors and invalid user responses", async () => {
-    const first = control();
+    const first = makeControlPlane();
     first.client.createUserResult = {
       data: { user: null },
       error: { code: "unexpected_failure", message: "service_role=secret" },
@@ -192,7 +192,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
       expect(String((error as Error).message)).not.toContain("service_role");
     }
 
-    const second = control();
+    const second = makeControlPlane();
     second.client.createUserResult = ok({ user: { id: "not-a-uuid" } });
     await expect(
       second.control.createSyntheticAuthUser({
@@ -205,7 +205,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("binds identity through the canonical immutable-identity RPC", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     client.rpcResults.set("vivienda_persist_upsert_identity", ok(null));
 
     await control.bindSyntheticIdentity({
@@ -228,7 +228,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("rejects non-synthetic identity binding before RPC", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     await expect(
       control.bindSyntheticIdentity({
         authUserId: OWNER_ID,
@@ -240,7 +240,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("recursively enumerates only fixture-owned canonical Storage objects", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     client.storagePages.set(
       `quarantine|upl_vivienda_dev_fixture123_|0`,
       ok([
@@ -287,7 +287,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("fails closed if Storage returns a direct file at fixture-root depth", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     client.storagePages.set(
       `quarantine|upl_vivienda_dev_fixture123_|0`,
       ok([{ name: "upl_vivienda_dev_fixture123_badfile", id: "unexpected-file" }]),
@@ -299,7 +299,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("fails closed on an unexpected folder depth instead of returning an incomplete object set", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     client.storagePages.set(
       `quarantine|upl_vivienda_dev_fixture123_|0`,
       ok([{ name: "upl_vivienda_dev_fixture123_intentA", id: null }]),
@@ -319,7 +319,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("batches physical Storage deletion and rejects duplicate/non-canonical paths before remove", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     const paths = Array.from({ length: 101 }, (_, index) =>
       `quarantine/upl_vivienda_dev_fixture123_intentA/evd_abc/obj_${String(index).padStart(6, "0")}`,
     );
@@ -330,7 +330,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
     expect(removes[0]!.payload as string[]).toHaveLength(100);
     expect(removes[1]!.payload as string[]).toHaveLength(1);
 
-    const second = control();
+    const second = makeControlPlane();
     await expect(
       second.control.deleteStorageObjects({
         bucketId: "vivienda-evidence",
@@ -341,7 +341,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("purges only the exact DEV namespace/subject pair through the DEV-only RPC", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     client.rpcResults.set("vivienda_dev_fixture_purge", ok(null));
 
     await control.purgeFixtureDatabase({ namespace: NAMESPACE, subjectRefs: [OWNER_REF, INTRUDER_REF] });
@@ -357,7 +357,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
       },
     });
 
-    const second = control();
+    const second = makeControlPlane();
     await expect(
       second.control.purgeFixtureDatabase({ namespace: NAMESPACE, subjectRefs: [INTRUDER_REF, OWNER_REF] }),
     ).rejects.toMatchObject({ code: "invalid_input" });
@@ -365,14 +365,14 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("treats Auth user_not_found as idempotent deletion but no other provider error as success", async () => {
-    const first = control();
+    const first = makeControlPlane();
     first.client.deleteUserResults.set(OWNER_ID, {
       data: null,
       error: { code: "user_not_found", status: 404, message: "gone" },
     });
     await expect(first.control.deleteAuthUser(OWNER_ID)).resolves.toBeUndefined();
 
-    const second = control();
+    const second = makeControlPlane();
     second.client.deleteUserResults.set(OWNER_ID, {
       data: null,
       error: { code: "unexpected_failure", status: 500, message: "secret provider diagnostic" },
@@ -383,7 +383,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("combines independent DB, Storage and Auth residue into one truthful report", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     client.rpcResults.set(
       "vivienda_dev_fixture_residue",
       ok({ caseRows: 2, registryRows: 1, identityRows: 0 }),
@@ -413,7 +413,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("rejects malformed residue instead of manufacturing a clean report", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     client.rpcResults.set(
       "vivienda_dev_fixture_residue",
       ok({ caseRows: 0, registryRows: "0", identityRows: 0 }),
@@ -434,7 +434,7 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   });
 
   it("caps Storage pagination so an incomplete provider enumeration can never certify zero residue", async () => {
-    const { client, control } = control();
+    const { client, control } = makeControlPlane();
     for (let offset = 0; offset < 10_000; offset += 100) {
       client.storagePages.set(
         `quarantine|upl_vivienda_dev_fixture123_|${offset}`,
