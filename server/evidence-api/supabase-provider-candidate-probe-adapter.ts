@@ -536,8 +536,10 @@ export class SupabaseProviderCandidateProbeAdapter implements EvidenceRuntimePro
       const publicBoundaries = publicCaseReadModelBoundaries(snapshot.publicReadModel, "happy_path");
 
       return {
-        routeCode: snapshot.routeCode,
-        caseTrack: snapshot.caseTrack,
+        // V0.23.19 uses literal TS types while its runtime evaluator intentionally checks mismatches.
+        // Preserve the observed runtime values here; the cast only bridges that frozen type boundary.
+        routeCode: snapshot.routeCode as EvidenceRuntimeHappyPathObservation["routeCode"],
+        caseTrack: snapshot.caseTrack as EvidenceRuntimeHappyPathObservation["caseTrack"],
         finalCaseVersion: snapshot.version,
         finalCaseStage: snapshot.stage,
         eventSequence: [...snapshot.eventSequence],
