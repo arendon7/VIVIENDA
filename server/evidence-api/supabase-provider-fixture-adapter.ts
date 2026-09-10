@@ -62,11 +62,13 @@ export interface SupabaseProviderFixtureAdminPort {
     objectPaths: string[];
   }): Promise<void>;
 
+  /** Must be idempotent for a previously purged namespace. */
   purgeFixtureDatabase(input: {
     namespace: string;
     subjectRefs: [string, string];
   }): Promise<void>;
 
+  /** Must treat an already-absent synthetic Auth user as successfully deleted. */
   deleteAuthUser(authUserId: string): Promise<void>;
 
   inspectFixtureResidue(input: {
@@ -123,6 +125,21 @@ function validateResidue(value: SupabaseFixtureResidue): boolean {
     safeCount(value.registryRows) &&
     safeCount(value.identityRows) &&
     safeCount(value.authUsers)
+  );
+}
+
+function leaseMatches(active: ProviderCandidateFixtureLease, candidate: ProviderCandidateFixtureLease): boolean {
+  return (
+    active.contractVersion === candidate.contractVersion &&
+    active.scope === candidate.scope &&
+    active.fixtureId === candidate.fixtureId &&
+    active.namespace === candidate.namespace &&
+    active.ownerSubjectRef === candidate.ownerSubjectRef &&
+    active.intruderSubjectRef === candidate.intruderSubjectRef &&
+    active.issuedAt === candidate.issuedAt &&
+    active.expiresAt === candidate.expiresAt &&
+    active.syntheticOnly === candidate.syntheticOnly &&
+    active.disposable === candidate.disposable
   );
 }
 
@@ -213,6 +230,10 @@ export class SupabaseProviderCandidateFixtureLifecycle implements ProviderCandid
 
   async allocate(scope: ProviderCandidateParityProbeScope): Promise<ProviderCandidateFixtureLease> {
     const lease = this.buildLease(scope);
+    if (this.activeFixtures.has(lease.fixtureId)) {
+      throw new SupabaseProviderFixtureAdapterError("allocation_failed");
+    }
+
     const createdAuthUserIds: string[] = [];
 
     try {
@@ -261,7 +282,7 @@ export class SupabaseProviderCandidateFixtureLifecycle implements ProviderCandid
 
   async cleanup(lease: ProviderCandidateFixtureLease): Promise<ProviderCandidateFixtureCleanupReport> {
     const active = this.activeFixtures.get(lease.fixtureId);
-    if (!active || active.lease !== lease) {
+    if (!active || !leaseMatches(active.lease, lease)) {
       throw new SupabaseProviderFixtureAdapterError("cleanup_failed");
     }
 
@@ -270,14 +291,16 @@ export class SupabaseProviderCandidateFixtureLifecycle implements ProviderCandid
 
     let objectPaths: string[] = [];
     try {
-      objectPaths = await this.admin.listStorageObjects({
+      const listed = await this.admin.listStorageObjects({
         bucketId: EVIDENCE_BUCKET_ID,
         prefix: active.storagePrefix,
       });
-      if (objectPaths.some((path) => !path.startsWith(active.storagePrefix))) {
+      if (listed.some((path) => !path.startsWith(active.storagePrefix))) {
         throw new Error("provider returned object outside fixture prefix");
       }
+      objectPaths = listed;
     } catch {
+      objectPaths = [];
       cleanupOperationFailed = true;
     }
 
@@ -317,15 +340,13 @@ export class SupabaseProviderCandidateFixtureLifecycle implements ProviderCandid
       });
     } catch {
       throw new SupabaseProviderFixtureAdapterError("cleanup_failed");
-    } finally {
-      this.activeFixtures.delete(lease.fixtureId);
     }
 
     if (cleanupOperationFailed || !validateResidue(residue)) {
       throw new SupabaseProviderFixtureAdapterError("cleanup_failed");
     }
 
-    return {
+    const report: ProviderCandidateFixtureCleanupReport = {
       scope: lease.scope,
       fixtureId: lease.fixtureId,
       caseResidueAbsent: residue.caseRows === 0,
@@ -333,6 +354,17 @@ export class SupabaseProviderCandidateFixtureLifecycle implements ProviderCandid
       registryResidueAbsent: residue.registryRows === 0,
       identityResidueAbsent: residue.identityRows === 0 && residue.authUsers === 0,
     };
+
+    if (
+      report.caseResidueAbsent &&
+      report.storageResidueAbsent &&
+      report.registryResidueAbsent &&
+      report.identityResidueAbsent
+    ) {
+      this.activeFixtures.delete(lease.fixtureId);
+    }
+
+    return report;
   }
 }
 
