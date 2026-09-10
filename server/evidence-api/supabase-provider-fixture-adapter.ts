@@ -164,6 +164,7 @@ async function settleAll(calls: ProviderCall[]): Promise<boolean> {
  */
 export class SupabaseProviderCandidateFixtureLifecycle implements ProviderCandidateFixtureLifecycle {
   private readonly activeFixtures = new Map<string, ActiveFixture>();
+  private readonly consumedFixtureIds = new Set<string>();
 
   constructor(
     private readonly admin: SupabaseProviderFixtureAdminPort,
@@ -230,9 +231,10 @@ export class SupabaseProviderCandidateFixtureLifecycle implements ProviderCandid
 
   async allocate(scope: ProviderCandidateParityProbeScope): Promise<ProviderCandidateFixtureLease> {
     const lease = this.buildLease(scope);
-    if (this.activeFixtures.has(lease.fixtureId)) {
+    if (this.consumedFixtureIds.has(lease.fixtureId)) {
       throw new SupabaseProviderFixtureAdapterError("allocation_failed");
     }
+    this.consumedFixtureIds.add(lease.fixtureId);
 
     const createdAuthUserIds: string[] = [];
 
