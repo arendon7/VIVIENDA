@@ -535,11 +535,9 @@ export class SupabaseProviderCandidateProbeAdapter implements EvidenceRuntimePro
       const telemetry = cloneAndValidateTelemetry(telemetryRaw, lease, "happy_path");
       const publicBoundaries = publicCaseReadModelBoundaries(snapshot.publicReadModel, "happy_path");
 
-      return {
-        // V0.23.19 uses literal TS types while its runtime evaluator intentionally checks mismatches.
-        // Preserve the observed runtime values here; the cast only bridges that frozen type boundary.
-        routeCode: snapshot.routeCode as EvidenceRuntimeHappyPathObservation["routeCode"],
-        caseTrack: snapshot.caseTrack as EvidenceRuntimeHappyPathObservation["caseTrack"],
+      const observation = {
+        routeCode: snapshot.routeCode,
+        caseTrack: snapshot.caseTrack,
         finalCaseVersion: snapshot.version,
         finalCaseStage: snapshot.stage,
         eventSequence: [...snapshot.eventSequence],
@@ -560,6 +558,10 @@ export class SupabaseProviderCandidateProbeAdapter implements EvidenceRuntimePro
           checksumExposedInCaseReadModel: publicBoundaries.checksumExposed,
         },
       };
+
+      // V0.23.19 intentionally evaluates runtime mismatches for fields whose TS types are literals.
+      // This cast bridges that frozen typing without changing any observed runtime value.
+      return observation as EvidenceRuntimeHappyPathObservation;
     });
   }
 
