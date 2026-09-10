@@ -415,6 +415,7 @@ function failureErrorOperation(
 }
 
 export class SupabaseProviderCandidateProbeAdapter implements EvidenceRuntimeProviderCandidateProbe {
+  readonly externalIoOccurred = true as const;
   readonly liveRuntimeAuthorized = false as const;
   readonly runtimeServerWasUsed = false as const;
 
@@ -426,15 +427,12 @@ export class SupabaseProviderCandidateProbeAdapter implements EvidenceRuntimePro
       execution.provider !== "supabase" ||
       execution.projectLabel !== "vivienda-dev" ||
       execution.syntheticOnly !== true ||
+      execution.externalIoOccurred !== true ||
       execution.liveRuntimeAuthorized !== false ||
       execution.runtimeServerWasUsed !== false
     ) {
       fail("invalid_configuration", "happy_path");
     }
-  }
-
-  get externalIoOccurred(): boolean {
-    return this.execution.externalIoOccurred;
   }
 
   private async seed(
