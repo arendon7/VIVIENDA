@@ -16,6 +16,7 @@ El siguiente riesgo era conectar ese contrato a Supabase de una forma que:
 - borrara metadata SQL sin borrar primero el objeto físico;
 - eliminara Auth antes de desmontar las referencias de persistencia;
 - perdiera capacidad de remediación después de un cleanup parcial;
+- permitiera reutilizar un namespace ya consumido;
 - aplicara utilidades DEV como migraciones canónicas de STAGING/PROD.
 
 ## Decisión
@@ -34,13 +35,15 @@ Cada allocation:
 2. construye `fixtureId = fx_<token>`;
 3. construye `namespace = vivienda_dev_<token>`;
 4. construye owner e intruder `sub_synthetic_*`;
-5. crea dos usuarios Auth sintéticos;
-6. enlaza cada `auth_user_id` con el `subjectRef` mediante el boundary de identidad;
-7. registra el fixture activo únicamente después de completar ambas identidades.
+5. verifica que ese `fixtureId` nunca haya sido consumido por esa lifecycle;
+6. consume el `fixtureId` antes del primer I/O;
+7. crea dos usuarios Auth sintéticos;
+8. enlaza cada `auth_user_id` con el `subjectRef` mediante el boundary de identidad;
+9. registra el fixture activo únicamente después de completar ambas identidades.
 
 El TTL por defecto es 20 minutos y nunca puede superar el máximo V0.23.21 de 30 minutos.
 
-Una colisión de token/fixture activo se rechaza **antes de la primera llamada al proveedor**.
+La regla de no reutilización es histórica, no solamente concurrente: un token/fixture consumido no vuelve a entrar al proveedor aunque el fixture anterior haya limpiado 0/0/0/0/0 o aunque su allocation haya fallado parcialmente. Esto evita reabrir un namespace sobre el que pudiera existir estado residual no observable.
 
 ## Rollback de allocation parcial
 
@@ -50,6 +53,8 @@ Si falla cualquier fase después de crear uno o más usuarios Auth, el adapter i
 2. eliminar todos los Auth users cuyo ID ya conoce.
 
 El error resultante se sanitiza como `allocation_failed`.
+
+El `fixtureId` permanece consumido después del fallo: el retry debe generar un token nuevo y nunca reutilizar el namespace potencialmente contaminado.
 
 ## Storage ownership
 
@@ -92,7 +97,7 @@ El adapter intenta reducir residuos tanto como sea seguro y después exige una i
 
 Si una operación falló, la inspección no pudo ejecutarse, devolvió conteos inválidos o quedan residuos, el fixture **no se olvida**. Se conserva en memoria para una remediación/reintento con el mismo lease.
 
-Solo un reporte 0/0/0/0/0 elimina el fixture del registro activo.
+Solo un reporte 0/0/0/0/0 elimina el fixture del registro activo. Incluso entonces su `fixtureId` permanece en el conjunto histórico consumido y no puede reasignarse.
 
 ## Lease integrity
 
@@ -152,6 +157,7 @@ Regla:
 
 - el lifecycle provider-neutral ya tiene una traducción Supabase concreta;
 - los borrados destructivos quedan estrictamente namespace-scoped;
+- ningún namespace consumido puede reabrirse por colisión del generador;
 - Storage y Auth respetan su orden físico/referencial;
 - cleanup parcial conserva capacidad de remediation;
 - las utilidades SQL DEV no entran al migration chain canónico;
@@ -159,6 +165,7 @@ Regla:
 
 ### Costos
 
+- el conjunto de IDs consumidos crece durante la vida de la lifecycle, deliberadamente;
 - todavía falta una implementación real de `SupabaseProviderFixtureAdminPort`;
 - el SQL DEV deberá instalarse manual y exclusivamente en `vivienda-dev`;
 - un provider real sigue bloqueado mientras no exista un proyecto DEV dedicado y 14/14 calificado.
