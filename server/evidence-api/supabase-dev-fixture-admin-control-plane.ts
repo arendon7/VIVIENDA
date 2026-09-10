@@ -1,4 +1,5 @@
 import { EVIDENCE_BUCKET_ID } from "@/domain/storage-coordination/coordinator";
+import type { DevEnvironmentQualificationDecision } from "./dev-provisioning-qualification";
 import type {
   SupabaseFixtureResidue,
   SupabaseProviderFixtureAdminPort,
@@ -14,6 +15,7 @@ const STORAGE_LIST_MAX_PAGES = 100;
 const STORAGE_REMOVE_BATCH_SIZE = 100;
 const AUTH_USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TOKEN = /^[A-Za-z0-9_-]{8,40}$/;
+const SYNTHETIC_SUBJECT_REF = /^sub_synthetic_[A-Za-z0-9_-]{8,40}_(?:owner|intruder)$/;
 const CANONICAL_OBJECT_PATH =
   /^quarantine\/(upl_vivienda_dev_[A-Za-z0-9_-]{8,40}_[A-Za-z0-9_-]{3,})\/(evd_[A-Za-z0-9_-]{3,})\/(obj_[A-Za-z0-9_-]{6,})$/;
 
@@ -91,6 +93,18 @@ export class SupabaseDevFixtureAdminControlPlaneError extends Error {
 
 function fail(code: SupabaseDevFixtureAdminControlPlaneErrorCode): never {
   throw new SupabaseDevFixtureAdminControlPlaneError(code);
+}
+
+function assertQualifiedDev(qualification: DevEnvironmentQualificationDecision): void {
+  const qualified =
+    qualification.state === "qualified_for_staging_candidate" &&
+    qualification.devEnvironmentVerified === true &&
+    qualification.liveRuntimeAuthorized === false &&
+    qualification.blockers.length === 0 &&
+    qualification.totalRequirementCount > 0 &&
+    qualification.verifiedRequirementCount === qualification.totalRequirementCount;
+
+  if (!qualified) fail("invalid_configuration");
 }
 
 function requireProviderSuccess<T>(result: SupabaseDevClientResult<T>): T {
@@ -172,8 +186,10 @@ export class SupabaseDevFixtureAdminControlPlane implements SupabaseProviderFixt
   constructor(
     private readonly client: SupabaseDevFixtureClient,
     private readonly configuration: { projectLabel: string },
+    qualification: DevEnvironmentQualificationDecision,
   ) {
     if (configuration.projectLabel !== DEV_PROJECT_LABEL) fail("invalid_configuration");
+    assertQualifiedDev(qualification);
   }
 
   async createSyntheticAuthUser(input: {
@@ -200,7 +216,7 @@ export class SupabaseDevFixtureAdminControlPlane implements SupabaseProviderFixt
     subjectRef: string;
     principalKind: "client";
   }): Promise<void> {
-    if (!AUTH_USER_ID.test(input.authUserId) || !/^sub_synthetic_[A-Za-z0-9_-]{8,}_/.test(input.subjectRef)) {
+    if (!AUTH_USER_ID.test(input.authUserId) || !SYNTHETIC_SUBJECT_REF.test(input.subjectRef)) {
       fail("invalid_input");
     }
 
