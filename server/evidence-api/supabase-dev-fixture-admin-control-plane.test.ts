@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  evaluateDevEnvironmentQualification,
+  verifiedDevEnvironmentQualificationFacts,
+} from "./dev-provisioning-qualification";
+import {
   SUPABASE_DEV_FIXTURE_ADMIN_CONTROL_PLANE_VERSION,
   SupabaseDevFixtureAdminControlPlane,
   SupabaseDevFixtureAdminControlPlaneError,
@@ -20,6 +24,10 @@ const STORAGE_PREFIX = "quarantine/upl_vivienda_dev_fixture123_";
 
 function ok<T>(data: T): SupabaseDevClientResult<T> {
   return { data, error: null };
+}
+
+function qualifiedDev() {
+  return evaluateDevEnvironmentQualification(verifiedDevEnvironmentQualificationFacts());
 }
 
 class FakeSupabaseDevClient implements SupabaseDevFixtureClient {
@@ -83,7 +91,14 @@ class FakeSupabaseDevClient implements SupabaseDevFixtureClient {
 }
 
 function control(client = new FakeSupabaseDevClient()) {
-  return { client, control: new SupabaseDevFixtureAdminControlPlane(client, { projectLabel: "vivienda-dev" }) };
+  return {
+    client,
+    control: new SupabaseDevFixtureAdminControlPlane(
+      client,
+      { projectLabel: "vivienda-dev" },
+      qualifiedDev(),
+    ),
+  };
 }
 
 describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
@@ -96,7 +111,25 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
   it("refuses any project label other than vivienda-dev at construction", () => {
     const client = new FakeSupabaseDevClient();
     expect(
-      () => new SupabaseDevFixtureAdminControlPlane(client, { projectLabel: "production" }),
+      () =>
+        new SupabaseDevFixtureAdminControlPlane(
+          client,
+          { projectLabel: "production" },
+          qualifiedDev(),
+        ),
+    ).toThrowError(SupabaseDevFixtureAdminControlPlaneError);
+    expect(client.events).toEqual([]);
+  });
+
+  it("refuses construction unless V0.23.14 is fully 14/14 qualified", () => {
+    const client = new FakeSupabaseDevClient();
+    expect(
+      () =>
+        new SupabaseDevFixtureAdminControlPlane(
+          client,
+          { projectLabel: "vivienda-dev" },
+          evaluateDevEnvironmentQualification(),
+        ),
     ).toThrowError(SupabaseDevFixtureAdminControlPlaneError);
     expect(client.events).toEqual([]);
   });
@@ -194,6 +227,18 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
     });
   });
 
+  it("rejects non-synthetic identity binding before RPC", async () => {
+    const { client, control } = control();
+    await expect(
+      control.bindSyntheticIdentity({
+        authUserId: OWNER_ID,
+        subjectRef: "sub_real_customer_123",
+        principalKind: "client",
+      }),
+    ).rejects.toMatchObject({ code: "invalid_input" });
+    expect(client.events).toEqual([]);
+  });
+
   it("recursively enumerates only fixture-owned canonical Storage objects", async () => {
     const { client, control } = control();
     client.storagePages.set(
@@ -282,8 +327,8 @@ describe("Supabase DEV Fixture Admin Control Plane V0.23.23", () => {
     await control.deleteStorageObjects({ bucketId: "vivienda-evidence", objectPaths: paths });
     const removes = client.events.filter((event) => event.name === "storage.remove");
     expect(removes).toHaveLength(2);
-    expect((removes[0]!.payload as string[])).toHaveLength(100);
-    expect((removes[1]!.payload as string[])).toHaveLength(1);
+    expect(removes[0]!.payload as string[]).toHaveLength(100);
+    expect(removes[1]!.payload as string[]).toHaveLength(1);
 
     const second = control();
     await expect(
