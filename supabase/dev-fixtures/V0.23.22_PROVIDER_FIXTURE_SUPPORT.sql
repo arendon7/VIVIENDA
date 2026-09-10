@@ -36,9 +36,9 @@ begin
   v_owner_ref := 'sub_synthetic_' || v_token || '_owner';
   v_intruder_ref := 'sub_synthetic_' || v_token || '_intruder';
 
-  if cardinality(p_subject_refs) <> 2
-     or not (v_owner_ref = any(p_subject_refs))
-     or not (v_intruder_ref = any(p_subject_refs)) then
+  if coalesce(cardinality(p_subject_refs), 0) <> 2
+     or not coalesce(v_owner_ref = any(p_subject_refs), false)
+     or not coalesce(v_intruder_ref = any(p_subject_refs), false) then
     raise exception 'vivienda:fixture_subject_mismatch' using errcode = 'P0001';
   end if;
 
@@ -90,9 +90,9 @@ begin
   v_owner_ref := 'sub_synthetic_' || v_token || '_owner';
   v_intruder_ref := 'sub_synthetic_' || v_token || '_intruder';
 
-  if cardinality(p_subject_refs) <> 2
-     or not (v_owner_ref = any(p_subject_refs))
-     or not (v_intruder_ref = any(p_subject_refs)) then
+  if coalesce(cardinality(p_subject_refs), 0) <> 2
+     or not coalesce(v_owner_ref = any(p_subject_refs), false)
+     or not coalesce(v_intruder_ref = any(p_subject_refs), false) then
     raise exception 'vivienda:fixture_subject_mismatch' using errcode = 'P0001';
   end if;
 
