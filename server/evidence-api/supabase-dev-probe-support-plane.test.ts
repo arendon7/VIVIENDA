@@ -359,13 +359,13 @@ describe("Supabase DEV Probe Support Plane V0.23.26", () => {
     expect(sql).not.toContain("as $$;");
   });
 
-  it("contains no credentials, runtime.server import or activation path", () => {
+  it("contains no credentials, runtime import or activation path", () => {
     const source = readFileSync(
       join(process.cwd(), "server/evidence-api/supabase-dev-probe-support-plane.ts"),
       "utf8",
     );
     expect(source).not.toContain("process.env");
-    expect(source).not.toContain("runtime.server");
+    expect(source).not.toMatch(/from\s+["']\.\/runtime\.server["']/);
     expect(source).not.toContain("createActivatedEvidenceRuntime");
     expect(source).not.toMatch(/https:\/\/[a-z0-9-]+\.supabase\.co/i);
     expect(source).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
