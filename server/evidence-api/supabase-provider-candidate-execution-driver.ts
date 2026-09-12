@@ -250,6 +250,26 @@ function assertLease(lease: ProviderCandidateFixtureLease): void {
   }
 }
 
+function expectedPrepareActor(scope: ProviderCandidateFixtureLease["scope"]): SupabaseProviderProbeActor {
+  if (scope === "unauthenticated_prepare") return "anonymous";
+  if (scope === "cross_case_access") return "intruder";
+  return "owner";
+}
+
+function expectedPrepareFault(scope: ProviderCandidateFixtureLease["scope"]): SupabaseProviderProbeFault {
+  return scope === "rate_limit_unavailable" ? "rate_limit_unavailable" : null;
+}
+
+function assertPrepareScope(
+  lease: ProviderCandidateFixtureLease,
+  actor: SupabaseProviderProbeActor,
+  fault: SupabaseProviderProbeFault,
+): void {
+  if (actor !== expectedPrepareActor(lease.scope) || fault !== expectedPrepareFault(lease.scope)) {
+    fail("invalid_input");
+  }
+}
+
 function assertTransportIdentity(
   transport: SupabaseProviderCandidateTransportIdentity & { channel: string },
   channel: string,
@@ -604,6 +624,7 @@ export class SupabaseProviderCandidateExecutionDriver
     fault: SupabaseProviderProbeFault;
   }): Promise<SupabaseProviderProbeHttpResult<SupabaseProviderPreparedUpload>> {
     assertLease(input.lease);
+    assertPrepareScope(input.lease, input.actor, input.fault);
     if (!CASE_ID.test(input.caseId) || !input.caseId.startsWith(`case_${input.lease.namespace}_`)) {
       fail("invalid_input");
     }
@@ -633,8 +654,6 @@ export class SupabaseProviderCandidateExecutionDriver
         if (error instanceof SupabaseProviderCandidateExecutionDriverError) throw error;
         fail("transport_failure");
       }
-    } else if (input.fault !== null) {
-      fail("invalid_input");
     }
 
     try {
