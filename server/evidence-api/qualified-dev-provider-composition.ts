@@ -143,6 +143,12 @@ function assertObjectPath(path: string): void {
   if (!OBJECT_PATH.test(path)) fail("invalid_input");
 }
 
+function assertLeaseOwnsObjectPath(lease: ProviderCandidateFixtureLease, path: string): void {
+  assertLease(lease);
+  assertObjectPath(path);
+  if (!path.startsWith(`quarantine/upl_${lease.namespace}_`)) fail("invalid_input");
+}
+
 export interface QualifiedDevAuthSessionPort {
   issueSession(input: {
     lease: ProviderCandidateFixtureLease;
@@ -172,6 +178,12 @@ export interface QualifiedDevSignedUploadPort {
  * out-of-band DEV control plane, never from public request fields supplied by the browser.
  */
 export interface QualifiedDevProbeServerContextPort {
+  readonly channel: "server_probe_context";
+  readonly projectLabel: typeof DEV_PROJECT_LABEL;
+  readonly syntheticOnly: true;
+  readonly liveRuntimeAuthorized: false;
+  readonly publicRequestDerived: false;
+
   resolveForStorage(input: {
     kind: "upload_grant" | "inspection";
     bucketId: typeof EVIDENCE_BUCKET_ID;
@@ -189,6 +201,18 @@ export interface QualifiedDevProbeServerContextPort {
   }): Promise<ProviderCandidateFixtureLease | null> | ProviderCandidateFixtureLease | null;
 }
 
+function assertTrustedContext(context: QualifiedDevProbeServerContextPort): void {
+  if (
+    context.channel !== "server_probe_context" ||
+    context.projectLabel !== DEV_PROJECT_LABEL ||
+    context.syntheticOnly !== true ||
+    context.liveRuntimeAuthorized !== false ||
+    context.publicRequestDerived !== false
+  ) {
+    fail("invalid_configuration");
+  }
+}
+
 export class QualifiedDevAuthTransport implements SupabaseProviderCandidateAuthTransport {
   readonly channel = "supabase_auth" as const;
   readonly projectLabel = DEV_PROJECT_LABEL;
@@ -197,7 +221,7 @@ export class QualifiedDevAuthTransport implements SupabaseProviderCandidateAuthT
 
   constructor(private readonly sessions: QualifiedDevAuthSessionPort) {}
 
-  issueAccessToken(input: {
+  async issueAccessToken(input: {
     lease: ProviderCandidateFixtureLease;
     actor: "owner" | "intruder";
   }): Promise<SupabaseProviderCandidateAuthSession> {
@@ -222,7 +246,7 @@ export class QualifiedDevHttpTransport implements SupabaseProviderCandidateHttpT
     this.origin = normalizeOrigin(evidenceApiOrigin);
   }
 
-  send(request: SupabaseProviderCandidateHttpRequest): Promise<SupabaseProviderCandidateHttpResponse> {
+  async send(request: SupabaseProviderCandidateHttpRequest): Promise<SupabaseProviderCandidateHttpResponse> {
     let parsed: URL;
     try {
       parsed = new URL(request.url);
@@ -253,7 +277,7 @@ export class QualifiedDevStorageTransport implements SupabaseProviderCandidateSt
 
   constructor(private readonly uploads: QualifiedDevSignedUploadPort) {}
 
-  uploadSigned(input: {
+  async uploadSigned(input: {
     lease: ProviderCandidateFixtureLease;
     bucketId: typeof EVIDENCE_BUCKET_ID;
     objectPath: string;
@@ -262,8 +286,7 @@ export class QualifiedDevStorageTransport implements SupabaseProviderCandidateSt
     bytes: Uint8Array;
     upsert: false;
   }): Promise<{ status: number }> {
-    assertLease(input.lease);
-    assertObjectPath(input.objectPath);
+    assertLeaseOwnsObjectPath(input.lease, input.objectPath);
     if (
       input.bucketId !== EVIDENCE_BUCKET_ID ||
       input.contentType !== "application/pdf" ||
@@ -307,7 +330,6 @@ export class QualifiedDevInstrumentedStorageGateway implements EvidenceStorageGa
     upsert: false;
   }): Promise<SignedUploadProviderGrant> {
     assertObjectPath(input.objectPath);
-    const result = await this.delegate.createSignedUploadGrant(input);
     const lease = await requireContext(
       this.context.resolveForStorage({
         kind: "upload_grant",
@@ -315,6 +337,8 @@ export class QualifiedDevInstrumentedStorageGateway implements EvidenceStorageGa
         objectPath: input.objectPath,
       }),
     );
+    assertLeaseOwnsObjectPath(lease, input.objectPath);
+    const result = await this.delegate.createSignedUploadGrant(input);
     try {
       await this.telemetry.recordStorageUploadGrant(lease);
     } catch {
@@ -328,7 +352,6 @@ export class QualifiedDevInstrumentedStorageGateway implements EvidenceStorageGa
     objectPath: string;
   }): Promise<ObjectInspection | null> {
     assertObjectPath(input.objectPath);
-    const result = await this.delegate.inspectAndHashObject(input);
     const lease = await requireContext(
       this.context.resolveForStorage({
         kind: "inspection",
@@ -336,6 +359,8 @@ export class QualifiedDevInstrumentedStorageGateway implements EvidenceStorageGa
         objectPath: input.objectPath,
       }),
     );
+    assertLeaseOwnsObjectPath(lease, input.objectPath);
+    const result = await this.delegate.inspectAndHashObject(input);
     try {
       await this.telemetry.recordStorageInspection(lease);
     } catch {
@@ -376,10 +401,10 @@ export class QualifiedDevInstrumentedAuditLogPort implements ApiAuditLogPort {
     status: number;
     errorCode?: string;
   }): Promise<void> {
-    await this.delegate.record(event);
     const lease = await requireContext(
       this.context.resolveForAudit({ requestId: event.requestId, operation: event.operation }),
     );
+    await this.delegate.record(event);
     try {
       await this.telemetry.recordAudit(lease, {
         operation: event.operation,
@@ -470,6 +495,7 @@ export function createQualifiedDevProviderComposition(
   if (input.configuration.projectLabel !== DEV_PROJECT_LABEL) fail("invalid_configuration");
   assertQualifiedDev(input.qualification);
   const evidenceApiOrigin = normalizeOrigin(input.configuration.evidenceApiOrigin);
+  assertTrustedContext(input.server.context);
 
   const support = new SupabaseDevProbeSupportRpc(input.supportRpcClient, {
     projectLabel: DEV_PROJECT_LABEL,
