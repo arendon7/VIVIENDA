@@ -239,6 +239,11 @@ class FakeRateLimit implements ApiRateLimitPort {
 }
 
 class FakeContext implements QualifiedDevProbeServerContextPort {
+  readonly channel = "server_probe_context" as const;
+  readonly projectLabel = "vivienda-dev" as const;
+  readonly syntheticOnly = true as const;
+  readonly liveRuntimeAuthorized = false as const;
+  readonly publicRequestDerived = false as const;
   current: ProviderCandidateFixtureLease | null = lease();
   readonly calls: string[] = [];
 
@@ -299,6 +304,7 @@ function makeInputs() {
 }
 
 const OBJECT = "quarantine/upl_vivienda_dev_compose001_intent/evd_compose001/obj_compose001";
+const FOREIGN_OBJECT = "quarantine/upl_vivienda_dev_foreign001_intent/evd_foreign001/obj_foreign001";
 
 describe("Qualified DEV Provider Composition V0.23.27", () => {
   it("constructs only on exact 14/14 qualification and exposes no runtime authority", () => {
@@ -358,6 +364,23 @@ describe("Qualified DEV Provider Composition V0.23.27", () => {
     );
   });
 
+  it("rejects any probe context that can be derived from the public request", () => {
+    const made = makeInputs();
+    made.input.server.context = {
+      channel: "server_probe_context",
+      projectLabel: "vivienda-dev",
+      syntheticOnly: true,
+      liveRuntimeAuthorized: false,
+      publicRequestDerived: true,
+    } as unknown as FakeContext;
+
+    expect(() => createQualifiedDevProviderComposition(made.input)).toThrowError(
+      QualifiedDevProviderCompositionError,
+    );
+    expect(made.fixtureAdmin.calls).toEqual([]);
+    expect(made.supportRpcClient.calls).toEqual([]);
+  });
+
   it("auth transport binds owner/intruder sessions to the lease subjectRef", async () => {
     const sessions = new FakeAuthSessions();
     const transport = new QualifiedDevAuthTransport(sessions);
@@ -403,7 +426,7 @@ describe("Qualified DEV Provider Composition V0.23.27", () => {
     expect(client.requests).toHaveLength(1);
   });
 
-  it("signed upload transport accepts only synthetic 2048-byte canonical uploads", async () => {
+  it("signed upload transport accepts only fixture-owned synthetic 2048-byte canonical uploads", async () => {
     const uploads = new FakeSignedUploads();
     const transport = new QualifiedDevStorageTransport(uploads);
     await transport.uploadSigned({
@@ -416,6 +439,19 @@ describe("Qualified DEV Provider Composition V0.23.27", () => {
       upsert: false,
     });
     expect(uploads.calls).toEqual([{ objectPath: OBJECT, byteSize: 2048 }]);
+
+    await expect(
+      transport.uploadSigned({
+        lease: lease(),
+        bucketId: "vivienda-evidence",
+        objectPath: FOREIGN_OBJECT,
+        signedCapability: "signed_capability_compose001",
+        contentType: "application/pdf",
+        bytes: new Uint8Array(2048),
+        upsert: false,
+      }),
+    ).rejects.toMatchObject({ code: "invalid_input" });
+    expect(uploads.calls).toHaveLength(1);
   });
 
   it("instruments real Storage grant and inspection calls through support telemetry", async () => {
@@ -438,6 +474,23 @@ describe("Qualified DEV Provider Composition V0.23.27", () => {
         .filter((call) => call.functionName === "vivienda_dev_probe_record_storage_touch")
         .map((call) => call.args.p_kind),
     ).toEqual(["upload_grant", "inspection"]);
+  });
+
+  it("rejects a foreign fixture Storage path before delegate I/O", async () => {
+    const made = makeInputs();
+    const composition = createQualifiedDevProviderComposition(made.input);
+
+    await expect(
+      composition.server.storageGateway.createSignedUploadGrant({
+        bucketId: "vivienda-evidence",
+        objectPath: FOREIGN_OBJECT,
+        upsert: false,
+      }),
+    ).rejects.toMatchObject({ code: "invalid_input" });
+    expect(made.storageGateway.calls).toEqual([]);
+    expect(
+      made.supportRpcClient.calls.some((call) => call.functionName === "vivienda_dev_probe_record_storage_touch"),
+    ).toBe(false);
   });
 
   it("records support audit only after the real audit delegate succeeds", async () => {
