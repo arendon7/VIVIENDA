@@ -35,7 +35,6 @@ import type {
 } from "./qualified-dev-provider-composition";
 import {
   QUALIFIED_DEV_CANDIDATE_HOST_VERSION,
-  QualifiedDevCandidateHostError,
   createQualifiedDevCandidateEvidenceApiHost,
   qualifiedDevCandidateHostProducesNoActivationFacts,
   type QualifiedDevCandidateHostInputs,
@@ -509,7 +508,7 @@ describe("Qualified DEV Candidate Evidence API Host V0.23.28", () => {
     made.input.provider.qualification = evaluateDevEnvironmentQualification();
 
     expect(() => createQualifiedDevCandidateEvidenceApiHost(made.input)).toThrowError(
-      QualifiedDevCandidateHostError,
+      expect.objectContaining({ code: "dev_environment_unqualified" }),
     );
     expect(made.fixtureAdmin.calls).toEqual([]);
     expect(made.supportRpcClient.calls).toEqual([]);
