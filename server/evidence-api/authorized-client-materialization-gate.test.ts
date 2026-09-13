@@ -24,7 +24,7 @@ import {
   type ProviderClientMaterializationGateInput,
 } from "./authorized-client-materialization-gate";
 
-const PROJECT_BINDING_ID = "binding.dev.035";
+const PROJECT_BINDING_ID = "binding_dev_035";
 const PROJECT_REF = "abcdefghijklmno";
 const PROJECT_URL = `https://${PROJECT_REF}.supabase.co`;
 const OBSERVED_AT = "2026-09-13T17:40:00.000Z";
@@ -439,7 +439,7 @@ describe("V0.23.35 authorized client materialization gate", () => {
       hostileAttestation({ requestId: "bad id whitespace" }),
       hostileAttestation({ observationNonce: "bad" }),
       hostileAttestation({ observedAt: "not-a-date" }),
-      hostileAttestation({ projectBindingId: "binding.other.035" }),
+      hostileAttestation({ projectBindingId: "binding_other_035" }),
     ];
 
     for (const attestationContract of variants) {
@@ -498,7 +498,7 @@ describe("V0.23.35 authorized client materialization gate", () => {
       hostileSession({
         intruder: { ...base.intruder, expiresAt: "not-a-date" },
       }),
-      hostileSession({ projectBindingId: "binding.other.035" }),
+      hostileSession({ projectBindingId: "binding_other_035" }),
     ];
 
     for (const sessionBootstrapContract of variants) {
@@ -517,7 +517,7 @@ describe("V0.23.35 authorized client materialization gate", () => {
   it("does not treat cross-stack binding mismatch as a separate live fact; it fails the originating contract", () => {
     const attestationMismatch = evaluateAuthorizedClientMaterializationGate({
       ...validGateInput(),
-      attestationContract: hostileAttestation({ projectBindingId: "binding.other.035" }),
+      attestationContract: hostileAttestation({ projectBindingId: "binding_other_035" }),
     });
     expect(attestationMismatch.blockers).toEqual([
       { code: "attestation_contract_invalid", scope: "attestation_contract" },
@@ -525,7 +525,7 @@ describe("V0.23.35 authorized client materialization gate", () => {
 
     const sessionMismatch = evaluateAuthorizedClientMaterializationGate({
       ...validGateInput(),
-      sessionBootstrapContract: hostileSession({ projectBindingId: "binding.other.035" }),
+      sessionBootstrapContract: hostileSession({ projectBindingId: "binding_other_035" }),
     });
     expect(sessionMismatch.blockers).toEqual([
       { code: "session_bootstrap_contract_invalid", scope: "session_bootstrap_contract" },
