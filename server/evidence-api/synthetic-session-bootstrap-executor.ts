@@ -1,4 +1,7 @@
-import type { ProviderCandidateFixtureLease } from "./provider-candidate-fixture-lifecycle";
+import {
+  PROVIDER_CANDIDATE_MAX_FIXTURE_TTL_MS,
+  type ProviderCandidateFixtureLease,
+} from "./provider-candidate-fixture-lifecycle";
 import type {
   ProviderClientFactoryPreflightDecision,
   ProviderSyntheticSessionBootstrapPlan,
@@ -254,7 +257,8 @@ function assertFixture(lease: ProviderCandidateFixtureLease, nowMs: number): voi
     expiresAt === null ||
     expiresAt <= issuedAt ||
     expiresAt <= nowMs ||
-    issuedAt > nowMs + CLOCK_SKEW_MS
+    issuedAt > nowMs + CLOCK_SKEW_MS ||
+    expiresAt - issuedAt > PROVIDER_CANDIDATE_MAX_FIXTURE_TTL_MS
   ) {
     fail("invalid_fixture");
   }
