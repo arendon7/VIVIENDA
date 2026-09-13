@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { SupabaseRpcClient, SupabaseRpcError } from "@/domain/persistence-boundary/supabase-adapter";
+import type { SupabaseRpcError } from "@/domain/persistence-boundary/supabase-adapter";
 import { EVIDENCE_BUCKET_ID, type ObjectInspection } from "@/domain/storage-coordination/coordinator";
 import type {
   QualifiedDevFixtureAdminClient,
@@ -12,7 +12,6 @@ import type {
 import type {
   SupabaseDevClientResult,
   SupabaseDevFixtureClient,
-  SupabaseDevStorageBucketClient,
 } from "./supabase-dev-fixture-admin-control-plane";
 import type { SupabaseDevProbeRpcResult } from "./supabase-dev-probe-support-plane";
 import type { SupabaseProviderCandidateAuthSession } from "./supabase-provider-candidate-execution-driver";
@@ -62,23 +61,18 @@ export interface SupabaseFileBucketClientShape {
     path: string,
     options: { upsert: false },
   ): Promise<SupabaseClientShapeResult<{ path?: string; signedUrl?: string; token?: string }>>;
-
   uploadToSignedUrl(
     path: string,
     token: string,
     fileBody: Uint8Array,
     options: { contentType: string },
   ): Promise<SupabaseClientShapeResult<unknown>>;
-
   exists(path: string): Promise<SupabaseClientShapeResult<boolean>>;
-
   download(path: string): Promise<SupabaseClientShapeResult<SupabaseDownloadedObjectShape>>;
-
   createSignedUrl(
     path: string,
     expiresIn: number,
   ): Promise<SupabaseClientShapeResult<{ signedUrl?: string }>>;
-
   remove(paths: string[]): Promise<SupabaseClientShapeResult<unknown>>;
 }
 
@@ -89,8 +83,8 @@ export interface SupabaseStorageClientShape {
 }
 
 /**
- * Session bootstrap is intentionally not modeled as a proven Supabase Auth API composition yet.
- * A later slice may implement this port using an approved mechanism and a dedicated DEV project.
+ * This is intentionally an injected, unproven session bootstrap seam. V0.23.31 does not claim
+ * that a specific Supabase Auth sequence has been validated against a dedicated DEV project.
  */
 export interface SupabaseSyntheticSessionBootstrapShape {
   issue(input: {
@@ -100,7 +94,6 @@ export interface SupabaseSyntheticSessionBootstrapShape {
     subjectRef: string;
     syntheticEmail: string;
   }): Promise<SupabaseClientShapeResult<SupabaseProviderCandidateAuthSession>>;
-
   resolve(input: {
     fixtureId: string;
     namespace: string;
@@ -123,15 +116,6 @@ export class SupabaseProviderClientShapeAdaptersError extends Error {
 
 function fail(code: SupabaseProviderClientShapeAdaptersErrorCode): never {
   throw new SupabaseProviderClientShapeAdaptersError(code);
-}
-
-function assertBindingId(value: string): void {
-  if (!BINDING_ID.test(value)) fail("invalid_configuration");
-}
-
-function assertDistinctAuthorities(values: object[]): void {
-  const unique = new Set(values);
-  if (unique.size !== values.length) fail("invalid_configuration");
 }
 
 function parseIso(value: string): number | null {
@@ -179,14 +163,6 @@ function supportProviderFailure<T>(error: SupabaseClientShapeError | null): Supa
   };
 }
 
-function validateProjectConfiguration(input: {
-  projectLabel: string;
-  projectBindingId: string;
-}): void {
-  if (input.projectLabel !== DEV_PROJECT_LABEL) fail("invalid_configuration");
-  assertBindingId(input.projectBindingId);
-}
-
 class BoundRuntimeRpcClient implements QualifiedDevRuntimeRpcClient {
   readonly provider = "supabase" as const;
   readonly projectLabel = DEV_PROJECT_LABEL;
@@ -194,12 +170,7 @@ class BoundRuntimeRpcClient implements QualifiedDevRuntimeRpcClient {
   readonly authority = "candidate_runtime" as const;
   readonly syntheticOnly = true as const;
   readonly liveRuntimeAuthorized = false as const;
-
-  constructor(
-    readonly projectBindingId: string,
-    private readonly client: SupabaseRpcClientShape,
-  ) {}
-
+  constructor(readonly projectBindingId: string, private readonly client: SupabaseRpcClientShape) {}
   rpc<T = unknown>(functionName: string, args?: Record<string, unknown>) {
     return this.client.rpc<T>(functionName, args);
   }
@@ -212,12 +183,7 @@ class BoundSupportRpcClient implements QualifiedDevSupportRpcClient {
   readonly authority = "probe_support" as const;
   readonly syntheticOnly = true as const;
   readonly liveRuntimeAuthorized = false as const;
-
-  constructor(
-    readonly projectBindingId: string,
-    private readonly client: SupabaseSupportRpcClientShape,
-  ) {}
-
+  constructor(readonly projectBindingId: string, private readonly client: SupabaseSupportRpcClientShape) {}
   async rpc<T = unknown>(functionName: string, args: Record<string, unknown>): Promise<SupabaseDevProbeRpcResult<T>> {
     try {
       const result = await this.client.rpc<T>(functionName, args);
@@ -238,18 +204,12 @@ class BoundFixtureAdminClient implements QualifiedDevFixtureAdminClient {
   readonly authority = "fixture_admin" as const;
   readonly syntheticOnly = true as const;
   readonly liveRuntimeAuthorized = false as const;
-
   readonly auth: SupabaseDevFixtureClient["auth"];
   readonly storage: SupabaseDevFixtureClient["storage"];
-
-  constructor(
-    readonly projectBindingId: string,
-    private readonly client: SupabaseDevFixtureClient,
-  ) {
+  constructor(readonly projectBindingId: string, private readonly client: SupabaseDevFixtureClient) {
     this.auth = client.auth;
     this.storage = client.storage;
   }
-
   rpc<T = unknown>(functionName: string, args: Record<string, unknown>): Promise<SupabaseDevClientResult<T>> {
     return this.client.rpc<T>(functionName, args);
   }
@@ -262,7 +222,6 @@ class BoundStorageClient implements QualifiedDevStorageClient {
   readonly authority = "storage_candidate" as const;
   readonly syntheticOnly = true as const;
   readonly liveRuntimeAuthorized = false as const;
-
   constructor(
     readonly projectBindingId: string,
     private readonly client: SupabaseStorageClientShape,
@@ -290,16 +249,11 @@ class BoundStorageClient implements QualifiedDevStorageClient {
     }
     if (result.error) return providerFailure(result.error);
     if (!result.data || typeof result.data.token !== "string") fail("invalid_provider_response");
-    if (result.data.path !== undefined && result.data.path !== input.objectPath) {
-      fail("invalid_provider_response");
-    }
+    if (result.data.path !== undefined && result.data.path !== input.objectPath) fail("invalid_provider_response");
     assertOpaque(result.data.token);
     const issuedAt = this.now();
     return {
-      data: {
-        token: result.data.token,
-        expiresAt: addMilliseconds(issuedAt, SIGNED_UPLOAD_TTL_MS),
-      },
+      data: { token: result.data.token, expiresAt: addMilliseconds(issuedAt, SIGNED_UPLOAD_TTL_MS) },
       error: null,
     };
   }
@@ -312,11 +266,7 @@ class BoundStorageClient implements QualifiedDevStorageClient {
     bytes: Uint8Array;
     upsert: false;
   }): Promise<QualifiedDevProviderClientResult<{ status: number }>> {
-    if (
-      input.contentType !== "application/pdf" ||
-      input.upsert !== false ||
-      !(input.bytes instanceof Uint8Array)
-    ) {
+    if (input.contentType !== "application/pdf" || input.upsert !== false || !(input.bytes instanceof Uint8Array)) {
       fail("invalid_input");
     }
     assertOpaque(input.signedCapability);
@@ -357,18 +307,12 @@ class BoundStorageClient implements QualifiedDevStorageClient {
       return providerFailure(null);
     }
     if (downloaded.error) return providerFailure(downloaded.error);
-    if (!downloaded.data || typeof downloaded.data.arrayBuffer !== "function") {
-      fail("invalid_provider_response");
-    }
+    if (!downloaded.data || typeof downloaded.data.arrayBuffer !== "function") fail("invalid_provider_response");
     const object = downloaded.data;
     if (
-      typeof object.type !== "string" ||
-      object.type.trim() === "" ||
-      !Number.isSafeInteger(object.size) ||
-      object.size < 0
-    ) {
-      fail("invalid_provider_response");
-    }
+      typeof object.type !== "string" || object.type.trim() === "" ||
+      !Number.isSafeInteger(object.size) || object.size < 0
+    ) fail("invalid_provider_response");
 
     let buffer: ArrayBuffer;
     try {
@@ -376,18 +320,14 @@ class BoundStorageClient implements QualifiedDevStorageClient {
     } catch {
       return providerFailure(null);
     }
-    if (!(buffer instanceof ArrayBuffer) || buffer.byteLength !== object.size) {
-      fail("invalid_provider_response");
-    }
+    if (!(buffer instanceof ArrayBuffer) || buffer.byteLength !== object.size) fail("invalid_provider_response");
     const verifiedAt = this.now();
     if (parseIso(verifiedAt) === null) fail("invalid_configuration");
-    const checksumSha256 = createHash("sha256").update(new Uint8Array(buffer)).digest("hex");
-
     return {
       data: {
         mimeType: object.type,
         byteSize: object.size,
-        checksumSha256,
+        checksumSha256: createHash("sha256").update(new Uint8Array(buffer)).digest("hex"),
         verifiedAt,
       },
       error: null,
@@ -399,9 +339,7 @@ class BoundStorageClient implements QualifiedDevStorageClient {
     objectPath: string;
     expiresInSeconds: number;
   }): Promise<QualifiedDevProviderClientResult<{ url: string; expiresAt: string }>> {
-    if (!Number.isSafeInteger(input.expiresInSeconds) || input.expiresInSeconds < 1) {
-      fail("invalid_input");
-    }
+    if (!Number.isSafeInteger(input.expiresInSeconds) || input.expiresInSeconds < 1) fail("invalid_input");
     let result: SupabaseClientShapeResult<{ signedUrl?: string }>;
     try {
       result = await this.bucket(input.bucketId).createSignedUrl(input.objectPath, input.expiresInSeconds);
@@ -419,11 +357,10 @@ class BoundStorageClient implements QualifiedDevStorageClient {
     if (signedUrl.protocol !== "https:" || signedUrl.username !== "" || signedUrl.password !== "") {
       fail("invalid_provider_response");
     }
-    const issuedAt = this.now();
     return {
       data: {
         url: signedUrl.toString(),
-        expiresAt: addMilliseconds(issuedAt, input.expiresInSeconds * 1000),
+        expiresAt: addMilliseconds(this.now(), input.expiresInSeconds * 1000),
       },
       error: null,
     };
@@ -443,7 +380,6 @@ class BoundStorageClient implements QualifiedDevStorageClient {
     if (exists.error) return providerFailure(exists.error);
     if (typeof exists.data !== "boolean") fail("invalid_provider_response");
     if (!exists.data) return { data: "not_found", error: null };
-
     let removed: SupabaseClientShapeResult<unknown>;
     try {
       removed = await bucket.remove([input.objectPath]);
@@ -463,11 +399,7 @@ class BoundSyntheticSessionClient implements QualifiedDevSyntheticSessionClient 
   readonly syntheticOnly = true as const;
   readonly liveRuntimeAuthorized = false as const;
   readonly publicFixtureSelectorsAccepted = false as const;
-
-  constructor(
-    readonly projectBindingId: string,
-    private readonly bootstrap: SupabaseSyntheticSessionBootstrapShape,
-  ) {}
+  constructor(readonly projectBindingId: string, private readonly bootstrap: SupabaseSyntheticSessionBootstrapShape) {}
 
   async issueSyntheticSession(input: {
     fixtureId: string;
@@ -484,14 +416,10 @@ class BoundSyntheticSessionClient implements QualifiedDevSyntheticSessionClient 
     }
     if (result.error) return providerFailure(result.error);
     if (
-      !result.data ||
-      result.data.subjectRef !== input.subjectRef ||
-      typeof result.data.accessToken !== "string" ||
-      typeof result.data.expiresAt !== "string" ||
+      !result.data || result.data.subjectRef !== input.subjectRef ||
+      typeof result.data.accessToken !== "string" || typeof result.data.expiresAt !== "string" ||
       parseIso(result.data.expiresAt) === null
-    ) {
-      fail("invalid_provider_response");
-    }
+    ) fail("invalid_provider_response");
     assertOpaque(result.data.accessToken);
     return { data: { ...result.data }, error: null };
   }
@@ -511,22 +439,15 @@ class BoundSyntheticSessionClient implements QualifiedDevSyntheticSessionClient 
     if (result.error) return providerFailure(result.error);
     if (result.data === null) return { data: null, error: null };
     if (
-      result.data.kind !== "client" ||
-      typeof result.data.subjectRef !== "string" ||
-      result.data.subjectRef.trim() === "" ||
-      CONTROL_CHARACTER.test(result.data.subjectRef)
-    ) {
-      fail("invalid_provider_response");
-    }
+      result.data.kind !== "client" || typeof result.data.subjectRef !== "string" ||
+      result.data.subjectRef.trim() === "" || CONTROL_CHARACTER.test(result.data.subjectRef)
+    ) fail("invalid_provider_response");
     return { data: { ...result.data }, error: null };
   }
 }
 
 export type SupabaseProviderClientShapeAdaptersInputs = {
-  configuration: {
-    projectLabel: string;
-    projectBindingId: string;
-  };
+  configuration: { projectLabel: string; projectBindingId: string };
   runtimeRpc: SupabaseRpcClientShape;
   supportRpc: SupabaseSupportRpcClientShape;
   fixtureAdmin: SupabaseDevFixtureClient;
@@ -557,21 +478,15 @@ export type SupabaseProviderClientShapeAdapters = {
 export function createSupabaseProviderClientShapeAdapters(
   input: SupabaseProviderClientShapeAdaptersInputs,
 ): SupabaseProviderClientShapeAdapters {
-  validateProjectConfiguration(input.configuration);
-  assertDistinctAuthorities([
-    input.runtimeRpc as object,
-    input.supportRpc as object,
-    input.fixtureAdmin as object,
-    input.storage as object,
-    input.sessionBootstrap as object,
-  ]);
-  if (input.fixtureAdmin.storage === input.storage.storage) fail("invalid_configuration");
-
-  const now = input.now ?? (() => new Date().toISOString());
-  const initialNow = now();
-  if (parseIso(initialNow) === null) fail("invalid_configuration");
+  if (input.configuration.projectLabel !== DEV_PROJECT_LABEL || !BINDING_ID.test(input.configuration.projectBindingId)) {
+    fail("invalid_configuration");
+  }
+  const authorities = [input.runtimeRpc, input.supportRpc, input.fixtureAdmin, input.storage, input.sessionBootstrap] as object[];
+  if (new Set(authorities).size !== authorities.length) fail("invalid_configuration");
+  if ((input.fixtureAdmin.storage as object) === (input.storage.storage as object)) fail("invalid_configuration");
 
   const projectBindingId = input.configuration.projectBindingId;
+  const now = input.now ?? (() => new Date().toISOString());
   return {
     version: SUPABASE_PROVIDER_CLIENT_SHAPE_ADAPTERS_VERSION,
     provider: "supabase",
