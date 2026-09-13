@@ -19,6 +19,7 @@ export const AUTHORIZED_CLIENT_MATERIALIZATION_GATE_VERSION =
 const DEV_PROJECT_LABEL = "vivienda-dev" as const;
 const AUTHORITY_HANDLE_COUNT = 5 as const;
 const MAX_FUTURE_GRANT_TTL_SECONDS = 300 as const;
+const BINDING_ID = /^[A-Za-z0-9_-]{8,80}$/;
 const OPAQUE = /^[A-Za-z0-9_.:-]{8,160}$/;
 const PROJECT_REF = /^[a-z0-9]{8,40}$/;
 const FIXTURE_ID = /^fx_[A-Za-z0-9_-]{6,}$/;
@@ -197,7 +198,7 @@ function readyPreflight(decision: ProviderClientFactoryPreflightDecision): boole
     decision.provider === "supabase" &&
     decision.projectLabel === DEV_PROJECT_LABEL &&
     typeof decision.projectBindingId === "string" &&
-    OPAQUE.test(decision.projectBindingId) &&
+    BINDING_ID.test(decision.projectBindingId) &&
     typeof decision.expectedRemoteProjectRef === "string" &&
     PROJECT_REF.test(decision.expectedRemoteProjectRef) &&
     typeof decision.normalizedProjectUrl === "string" &&
@@ -237,7 +238,6 @@ function preflightMatches(
 }
 
 function authorityHandleMatches(
-  authority: ProviderFactoryAuthority,
   left: ProviderClientFactoryPreflightInput["manifest"]["authorityHandles"][ProviderFactoryAuthority],
   right: ProviderClientFactoryPreflightInput["manifest"]["authorityHandles"][ProviderFactoryAuthority],
 ): boolean {
@@ -250,8 +250,7 @@ function authorityHandleMatches(
     left.handleId === right.handleId &&
     left.source === right.source &&
     left.serverOnly === right.serverOnly &&
-    left.secretValueExposedToApplication === right.secretValueExposedToApplication &&
-    authority in left === authority in right
+    left.secretValueExposedToApplication === right.secretValueExposedToApplication
   );
 }
 
@@ -307,7 +306,6 @@ function preflightConfigurationMatches(
     left.environmentReadRequiredByContract === right.environmentReadRequiredByContract &&
     PROVIDER_FACTORY_AUTHORITIES.every((authority) =>
       authorityHandleMatches(
-        authority,
         left.authorityHandles[authority],
         right.authorityHandles[authority],
       ),
