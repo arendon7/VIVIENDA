@@ -244,11 +244,14 @@ describe("V0.23.39 independent receipt authenticity evidence contract", () => {
   });
 
   it("rejects an altered upstream authenticity requirement", () => {
-    const bad = upstream();
-    bad.authenticityVerificationEvidence = {
-      ...bad.authenticityVerificationEvidence!,
-      selfReportedProvenanceAccepted: true,
-    };
+    const original = upstream();
+    const bad = {
+      ...original,
+      authenticityVerificationEvidence: {
+        ...original.authenticityVerificationEvidence!,
+        selfReportedProvenanceAccepted: true,
+      },
+    } as unknown as ExternalEvidenceCollectionReceiptVerificationGateDecision;
     const result = decide({ upstream: bad });
     expect(result.blockers.map((item) => item.code)).toContain("authenticity_requirement_invalid");
   });
