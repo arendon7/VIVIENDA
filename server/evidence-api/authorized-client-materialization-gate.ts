@@ -3,6 +3,7 @@ import {
   evaluateProviderClientFactoryPreflight,
   type ProviderClientFactoryPreflightDecision,
   type ProviderClientFactoryPreflightInput,
+  type ProviderFactoryAuthority,
   type ProviderRemoteIdentityAttestationRequirement,
   type ProviderSyntheticSessionBootstrapPlan,
 } from "./provider-client-factory-preflight";
@@ -32,17 +33,17 @@ export type ProviderClientMaterializationGateState =
 export type ProviderClientMaterializationGateBlockerCode =
   | "preflight_revalidation_failed"
   | "preflight_decision_mismatch"
+  | "preflight_configuration_drift"
   | "attestation_contract_invalid"
-  | "session_bootstrap_contract_invalid"
-  | "project_binding_mismatch";
+  | "session_bootstrap_contract_invalid";
 
 export type ProviderClientMaterializationGateBlocker = {
   code: ProviderClientMaterializationGateBlockerCode;
   scope:
     | "preflight"
+    | "configuration_drift"
     | "attestation_contract"
-    | "session_bootstrap_contract"
-    | "project_binding";
+    | "session_bootstrap_contract";
 };
 
 export type ProviderClientMaterializationAuthorizationRequirement = {
@@ -54,6 +55,7 @@ export type ProviderClientMaterializationAuthorizationRequirement = {
   expectedProjectUrl: string;
   authorityHandleCount: typeof AUTHORITY_HANDLE_COUNT;
   preflightRevalidationRequired: true;
+  configurationDriftCheckRequired: true;
   liveRemoteIdentityEvidence: {
     required: true;
     accepted: false;
@@ -95,6 +97,7 @@ export type ProviderClientMaterializationGateDecision = {
   expectedProjectUrl: string | null;
   authorityHandleCount: number;
   configurationRevalidated: boolean;
+  configurationStable: boolean;
   contractStackValidated: boolean;
   blockers: ProviderClientMaterializationGateBlocker[];
   authorizationRequirement: ProviderClientMaterializationAuthorizationRequirement | null;
@@ -117,7 +120,10 @@ export type ProviderClientMaterializationGateDecision = {
 };
 
 export type ProviderClientMaterializationGateInput = {
+  /** Exact structural input that produced the supplied frozen preflight decision. */
   preflightInput: ProviderClientFactoryPreflightInput;
+  /** Current structural input observed immediately before asking for live authorization. */
+  currentPreflightInput: ProviderClientFactoryPreflightInput;
   preflightDecision: ProviderClientFactoryPreflightDecision;
   attestationContract: RemoteIdentityAttestationContractResult;
   sessionBootstrapContract: SyntheticSessionBootstrapContractResult;
@@ -230,6 +236,90 @@ function preflightMatches(
   );
 }
 
+function authorityHandleMatches(
+  authority: ProviderFactoryAuthority,
+  left: ProviderClientFactoryPreflightInput["manifest"]["authorityHandles"][ProviderFactoryAuthority],
+  right: ProviderClientFactoryPreflightInput["manifest"]["authorityHandles"][ProviderFactoryAuthority],
+): boolean {
+  return (
+    left !== null &&
+    right !== null &&
+    typeof left === "object" &&
+    typeof right === "object" &&
+    left.authority === right.authority &&
+    left.handleId === right.handleId &&
+    left.source === right.source &&
+    left.serverOnly === right.serverOnly &&
+    left.secretValueExposedToApplication === right.secretValueExposedToApplication &&
+    authority in left === authority in right
+  );
+}
+
+function qualificationMatches(
+  left: ProviderClientFactoryPreflightInput["qualification"],
+  right: ProviderClientFactoryPreflightInput["qualification"],
+): boolean {
+  return (
+    left.state === right.state &&
+    left.devEnvironmentVerified === right.devEnvironmentVerified &&
+    left.liveRuntimeAuthorized === right.liveRuntimeAuthorized &&
+    left.verifiedRequirementCount === right.verifiedRequirementCount &&
+    left.totalRequirementCount === right.totalRequirementCount &&
+    left.blockers.length === right.blockers.length &&
+    left.requirements.length === right.requirements.length &&
+    left.requirements.every((requirement, index) => {
+      const candidate = right.requirements[index];
+      return candidate !== undefined && requirement.code === candidate.code && requirement.status === candidate.status;
+    })
+  );
+}
+
+function constructionPolicyMatches(
+  left: ProviderClientFactoryPreflightInput["constructionPolicy"],
+  right: ProviderClientFactoryPreflightInput["constructionPolicy"],
+): boolean {
+  return (
+    left.sdkFactoryInjected === right.sdkFactoryInjected &&
+    left.sdkDependencyRequiredByContract === right.sdkDependencyRequiredByContract &&
+    left.providerIoOnConstruction === right.providerIoOnConstruction &&
+    left.remoteAttestationOnConstruction === right.remoteAttestationOnConstruction &&
+    left.sessionBootstrapOnConstruction === right.sessionBootstrapOnConstruction &&
+    left.runtimeServerUsed === right.runtimeServerUsed
+  );
+}
+
+function preflightConfigurationMatches(
+  snapshot: ProviderClientFactoryPreflightInput,
+  current: ProviderClientFactoryPreflightInput,
+): boolean {
+  const left = snapshot.manifest;
+  const right = current.manifest;
+  const manifestMatches =
+    left.provider === right.provider &&
+    left.projectLabel === right.projectLabel &&
+    left.projectBindingId === right.projectBindingId &&
+    normalizeOrigin(left.projectUrl) === normalizeOrigin(right.projectUrl) &&
+    left.expectedRemoteProjectRef === right.expectedRemoteProjectRef &&
+    left.source === right.source &&
+    left.syntheticOnly === right.syntheticOnly &&
+    left.liveRuntimeAuthorized === right.liveRuntimeAuthorized &&
+    left.secretValuesEmbedded === right.secretValuesEmbedded &&
+    left.environmentReadRequiredByContract === right.environmentReadRequiredByContract &&
+    PROVIDER_FACTORY_AUTHORITIES.every((authority) =>
+      authorityHandleMatches(
+        authority,
+        left.authorityHandles[authority],
+        right.authorityHandles[authority],
+      ),
+    );
+
+  return (
+    manifestMatches &&
+    qualificationMatches(snapshot.qualification, current.qualification) &&
+    constructionPolicyMatches(snapshot.constructionPolicy, current.constructionPolicy)
+  );
+}
+
 function attestationContractValid(
   value: RemoteIdentityAttestationContractResult,
   preflight: ProviderClientFactoryPreflightDecision,
@@ -290,32 +380,29 @@ function sessionContractValid(
   preflight: ProviderClientFactoryPreflightDecision,
 ): boolean {
   if (!value || typeof value !== "object") return false;
-  if (
-    value.version !== "V0.23.34-SYNTHETIC-SESSION-BOOTSTRAP-EXECUTOR-V1" ||
-    value.state !== "session_bootstrap_contract_satisfied" ||
-    value.provider !== "supabase" ||
-    value.projectLabel !== DEV_PROJECT_LABEL ||
-    value.projectBindingId !== preflight.projectBindingId ||
-    !FIXTURE_ID.test(value.fixtureId) ||
-    !FIXTURE_NAMESPACE.test(value.namespace) ||
-    !sessionCapabilityValid(value.owner, "owner", value.namespace) ||
-    !sessionCapabilityValid(value.intruder, "intruder", value.namespace) ||
-    value.owner.subjectRef === value.intruder.subjectRef ||
-    value.owner.syntheticEmail === value.intruder.syntheticEmail ||
-    value.owner.accessToken === value.intruder.accessToken ||
-    value.sessionBootstrapContractSatisfied !== true ||
-    value.injectedTransportInvoked !== true ||
-    value.liveProviderSessionProven !== false ||
-    value.sessionBootstrapProven !== false ||
-    value.remoteIdentityVerified !== false ||
-    value.clientMaterializationAuthorized !== false ||
-    value.providerParityProven !== false ||
-    value.runtimeActivationAuthorized !== false ||
-    value.deploymentAuthorized !== false
-  ) {
-    return false;
-  }
-  return true;
+  return (
+    value.version === "V0.23.34-SYNTHETIC-SESSION-BOOTSTRAP-EXECUTOR-V1" &&
+    value.state === "session_bootstrap_contract_satisfied" &&
+    value.provider === "supabase" &&
+    value.projectLabel === DEV_PROJECT_LABEL &&
+    value.projectBindingId === preflight.projectBindingId &&
+    FIXTURE_ID.test(value.fixtureId) &&
+    FIXTURE_NAMESPACE.test(value.namespace) &&
+    sessionCapabilityValid(value.owner, "owner", value.namespace) &&
+    sessionCapabilityValid(value.intruder, "intruder", value.namespace) &&
+    value.owner.subjectRef !== value.intruder.subjectRef &&
+    value.owner.syntheticEmail !== value.intruder.syntheticEmail &&
+    value.owner.accessToken !== value.intruder.accessToken &&
+    value.sessionBootstrapContractSatisfied === true &&
+    value.injectedTransportInvoked === true &&
+    value.liveProviderSessionProven === false &&
+    value.sessionBootstrapProven === false &&
+    value.remoteIdentityVerified === false &&
+    value.clientMaterializationAuthorized === false &&
+    value.providerParityProven === false &&
+    value.runtimeActivationAuthorized === false &&
+    value.deploymentAuthorized === false
+  );
 }
 
 function baseDecision(): Omit<
@@ -326,6 +413,7 @@ function baseDecision(): Omit<
   | "expectedProjectUrl"
   | "authorityHandleCount"
   | "configurationRevalidated"
+  | "configurationStable"
   | "contractStackValidated"
   | "blockers"
   | "authorizationRequirement"
@@ -365,6 +453,7 @@ function authorizationRequirement(
     expectedProjectUrl: preflight.normalizedProjectUrl!,
     authorityHandleCount: AUTHORITY_HANDLE_COUNT,
     preflightRevalidationRequired: true,
+    configurationDriftCheckRequired: true,
     liveRemoteIdentityEvidence: {
       required: true,
       accepted: false,
@@ -401,58 +490,64 @@ export function evaluateAuthorizedClientMaterializationGate(
   input: ProviderClientMaterializationGateInput,
 ): ProviderClientMaterializationGateDecision {
   const blockers: ProviderClientMaterializationGateBlocker[] = [];
-  const recomputed = evaluateProviderClientFactoryPreflight(input.preflightInput);
+  const snapshotPreflight = evaluateProviderClientFactoryPreflight(input.preflightInput);
+  const currentPreflight = evaluateProviderClientFactoryPreflight(input.currentPreflightInput);
 
-  const configurationRevalidated = readyPreflight(recomputed);
+  const snapshotReady = readyPreflight(snapshotPreflight);
+  const currentReady = readyPreflight(currentPreflight);
+  const configurationRevalidated = snapshotReady && currentReady;
   if (!configurationRevalidated) {
     blockers.push({ code: "preflight_revalidation_failed", scope: "preflight" });
   }
 
-  const suppliedPreflightMatches = preflightMatches(recomputed, input.preflightDecision);
-  if (configurationRevalidated && !suppliedPreflightMatches) {
+  const suppliedPreflightMatches = preflightMatches(snapshotPreflight, input.preflightDecision);
+  if (snapshotReady && !suppliedPreflightMatches) {
     blockers.push({ code: "preflight_decision_mismatch", scope: "preflight" });
   }
 
-  const canonicalPreflight = suppliedPreflightMatches ? input.preflightDecision : recomputed;
+  const configurationStable =
+    configurationRevalidated && preflightConfigurationMatches(input.preflightInput, input.currentPreflightInput);
+  if (configurationRevalidated && suppliedPreflightMatches && !configurationStable) {
+    blockers.push({ code: "preflight_configuration_drift", scope: "configuration_drift" });
+  }
 
+  const canonicalPreflight = input.preflightDecision;
   const attestationValid =
     configurationRevalidated &&
     suppliedPreflightMatches &&
+    configurationStable &&
     attestationContractValid(input.attestationContract, canonicalPreflight);
-  if (configurationRevalidated && suppliedPreflightMatches && !attestationValid) {
+  if (configurationRevalidated && suppliedPreflightMatches && configurationStable && !attestationValid) {
     blockers.push({ code: "attestation_contract_invalid", scope: "attestation_contract" });
   }
 
   const sessionValid =
     configurationRevalidated &&
     suppliedPreflightMatches &&
+    configurationStable &&
     sessionContractValid(input.sessionBootstrapContract, canonicalPreflight);
-  if (configurationRevalidated && suppliedPreflightMatches && !sessionValid) {
+  if (configurationRevalidated && suppliedPreflightMatches && configurationStable && !sessionValid) {
     blockers.push({ code: "session_bootstrap_contract_invalid", scope: "session_bootstrap_contract" });
   }
 
-  const bindingMatches =
-    attestationValid &&
-    sessionValid &&
-    input.attestationContract.projectBindingId === input.sessionBootstrapContract.projectBindingId &&
-    input.attestationContract.projectBindingId === canonicalPreflight.projectBindingId;
-  if (attestationValid && sessionValid && !bindingMatches) {
-    blockers.push({ code: "project_binding_mismatch", scope: "project_binding" });
-  }
-
   const contractStackValidated =
-    configurationRevalidated && suppliedPreflightMatches && attestationValid && sessionValid && bindingMatches;
+    configurationRevalidated &&
+    suppliedPreflightMatches &&
+    configurationStable &&
+    attestationValid &&
+    sessionValid;
 
   return {
     ...baseDecision(),
     state: contractStackValidated
       ? "ready_for_live_materialization_authorization"
       : "blocked_contract_inconsistent",
-    projectBindingId: configurationRevalidated ? recomputed.projectBindingId : null,
-    expectedProjectRef: configurationRevalidated ? recomputed.expectedRemoteProjectRef : null,
-    expectedProjectUrl: configurationRevalidated ? recomputed.normalizedProjectUrl : null,
-    authorityHandleCount: configurationRevalidated ? recomputed.authorityHandleCount : 0,
+    projectBindingId: currentReady ? currentPreflight.projectBindingId : null,
+    expectedProjectRef: currentReady ? currentPreflight.expectedRemoteProjectRef : null,
+    expectedProjectUrl: currentReady ? currentPreflight.normalizedProjectUrl : null,
+    authorityHandleCount: currentReady ? currentPreflight.authorityHandleCount : 0,
     configurationRevalidated,
+    configurationStable,
     contractStackValidated,
     blockers,
     authorizationRequirement: contractStackValidated ? authorizationRequirement(canonicalPreflight) : null,
