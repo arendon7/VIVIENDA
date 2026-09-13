@@ -344,7 +344,7 @@ export function evaluateLiveEvidenceTrustReadiness(input: LiveEvidenceTrustReadi
   return {
     ...baseDecision(),
     state: pass ? "offline_architecture_complete_external_execution_blocked" : "blocked_offline_stack_inconsistent",
-    projectBindingId: pass ? binding : null,
+    projectBindingId: pass && typeof binding === "string" ? binding : null,
     expectedProjectRef: pass ? ref : null,
     expectedProjectUrl: pass ? url : null,
     authorityHandleCount: pass ? AUTHORITY_HANDLE_COUNT : 0,
