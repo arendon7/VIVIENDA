@@ -137,11 +137,6 @@ function assertSessionAuthority(authority: QualifiedDevDriverHostSessionAuthorit
   }
 }
 
-/**
- * Concurrency-safe candidate fixture context.
- * Exact same-lease nesting is permitted because the driver wrapper invokes the host inside the
- * same logical probe operation. Cross-fixture nesting is rejected fail-closed.
- */
 export class QualifiedDevDriverHostBridgeScope implements QualifiedDevCandidateProbeScopePort {
   readonly scopeChannel = "server_probe_scope" as const;
   readonly channel = "server_probe_context" as const;
@@ -282,10 +277,6 @@ class LateBoundHostHttpClient implements QualifiedDevEvidenceHttpClientPort {
   }
 }
 
-/**
- * Wraps the frozen V0.23.25 driver so every operation that already receives a lease executes
- * inside the out-of-band bridge scope. No frozen driver interface is modified.
- */
 export class QualifiedDevScopedExecutionPort implements SupabaseProviderCandidateProbeExecutionPort {
   readonly provider = "supabase" as const;
   readonly projectLabel = DEV_PROJECT_LABEL;
@@ -415,7 +406,7 @@ export function createQualifiedDevDriverHostBridge(
   const principalResolver = new BridgePrincipalResolver(input.sessionAuthority);
   const httpClient = new LateBoundHostHttpClient(scope);
 
-  const host = createQualifiedDevCandidateEvidenceApiHost({
+  const hostInput: QualifiedDevCandidateHostInputs = {
     provider: {
       ...input.provider,
       authSessions,
@@ -426,8 +417,9 @@ export function createQualifiedDevDriverHostBridge(
       probeScope: scope,
       principalResolver,
     },
-    tokenSource: input.tokenSource,
-  });
+    ...(input.tokenSource ? { tokenSource: input.tokenSource } : {}),
+  };
+  const host = createQualifiedDevCandidateEvidenceApiHost(hostInput);
   httpClient.bind(host);
 
   const execution = new QualifiedDevScopedExecutionPort(host.composition.execution, scope);
