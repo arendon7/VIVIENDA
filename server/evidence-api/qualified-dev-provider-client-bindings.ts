@@ -510,7 +510,6 @@ export type QualifiedDevProviderClientBindings = {
   readonly syntheticOnly: true;
   readonly liveRuntimeAuthorized: false;
   readonly remoteIdentityVerified: false;
-  readonly provider: "supabase";
   readonly bridge: {
     provider: Omit<QualifiedDevProviderCompositionInputs, "server" | "authSessions" | "httpClient">;
     server: {
